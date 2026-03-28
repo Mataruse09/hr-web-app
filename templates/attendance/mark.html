@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block title %}Mark Attendance{% endblock %}
+{% block page_title %}Mark Attendance{% endblock %}
+
+{% block content %}
+<div class="section-card">
+  <form method="POST">
+    <div class="form-row mb-3">
+      <div class="form-group" style="max-width:200px">
+        <label class="form-label">Work Date</label>
+        <input type="date" name="work_date" class="form-control" value="{{ today }}" />
+      </div>
+    </div>
+
+    <table class="data-table attendance-table">
+      <thead>
+        <tr>
+          <th>Code</th>
+          <th>Employee</th>
+          <th>Department</th>
+          <th>Status</th>
+          <th>Check In</th>
+          <th>Check Out</th>
+          <th>Notes</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for emp in employees %}
+        {% set rec = existing_map.get(emp.id, {}) %}
+        <tr>
+          <td><code>{{ emp.employee_code }}</code></td>
+          <td>{{ emp.first_name }} {{ emp.last_name }}</td>
+          <td>{{ emp.department_name or '—' }}</td>
+          <td>
+            <select name="status_{{ emp.id }}" class="form-control form-control-sm status-select"
+                    data-row="{{ emp.id }}">
+              {% for s in ['Present','Absent','Late','Half-Day','Work From Home','Holiday'] %}
+              <option value="{{ s }}"
+                {{ 'selected' if rec.get('status') == s or (not rec and s == 'Present') }}>
+                {{ s }}
+              </option>
+              {% endfor %}
+            </select>
+          </td>
+          <td>
+            <input type="time" name="check_in_{{ emp.id }}" class="form-control form-control-sm"
+                   value="{{ rec.check_in | string | truncate(5, True, '') if rec.get('check_in') else '' }}" />
+          </td>
+          <td>
+            <input type="time" name="check_out_{{ emp.id }}" class="form-control form-control-sm"
+                   value="{{ rec.check_out | string | truncate(5, True, '') if rec.get('check_out') else '' }}" />
+          </td>
+          <td>
+            <input type="text" name="notes_{{ emp.id }}" class="form-control form-control-sm"
+                   placeholder="Optional" value="{{ rec.get('notes','') }}" />
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="7" class="text-center text-muted">No employees found.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <div class="form-actions mt-3">
+      <button type="submit" class="btn btn-primary">💾 Save Attendance</button>
+      <a href="{{ url_for('attendance.logs') }}" class="btn btn-outline">View Logs</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

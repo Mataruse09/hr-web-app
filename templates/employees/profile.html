@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+{% block title %}{{ employee.first_name }} {{ employee.last_name }}{% endblock %}
+{% block page_title %}Employee Profile{% endblock %}
+
+{% block content %}
+<div class="profile-header section-card">
+  <div class="profile-avatar-lg">
+    {{ employee.first_name[0] }}{{ employee.last_name[0] }}
+  </div>
+  <div class="profile-info">
+    <h2>{{ employee.first_name }} {{ employee.last_name }}</h2>
+    <p class="profile-title">{{ employee.job_title or 'No title assigned' }}</p>
+    <p class="profile-dept">{{ employee.department_name or 'No department' }}
+      · <code>{{ employee.employee_code }}</code></p>
+    <span class="badge badge-status-{{ employee.status | lower | replace(' ','-') }}">
+      {{ employee.status }}
+    </span>
+    <span class="badge badge-type ml-1">{{ employee.employment_type }}</span>
+  </div>
+  <div class="profile-actions">
+    {% if session.role in ['Admin', 'HR'] %}
+    <a href="{{ url_for('employees.edit_employee', emp_id=employee.id) }}"
+       class="btn btn-outline">✏️ Edit Profile</a>
+    <a href="{{ url_for('payroll.compensation', emp_id=employee.id) }}"
+       class="btn btn-primary">💰 Set Compensation</a>
+    {% endif %}
+  </div>
+</div>
+
+<div class="profile-grid">
+
+  <!-- Personal Details -->
+  <div class="section-card">
+    <h3 class="section-title">Personal Details</h3>
+    <dl class="detail-list">
+      <dt>Email</dt>       <dd>{{ employee.email }}</dd>
+      <dt>Phone</dt>       <dd>{{ employee.phone or '—' }}</dd>
+      <dt>Gender</dt>      <dd>{{ employee.gender }}</dd>
+      <dt>DOB</dt>         <dd>{{ employee.date_of_birth or '—' }}</dd>
+      <dt>Nationality</dt> <dd>{{ employee.nationality or '—' }}</dd>
+      <dt>Address</dt>     <dd>{{ employee.address or '—' }}</dd>
+      <dt>Emergency</dt>
+      <dd>{{ employee.emergency_contact_name or '—' }}
+        {% if employee.emergency_contact_phone %}
+          · {{ employee.emergency_contact_phone }}
+        {% endif %}
+      </dd>
+    </dl>
+  </div>
+
+  <!-- Employment Details -->
+  <div class="section-card">
+    <h3 class="section-title">Employment Details</h3>
+    <dl class="detail-list">
+      <dt>Hire Date</dt>  <dd>{{ employee.hire_date }}</dd>
+      <dt>Type</dt>       <dd>{{ employee.employment_type }}</dd>
+      <dt>Status</dt>     <dd>{{ employee.status }}</dd>
+      {% if employee.termination_date %}
+      <dt>Exit Date</dt>  <dd>{{ employee.termination_date }}</dd>
+      {% endif %}
+    </dl>
+  </div>
+
+  <!-- Compensation -->
+  <div class="section-card">
+    <h3 class="section-title">Compensation</h3>
+    {% if comp %}
+    <dl class="detail-list">
+      <dt>Basic Salary</dt>  <dd>${{ "{:,.2f}".format(comp.basic_salary) }}</dd>
+      <dt>Housing</dt>       <dd>${{ "{:,.2f}".format(comp.housing_allowance) }}</dd>
+      <dt>Transport</dt>     <dd>${{ "{:,.2f}".format(comp.transport_allowance) }}</dd>
+      <dt>Tax Rate</dt>      <dd>{{ comp.income_tax_rate }}%</dd>
+      <dt>Currency</dt>      <dd>{{ comp.currency }}</dd>
+      <dt>Effective</dt>     <dd>{{ comp.effective_date }}</dd>
+    </dl>
+    {% else %}
+    <p class="text-muted">No compensation record.
+      {% if session.role in ['Admin','HR'] %}
+      <a href="{{ url_for('payroll.compensation', emp_id=employee.id) }}">Set now →</a>
+      {% endif %}
+    </p>
+    {% endif %}
+  </div>
+
+  <!-- Leave Balance -->
+  <div class="section-card">
+    <h3 class="section-title">Leave Balance ({{ balance.year if balance else 'N/A' }})</h3>
+    {% if balance %}
+    <div class="leave-bars">
+      {% set types = [('Annual','annual'),('Sick','sick'),('Emergency','emergency')] %}
+      {% for label, key in types %}
+      {% set total = balance[key ~ '_total'] %}
+      {% set used  = balance[key ~ '_used'] %}
+      {% set rem   = [total - used, 0] | max %}
+      <div class="leave-bar-item">
+        <div class="leave-bar-label">
+          <span>{{ label }}</span>
+          <span>{{ rem }} / {{ total }} remaining</span>
+        </div>
+        <div class="leave-bar-track">
+          <div class="leave-bar-fill"
+               style="width: {{ [(used / total * 100) if total > 0 else 0, 100] | min }}%">
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <p class="text-muted">No leave balance record for this year.</p>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}

@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block title %}Leave Requests{% endblock %}
+{% block page_title %}Leave Management{% endblock %}
+
+{% block content %}
+<div class="toolbar">
+  <div class="filter-tabs">
+    {% for s in ['All','Pending','Approved','Rejected','Cancelled'] %}
+    <a href="{{ url_for('leave.manage', status=s) }}"
+       class="filter-tab {{ 'active' if status_filter == s }}">{{ s }}</a>
+    {% endfor %}
+  </div>
+  <a href="{{ url_for('leave.apply') }}" class="btn btn-primary">✈️ New Request</a>
+</div>
+
+<div class="section-card">
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>#</th><th>Employee</th><th>Type</th>
+        <th>From</th><th>To</th><th>Days</th>
+        <th>Status</th><th>Reason</th><th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in requests %}
+      <tr>
+        <td>{{ r.id }}</td>
+        <td>
+          <strong>{{ r.first_name }} {{ r.last_name }}</strong><br/>
+          <span class="text-muted small">{{ r.dept_name or '' }}</span>
+        </td>
+        <td><span class="badge badge-type">{{ r.leave_type }}</span></td>
+        <td>{{ r.start_date }}</td>
+        <td>{{ r.end_date }}</td>
+        <td><strong>{{ r.days_requested }}</strong></td>
+        <td>
+          <span class="badge badge-leave-{{ r.status | lower }}">{{ r.status }}</span>
+        </td>
+        <td class="text-muted small">{{ (r.reason or '') | truncate(40) }}</td>
+        <td class="actions-cell">
+          {% if r.status == 'Pending' and session.role in ['Admin','HR','CHRO'] %}
+          <form method="POST" action="{{ url_for('leave.approve', req_id=r.id) }}"
+                style="display:inline">
+            <button class="btn-action btn-action-green" type="submit"
+                    onclick="return confirm('Approve this request?')">✓ Approve</button>
+          </form>
+          <form method="POST" action="{{ url_for('leave.reject', req_id=r.id) }}"
+                style="display:inline">
+            <input type="hidden" name="notes" value="Rejected by {{ session.full_name }}" />
+            <button class="btn-action btn-action-red" type="submit"
+                    onclick="return confirm('Reject this request?')">✗ Reject</button>
+          </form>
+          {% elif r.status != 'Pending' %}
+          <span class="text-muted small">
+            By {{ r.reviewer_name or '—' }}
+          </span>
+          {% endif %}
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="9" class="text-center text-muted py-4">No leave requests found.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <div class="table-footer">{{ requests | length }} request(s)</div>
+</div>
+{% endblock %}

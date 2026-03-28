@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block title %}Payroll{% endblock %}
+{% block page_title %}Payroll Runs{% endblock %}
+
+{% block content %}
+<div class="toolbar">
+  <form method="GET" class="filter-form inline-form">
+    <label class="form-label">Pay Period:</label>
+    <input type="month" name="period" class="form-control" value="{{ period }}" />
+    <button type="submit" class="btn btn-primary">View</button>
+  </form>
+  {% if session.role in ['Admin','HR','CHRO'] %}
+  <a href="{{ url_for('payroll.process') }}" class="btn btn-primary">⚙️ Run Payroll</a>
+  {% endif %}
+</div>
+
+<div class="section-card">
+  {% if runs %}
+  <!-- Summary row -->
+  {% set total_net = runs | sum(attribute='net_salary') | float %}
+  {% set total_gross = runs | sum(attribute='gross_salary') | float %}
+  <div class="payroll-summary">
+    <div class="pay-sum-item">
+      <span class="pay-sum-label">Total Gross</span>
+      <span class="pay-sum-value">${{ "{:,.2f}".format(total_gross) }}</span>
+    </div>
+    <div class="pay-sum-item">
+      <span class="pay-sum-label">Total Net</span>
+      <span class="pay-sum-value green">${{ "{:,.2f}".format(total_net) }}</span>
+    </div>
+    <div class="pay-sum-item">
+      <span class="pay-sum-label">Employees Paid</span>
+      <span class="pay-sum-value">{{ runs | length }}</span>
+    </div>
+  </div>
+  {% endif %}
+
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Employee</th><th>Period</th>
+        <th>Basic</th><th>Allowances</th><th>Gross</th>
+        <th>Bonus</th><th>Tax</th><th>Deductions</th>
+        <th>Net Salary</th><th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in runs %}
+      <tr>
+        <td>
+          <strong>{{ r.first_name }} {{ r.last_name }}</strong><br/>
+          <span class="text-muted small">{{ r.employee_code }}</span>
+        </td>
+        <td>{{ r.pay_period }}</td>
+        <td>${{ "{:,.2f}".format(r.basic_salary) }}</td>
+        <td>${{ "{:,.2f}".format(r.total_allowances) }}</td>
+        <td>${{ "{:,.2f}".format(r.gross_salary) }}</td>
+        <td class="text-green">${{ "{:,.2f}".format(r.bonus) }}</td>
+        <td class="text-red">${{ "{:,.2f}".format(r.income_tax) }}</td>
+        <td class="text-red">${{ "{:,.2f}".format(r.total_deductions) }}</td>
+        <td><strong class="text-green">${{ "{:,.2f}".format(r.net_salary) }}</strong></td>
+        <td>
+          <span class="badge badge-payroll-{{ r.status | lower }}">{{ r.status }}</span>
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="10" class="text-center text-muted py-4">
+        No payroll runs for this period. <a href="{{ url_for('payroll.process') }}">Process payroll →</a>
+      </td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

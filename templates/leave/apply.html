@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block title %}Apply Leave{% endblock %}
+{% block page_title %}Submit Leave Request{% endblock %}
+
+{% block content %}
+<div class="section-card form-card">
+  <form method="POST" class="hr-form">
+
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Employee *</label>
+        <select name="employee_id" class="form-control" required>
+          <option value="">— Select Employee —</option>
+          {% for e in employees %}
+          <option value="{{ e.id }}">{{ e.first_name }} {{ e.last_name }} ({{ e.employee_code }})</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Leave Type *</label>
+        <select name="leave_type" class="form-control" required>
+          {% for t in ['Annual','Sick','Emergency','Maternity','Paternity','Unpaid','Other'] %}
+          <option value="{{ t }}">{{ t }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Start Date *</label>
+        <input type="date" name="start_date" class="form-control" required id="start_date" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">End Date *</label>
+        <input type="date" name="end_date" class="form-control" required id="end_date" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Days Calculated</label>
+        <input type="text" id="days_preview" class="form-control" readonly
+               placeholder="Auto-calculated" style="background:#f5f6fa" />
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Reason</label>
+      <textarea name="reason" class="form-control" rows="3"
+                placeholder="Brief reason for leave request…"></textarea>
+    </div>
+
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary">✈️ Submit Request</button>
+      <a href="{{ url_for('leave.manage') }}" class="btn btn-outline">Cancel</a>
+    </div>
+  </form>
+</div>
+
+<script>
+  function calcDays() {
+    const s = document.getElementById('start_date').value;
+    const e = document.getElementById('end_date').value;
+    if (s && e) {
+      const d = (new Date(e) - new Date(s)) / 86400000 + 1;
+      document.getElementById('days_preview').value = d > 0 ? d + ' day(s)' : 'Invalid';
+    }
+  }
+  document.getElementById('start_date').addEventListener('change', calcDays);
+  document.getElementById('end_date').addEventListener('change', calcDays);
+</script>
+{% endblock %}

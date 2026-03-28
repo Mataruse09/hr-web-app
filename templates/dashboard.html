@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+
+{% block content %}
+<section class="kpi-grid">
+
+  <div class="kpi-card kpi-blue">
+    <div class="kpi-icon">👥</div>
+    <div class="kpi-body">
+      <div class="kpi-value">{{ kpis.total_employees }}</div>
+      <div class="kpi-label">Total Employees</div>
+    </div>
+    <div class="kpi-sub">{{ kpis.active_employees }} active</div>
+  </div>
+
+  <div class="kpi-card kpi-green">
+    <div class="kpi-icon">✅</div>
+    <div class="kpi-body">
+      <div class="kpi-value">{{ kpis.present_today }}</div>
+      <div class="kpi-label">Present Today</div>
+    </div>
+    <div class="kpi-sub">{{ kpis.absent_today }} absent</div>
+  </div>
+
+  <div class="kpi-card kpi-orange">
+    <div class="kpi-icon">🏖️</div>
+    <div class="kpi-body">
+      <div class="kpi-value">{{ kpis.on_leave_today }}</div>
+      <div class="kpi-label">On Leave Today</div>
+    </div>
+    <div class="kpi-sub">approved requests</div>
+  </div>
+
+  <div class="kpi-card kpi-red">
+    <div class="kpi-icon">⏳</div>
+    <div class="kpi-body">
+      <div class="kpi-value">{{ kpis.pending_payroll }}</div>
+      <div class="kpi-label">Pending Payroll</div>
+    </div>
+    <div class="kpi-sub">awaiting processing</div>
+  </div>
+
+  <div class="kpi-card kpi-purple">
+    <div class="kpi-icon">💵</div>
+    <div class="kpi-body">
+      <div class="kpi-value">${{ "{:,.0f}".format(kpis.average_salary) }}</div>
+      <div class="kpi-label">Avg Net Salary</div>
+    </div>
+    <div class="kpi-sub">per employee / month</div>
+  </div>
+
+  <div class="kpi-card kpi-teal">
+    <div class="kpi-icon">📈</div>
+    <div class="kpi-body">
+      <div class="kpi-value">{{ kpis.attendance_rate }}%</div>
+      <div class="kpi-label">Attendance Rate</div>
+    </div>
+    <div class="kpi-sub">this month</div>
+  </div>
+
+  <div class="kpi-card kpi-dark">
+    <div class="kpi-icon">📉</div>
+    <div class="kpi-body">
+      <div class="kpi-value">{{ kpis.attrition_rate }}%</div>
+      <div class="kpi-label">Attrition Rate</div>
+    </div>
+    <div class="kpi-sub">{{ kpis.terminated_count }} terminated</div>
+  </div>
+
+</section>
+
+<!-- Quick Actions -->
+<section class="section-card mt-4">
+  <h3 class="section-title">Quick Actions</h3>
+  <div class="quick-actions">
+    <a href="{{ url_for('employees.add_employee') }}" class="action-btn action-blue">
+      ➕ Add Employee
+    </a>
+    <a href="{{ url_for('attendance.mark') }}" class="action-btn action-green">
+      📅 Mark Attendance
+    </a>
+    <a href="{{ url_for('leave.apply') }}" class="action-btn action-orange">
+      ✈️ Apply Leave
+    </a>
+    <a href="{{ url_for('payroll.process') }}" class="action-btn action-purple">
+      💰 Run Payroll
+    </a>
+  </div>
+</section>
+
+<!-- Department Summary -->
+<section class="section-card mt-4">
+  <h3 class="section-title">Departments</h3>
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Department Name</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for d in departments %}
+      <tr>
+        <td>{{ loop.index }}</td>
+        <td><strong>{{ d.name }}</strong></td>
+        <td class="text-muted">{{ d.description or '—' }}</td>
+      </tr>
+      {% else %}
+      <tr><td colspan="3" class="text-center text-muted">No departments found.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endblock %}

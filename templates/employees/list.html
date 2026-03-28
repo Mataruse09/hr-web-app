@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block title %}Employees{% endblock %}
+{% block page_title %}Employee Directory{% endblock %}
+
+{% block content %}
+<div class="toolbar">
+  <form class="search-form" method="GET">
+    <input type="text" name="q" class="form-control search-input"
+           placeholder="Search by name, email, or code…" value="{{ search }}" />
+    <button type="submit" class="btn btn-primary">Search</button>
+    {% if search %}
+    <a href="{{ url_for('employees.list_employees') }}" class="btn btn-outline">Clear</a>
+    {% endif %}
+  </form>
+  {% if session.role in ['Admin', 'HR'] %}
+  <a href="{{ url_for('employees.add_employee') }}" class="btn btn-primary">
+    ➕ Add Employee
+  </a>
+  {% endif %}
+</div>
+
+<div class="section-card">
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Code</th>
+        <th>Full Name</th>
+        <th>Job Title</th>
+        <th>Department</th>
+        <th>Type</th>
+        <th>Status</th>
+        <th>Hire Date</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for emp in employees %}
+      <tr>
+        <td><code>{{ emp.employee_code }}</code></td>
+        <td>
+          <a href="{{ url_for('employees.profile', emp_id=emp.id) }}" class="link-name">
+            {{ emp.first_name }} {{ emp.last_name }}
+          </a>
+        </td>
+        <td>{{ emp.job_title or '—' }}</td>
+        <td>{{ emp.department_name or '—' }}</td>
+        <td><span class="badge badge-type">{{ emp.employment_type }}</span></td>
+        <td>
+          <span class="badge badge-status-{{ emp.status | lower | replace(' ','-') }}">
+            {{ emp.status }}
+          </span>
+        </td>
+        <td>{{ emp.hire_date }}</td>
+        <td class="actions-cell">
+          <a href="{{ url_for('employees.profile', emp_id=emp.id) }}"
+             class="btn-icon" title="View">👁</a>
+          {% if session.role in ['Admin', 'HR'] %}
+          <a href="{{ url_for('employees.edit_employee', emp_id=emp.id) }}"
+             class="btn-icon" title="Edit">✏️</a>
+          <form method="POST"
+                action="{{ url_for('employees.delete_employee', emp_id=emp.id) }}"
+                style="display:inline"
+                onsubmit="return confirm('Delete this employee permanently?')">
+            <button type="submit" class="btn-icon btn-icon-danger" title="Delete">🗑</button>
+          </form>
+          {% endif %}
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="8" class="text-center text-muted py-4">
+        No employees found.
+        {% if session.role in ['Admin', 'HR'] %}
+        <a href="{{ url_for('employees.add_employee') }}">Add one?</a>
+        {% endif %}
+      </td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <div class="table-footer">
+    Showing <strong>{{ employees | length }}</strong> employee(s)
+  </div>
+</div>
+{% endblock %}

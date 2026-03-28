@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}Process Payroll{% endblock %}
+{% block page_title %}Process Payroll{% endblock %}
+
+{% block content %}
+<div class="section-card form-card">
+  <form method="POST" class="hr-form">
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Pay Period *</label>
+        <input type="month" name="pay_period" class="form-control"
+               value="{{ current_period }}" required />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Working Days</label>
+        <input type="number" name="working_days" class="form-control"
+               value="22" min="1" max="31" />
+      </div>
+    </div>
+
+    <div class="form-section-title">Employee Bonus Overrides (optional)</div>
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Code</th><th>Employee</th><th>Department</th>
+          <th>Basic Salary</th><th>Bonus ($)</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for emp in employees %}
+        <tr>
+          <td><code>{{ emp.employee_code }}</code></td>
+          <td>{{ emp.first_name }} {{ emp.last_name }}</td>
+          <td>{{ emp.department_name or '—' }}</td>
+          <td>
+            <!-- Fetch comp inline isn't ideal but acceptable for process page -->
+            <span class="text-muted">See compensation record</span>
+          </td>
+          <td>
+            <input type="number" name="bonus_{{ emp.id }}" class="form-control form-control-sm"
+                   value="0" min="0" step="0.01" placeholder="0.00" />
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="5" class="text-center text-muted">No active employees.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <div class="form-actions mt-3">
+      <button type="submit" class="btn btn-primary"
+              onclick="return confirm('Process payroll for all active employees?')">
+        ⚙️ Generate Payroll Run
+      </button>
+      <a href="{{ url_for('payroll.list_payroll') }}" class="btn btn-outline">Cancel</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

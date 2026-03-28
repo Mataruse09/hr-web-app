@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Edit' if action == 'edit' else 'Add' }} Employee{% endblock %}
+{% block page_title %}{{ 'Edit' if action == 'edit' else 'New' }} Employee{% endblock %}
+
+{% block content %}
+<div class="section-card form-card">
+  <form method="POST" class="hr-form">
+
+    <div class="form-section-title">Personal Information</div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Employee Code *</label>
+        <input type="text" name="employee_code" class="form-control" required
+               value="{{ employee.employee_code if employee else next_code }}"
+               {% if action == 'edit' %}readonly{% endif %} />
+      </div>
+      <div class="form-group">
+        <label class="form-label">First Name *</label>
+        <input type="text" name="first_name" class="form-control" required
+               value="{{ employee.first_name if employee else '' }}" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Last Name *</label>
+        <input type="text" name="last_name" class="form-control" required
+               value="{{ employee.last_name if employee else '' }}" />
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Email *</label>
+        <input type="email" name="email" class="form-control" required
+               value="{{ employee.email if employee else '' }}" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Phone</label>
+        <input type="text" name="phone" class="form-control"
+               value="{{ employee.phone if employee else '' }}" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Date of Birth</label>
+        <input type="date" name="date_of_birth" class="form-control"
+               value="{{ employee.date_of_birth if employee else '' }}" />
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Gender</label>
+        <select name="gender" class="form-control">
+          {% for g in ['Male','Female','Other','Prefer not to say'] %}
+          <option value="{{ g }}"
+            {{ 'selected' if employee and employee.gender == g }}>{{ g }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Nationality</label>
+        <input type="text" name="nationality" class="form-control"
+               value="{{ employee.nationality if employee else '' }}" />
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Address</label>
+      <textarea name="address" class="form-control" rows="2">{{ employee.address if employee else '' }}</textarea>
+    </div>
+
+    <div class="form-section-title">Employment Details</div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Department</label>
+        <select name="department_id" class="form-control">
+          <option value="">— Select Department —</option>
+          {% for d in departments %}
+          <option value="{{ d.id }}"
+            {{ 'selected' if employee and employee.department_id == d.id }}>
+            {{ d.name }}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Job Title</label>
+        <input type="text" name="job_title" class="form-control"
+               value="{{ employee.job_title if employee else '' }}" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Employment Type</label>
+        <select name="employment_type" class="form-control">
+          {% for t in ['Full-Time','Part-Time','Contract','Intern'] %}
+          <option value="{{ t }}"
+            {{ 'selected' if employee and employee.employment_type == t }}>{{ t }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Status</label>
+        <select name="status" class="form-control">
+          {% for s in ['Active','Inactive','On Leave','Terminated'] %}
+          <option value="{{ s }}"
+            {{ 'selected' if employee and employee.status == s }}>{{ s }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Hire Date *</label>
+        <input type="date" name="hire_date" class="form-control" required
+               value="{{ employee.hire_date if employee else '' }}" />
+      </div>
+      {% if action == 'edit' %}
+      <div class="form-group">
+        <label class="form-label">Termination Date</label>
+        <input type="date" name="termination_date" class="form-control"
+               value="{{ employee.termination_date if employee else '' }}" />
+      </div>
+      {% endif %}
+    </div>
+
+    <div class="form-section-title">Emergency Contact</div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Contact Name</label>
+        <input type="text" name="emergency_contact_name" class="form-control"
+               value="{{ employee.emergency_contact_name if employee else '' }}" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Contact Phone</label>
+        <input type="text" name="emergency_contact_phone" class="form-control"
+               value="{{ employee.emergency_contact_phone if employee else '' }}" />
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary">
+        {{ '💾 Save Changes' if action == 'edit' else '➕ Add Employee' }}
+      </button>
+      <a href="{{ url_for('employees.list_employees') }}" class="btn btn-outline">
+        Cancel
+      </a>
+    </div>
+  </form>
+</div>
+{% endblock %}

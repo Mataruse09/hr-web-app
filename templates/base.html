@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}HRCore ERP{% endblock %} — HRCore</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" />
+</head>
+<body class="app-layout">
+
+  <!-- ── Sidebar ─────────────────────────────────────────── -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <span class="brand-icon">⬡</span>
+      <span class="brand-name">HRCore</span>
+    </div>
+
+    <nav class="sidebar-nav">
+      <a href="{{ url_for('dashboard.index') }}"
+         class="nav-item {% if request.endpoint == 'dashboard.index' %}active{% endif %}">
+        <span class="nav-icon">◈</span><span class="nav-label">Dashboard</span>
+      </a>
+
+      <div class="nav-group-label">WORKFORCE</div>
+
+      <a href="{{ url_for('employees.list_employees') }}"
+         class="nav-item {% if 'employees' in request.endpoint %}active{% endif %}">
+        <span class="nav-icon">👥</span><span class="nav-label">Employees</span>
+      </a>
+      <a href="{{ url_for('attendance.mark') }}"
+         class="nav-item {% if 'attendance' in request.endpoint %}active{% endif %}">
+        <span class="nav-icon">📅</span><span class="nav-label">Attendance</span>
+      </a>
+      <a href="{{ url_for('attendance.logs') }}"
+         class="nav-item {% if request.endpoint == 'attendance.logs' %}active{% endif %}">
+        <span class="nav-icon">📋</span><span class="nav-label">Att. Logs</span>
+      </a>
+
+      <div class="nav-group-label">COMPENSATION</div>
+
+      <a href="{{ url_for('payroll.list_payroll') }}"
+         class="nav-item {% if 'payroll' in request.endpoint %}active{% endif %}">
+        <span class="nav-icon">💰</span><span class="nav-label">Payroll</span>
+      </a>
+
+      <div class="nav-group-label">TIME OFF</div>
+
+      <a href="{{ url_for('leave.apply') }}"
+         class="nav-item {% if request.endpoint == 'leave.apply' %}active{% endif %}">
+        <span class="nav-icon">✈️</span><span class="nav-label">Apply Leave</span>
+      </a>
+      <a href="{{ url_for('leave.manage') }}"
+         class="nav-item {% if request.endpoint == 'leave.manage' %}active{% endif %}">
+        <span class="nav-icon">🗂️</span><span class="nav-label">Leave Requests</span>
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="user-badge">
+        <div class="user-avatar">{{ session.full_name[0] | upper }}</div>
+        <div class="user-info">
+          <div class="user-name">{{ session.full_name }}</div>
+          <div class="user-role badge-{{ session.role | lower }}">{{ session.role }}</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ── Main Area ──────────────────────────────────────── -->
+  <div class="main-wrapper">
+
+    <!-- Topbar -->
+    <header class="topbar">
+      <button class="sidebar-toggle" onclick="toggleSidebar()">☰</button>
+      <div class="topbar-left">
+        <h2 class="page-title">{% block page_title %}Dashboard{% endblock %}</h2>
+      </div>
+      <div class="topbar-right">
+        <span class="topbar-clock" id="clock"></span>
+        <a href="{{ url_for('auth.logout') }}" class="btn btn-outline-sm">
+          ⏻ Logout
+        </a>
+      </div>
+    </header>
+
+    <!-- Flash Messages -->
+    <div class="flash-container">
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category }}">
+            {{ message }}
+            <button class="alert-close" onclick="this.parentElement.remove()">×</button>
+          </div>
+        {% endfor %}
+      {% endwith %}
+    </div>
+
+    <!-- Page Content -->
+    <main class="page-content">
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+
+  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>
