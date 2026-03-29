@@ -7,7 +7,6 @@ WorkZen HR helps organizations manage employees, attendance, payroll, and leave 
 
 ## 🌐 Live Demo
 
-*(Add your deployed link here after deployment)*
 HUMAN RESOURCES WEB APP: *(https://hr-web-app-5.onrender.com/dashboard)*
 ---
 
