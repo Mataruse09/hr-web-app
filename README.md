@@ -237,7 +237,7 @@ xxxxx xxxxx xxxxx xxxxx xxxxx xxxxx xxxxx
 ## 👨‍💻 Author
 
 Developed by *Mataruse T*
-*(https://github.com/Mataruse09)*
+*((https://hr-web-app-5.onrender.com/dashboard))*
 
 ---
 
