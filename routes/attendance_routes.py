@@ -26,7 +26,7 @@ def logs():
 
 @attendance_bp.route('/mark', methods=['GET', 'POST'])
 @login_required
-@roles_required('Admin', 'HR')
+@roles_required('Admin', 'wow')
 def mark():
     company_id  = session['company_id']
     user_id     = session['user_id']

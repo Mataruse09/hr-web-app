@@ -14,10 +14,52 @@ CREATE TABLE IF NOT EXISTS companies (
     phone       VARCHAR(30),
     email       VARCHAR(150),
     website     VARCHAR(255),
-    is_active   TINYINT(1)  NOT NULL DEFAULT 1,
-    created_at  TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at  TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    is_active        TINYINT(1)  NOT NULL DEFAULT 1,
+    company_secret   VARCHAR(255) NULL,
+    created_at       TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at       TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     INDEX idx_company_active (is_active)
+) ENGINE=InnoDB;
+
+-- ─────────────────────────────────────────────────────────────
+-- 1.5. Subscription plans
+-- ─────────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS plans (
+    id          INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    name        VARCHAR(100) NOT NULL,
+    price       DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+    features    TEXT,
+    created_at  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS subscriptions (
+    id                    INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    company_id            INT UNSIGNED NOT NULL,
+    plan_id               INT UNSIGNED NOT NULL,
+    status                ENUM('active','past_due','cancelled','trial','expired') NOT NULL DEFAULT 'trial',
+    started_at            DATETIME NOT NULL,
+    expires_at            DATETIME NOT NULL,
+    external_subscription VARCHAR(255),
+    created_at            TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at            TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY fk_sub_company (company_id) REFERENCES companies(id) ON DELETE CASCADE,
+    FOREIGN KEY fk_sub_plan    (plan_id)    REFERENCES plans(id)    ON DELETE SET NULL,
+    INDEX idx_sub_company (company_id),
+    INDEX idx_sub_status  (status)
+) ENGINE=InnoDB;
+
+-- ─────────────────────────────────────────────────────────────
+-- 1.6. Company runtime settings
+-- ─────────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS company_settings (
+    id          INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    company_id  INT UNSIGNED NOT NULL,
+    key_name    VARCHAR(100) NOT NULL,
+    value       VARCHAR(255),
+    created_at  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY fk_setting_company (company_id) REFERENCES companies(id) ON DELETE CASCADE,
+    UNIQUE KEY uq_company_key (company_id, key_name)
 ) ENGINE=InnoDB;
 
 -- ─────────────────────────────────────────────────────────────

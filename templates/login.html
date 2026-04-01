@@ -25,9 +25,18 @@
 
       <form method="POST" action="{{ url_for('auth.login') }}" class="login-form">
         <div class="form-group">
+          <label class="form-label">Company</label>
+          <select name="company" class="form-control" required autofocus>
+            <option value="">Select company</option>
+            {% for comp in companies %}
+              <option value="{{ comp.name }}">{{ comp.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group">
           <label class="form-label">Username</label>
           <input type="text" name="username" class="form-control"
-                 placeholder="Enter your username" required autofocus />
+                 placeholder="Enter your username" required />
         </div>
         <div class="form-group">
           <label class="form-label">Password</label>
@@ -38,6 +47,7 @@
           Sign In
         </button>
       </form>
+      <p class="mt-2">New? <a href="{{ url_for('auth.register_company') }}">Register your company</a></p>
 
       <div class="login-demo">
         <p class="demo-hint">Demo Accounts</p>
