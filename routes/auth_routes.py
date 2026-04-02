@@ -113,6 +113,37 @@ def register_company():
     return render_template('register_company.html')
 
 
+@auth_bp.route('/reset-password', methods=['GET', 'POST'])
+def reset_password():
+    token_user = request.args.get('user', '')
+
+    if request.method == 'POST':
+        username = request.form.get('username', '').strip().lower()
+        new_password = request.form.get('new_password', '').strip()
+        confirm_password = request.form.get('confirm_password', '').strip()
+
+        if not username or not new_password:
+            flash('Username and new password are required.', 'danger')
+            return render_template('reset_password.html', username=username)
+
+        if new_password != confirm_password:
+            flash('Passwords do not match.', 'danger')
+            return render_template('reset_password.html', username=username)
+
+        user = user_model.get_by_username_any(username)
+
+        if not user:
+            flash('User not found.', 'danger')
+            return render_template('reset_password.html', username=username)
+
+        hash_pw = bcrypt.hashpw(new_password.encode(), bcrypt.gensalt()).decode()
+        user_model.update_password(user['id'], hash_pw)
+        flash('Password has been updated. Please login.', 'success')
+        return redirect(url_for('auth.login'))
+
+    return render_template('reset_password.html', username=token_user)
+
+
 @auth_bp.route('/logout')
 def logout():
     session.clear()

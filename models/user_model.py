@@ -55,6 +55,13 @@ def update_last_login(user_id: int):
     )
 
 
+def update_password(user_id: int, new_password_hash: str):
+    return mutate(
+        "UPDATE users SET password_hash = %s WHERE id = %s",
+        (new_password_hash, user_id)
+    )
+
+
 def get_all_users(company_id: int):
     return query(
         "SELECT id, username, email, full_name, role, is_active, last_login "
@@ -75,6 +82,14 @@ def update_user_role(user_id: int, company_id: int, role: str):
     return mutate(
         "UPDATE users SET role=%s WHERE id=%s AND company_id=%s",
         (role, user_id, company_id)
+    )
+
+
+def get_by_username_any(username: str):
+    normalized_username = username.strip().lower()
+    return query(
+        "SELECT * FROM users WHERE username = %s AND is_active = 1",
+        (normalized_username,), one=True
     )
 
 

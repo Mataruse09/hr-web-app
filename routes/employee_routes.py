@@ -2,8 +2,9 @@ from flask import (
     Blueprint, render_template, request,
     redirect, url_for, flash, session,
 )
-from utils import login_required, roles_required
-from models import employee_model
+import bcrypt
+from utils import login_required, roles_required, send_email
+from models import employee_model, user_model
 
 employee_bp = Blueprint('employees', __name__)
 
@@ -34,7 +35,40 @@ def add_employee():
         data = request.form.to_dict()
         try:
             emp_id = employee_model.create(company_id, data)
-            flash('Employee added successfully.', 'success')
+
+            username = data.get('employee_code', f'EMP{emp_id:04d}').strip().lower()
+            default_password = f"{username}@{emp_id}"  # simple default, change policy as needed
+            password_hash = bcrypt.hashpw(default_password.encode(), bcrypt.gensalt()).decode()
+
+            # Create user account for employee
+            new_user_id = user_model.create_user(
+                company_id,
+                username,
+                data.get('email', '').strip().lower(),
+                f"{data.get('first_name','').strip()} {data.get('last_name','').strip()}",
+                password_hash,
+                role='Employee'
+            )
+            user_model.assign_role_to_user(new_user_id, company_id, 'Employee')
+
+            # Send onboarding email
+            try:
+                reset_link = f"{request.url_root.rstrip('/')}/auth/reset-password?user={username}"
+                email_body = (
+                    f"Hello {data.get('first_name','')},\n\n"
+                    f"Your employee account has been created.\n"
+                    f"Username: {username}\n"
+                    f"Temporary password: {default_password}\n\n"
+                    f"Please login and change your password here: {reset_link}\n\n"
+                    f"Thank you."
+                )
+                send_email(data.get('email', '').strip().lower(),
+                           'Your new HRCore employee account',
+                           email_body)
+            except Exception as email_error:
+                flash(f'Employee created, but failed to send email: {email_error}', 'warning')
+
+            flash('Employee added successfully and login created.', 'success')
             return redirect(url_for('employees.profile', emp_id=emp_id))
         except Exception as e:
             flash(f'Error adding employee: {str(e)}', 'danger')
