@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% block title %}User Management{% endblock %}
+{% block page_title %}Company Users{% endblock %}
+{% block content %}
+<div class="section-card">
+  <h3>Users in {{ session.company_name }}</h3>
+  <p><a href="{{ url_for('admin.add_user') }}" class="btn btn-primary">➕ Add User</a></p>
+  <table class="data-table w-100">
+    <thead>
+      <tr><th>#</th><th>Username</th><th>Full Name</th><th>Email</th><th>Role</th><th>Active</th><th>Last Login</th></tr>
+    </thead>
+    <tbody>
+      {% for u in users %}
+      <tr>
+        <td>{{ loop.index }}</td>
+        <td>{{ u.username }}</td>
+        <td>{{ u.full_name }}</td>
+        <td>{{ u.email }}</td>
+        <td>{{ u.role }}</td>
+        <td>{{ 'Yes' if u.is_active else 'No' }}</td>
+        <td>{{ u.last_login or 'Never' }}</td>
+      </tr>
+      {% else %}
+      <tr><td colspan="7" class="text-center text-muted">No users yet.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

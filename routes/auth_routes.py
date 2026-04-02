@@ -15,7 +15,7 @@ def login():
 
     if request.method == 'POST':
         company_name = request.form.get('company', '').strip()
-        username = request.form.get('username', '').strip()
+        username = request.form.get('username', '').strip().lower()
         password = request.form.get('password', '').strip()
 
         if not company_name or not username or not password:
@@ -39,9 +39,24 @@ def login():
         session.permanent = True
         session['user_id'] = user['id']
         session['company_id'] = user['company_id']
+        session['company_name'] = company['name']
         session['username'] = user['username']
         session['full_name'] = user['full_name']
-        session['role'] = user['role']
+
+        # normalize role in session for route authorization consistently
+        role = user['role'].strip().lower()
+        if role == 'admin':
+            session['role'] = 'Admin'
+        elif role == 'hr':
+            session['role'] = 'HR'
+        elif role == 'manager':
+            session['role'] = 'Manager'
+        elif role == 'chro':
+            session['role'] = 'CHRO'
+        elif role == 'company_admin':
+            session['role'] = 'company_admin'
+        else:
+            session['role'] = user['role'].strip().title()
 
         user_model.update_last_login(user['id'])
         flash(f'Welcome back, {user["full_name"]}!', 'success')
@@ -80,7 +95,17 @@ def register_company():
         )
 
         password_hash = bcrypt.hashpw(admin_password.encode(), bcrypt.gensalt()).decode()
-        user_model.create_user(new_company_id, admin_username, admin_email, admin_full_name, password_hash, role='Admin')
+        new_user_id = user_model.create_user(
+            new_company_id,
+            admin_username.strip().lower(),
+            admin_email.strip().lower(),
+            admin_full_name.strip(),
+            password_hash,
+            role='Admin'
+        )
+
+        # Ensure relation in user_roles for immediate access rights
+        user_model.assign_role_to_user(new_user_id, new_company_id, 'Admin')
 
         flash('Company registered successfully. Please login.', 'success')
         return redirect(url_for('auth.login'))

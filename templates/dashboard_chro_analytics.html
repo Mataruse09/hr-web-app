@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+{% block title %}CHRO Analytics{% endblock %}
+{% block page_title %}CHRO Workforce Analytics{% endblock %}
+{% block content %}
+<div class="section-card">
+  <h3>Enterprise Analytics</h3>
+  <div class="kpi-grid">
+    <div class="kpi-card kpi-blue"><div class="kpi-icon">📊</div><div class="kpi-body"><div class="kpi-value">{{ employees }}</div><div class="kpi-label">Employees</div></div></div>
+    <div class="kpi-card kpi-dark"><div class="kpi-icon">📉</div><div class="kpi-body"><div class="kpi-value">{{ attrition }}%</div><div class="kpi-label">Attrition Rate</div></div></div>
+    <div class="kpi-card kpi-teal"><div class="kpi-icon">📈</div><div class="kpi-body"><div class="kpi-value">{{ kpis.attendance_rate }}%</div><div class="kpi-label">Attendance Rate</div></div></div>
+  </div>
+
+  <p class="mt-3">CHRO-specific analysis and reporting (templates, export and trends in next iteration).</p>
+
+  <a href="{{ url_for('dashboard.chro_dashboard') }}" class="btn btn-outline">← Back to CHRO Dashboard</a>
+</div>
+{% endblock %}

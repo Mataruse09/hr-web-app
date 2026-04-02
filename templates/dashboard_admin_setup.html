@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Admin Setup{% endblock %}
+{% block page_title %}Company Setup & Subscription{% endblock %}
+{% block content %}
+<div class="section-card">
+  <h3>Welcome, {{ company.name }}</h3>
+  <p>Configure your company settings and subscription status from here.</p>
+  <dl class="detail-list">
+    <dt>Industry</dt><dd>{{ company.industry or 'Not set' }}</dd>
+    <dt>Address</dt><dd>{{ company.address or 'Not set' }}</dd>
+    <dt>Phone</dt><dd>{{ company.phone or 'Not set' }}</dd>
+    <dt>Email</dt><dd>{{ company.email or 'Not set' }}</dd>
+    <dt>Website</dt><dd>{{ company.website or 'Not set' }}</dd>
+  </dl>
+  <div class="quick-actions mt-2">
+    <a href="{{ url_for('employees.add_employee') }}" class="action-btn action-blue">➕ Add first employee</a>
+    <a href="{{ url_for('dashboard.admin_setup') }}" class="action-btn action-green">💳 Manage subscription (demo)</a>
+    <a href="{{ url_for('admin.users') }}" class="action-btn action-orange">👥 Manage users</a>
+  </div>
+
+  <div class="section-card mt-4">
+    <h3>Subscription status</h3>
+    <p>Active plan: <strong>Pro</strong> (demo data)</p>
+    <p>Expiry date: <strong>{{ company.expiry_at if company and company.expiry_at else 'N/A' }}</strong></p>
+  </div>
+</div>
+{% endblock %}

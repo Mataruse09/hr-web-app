@@ -70,22 +70,44 @@
 
 </section>
 
+<!-- Role-specific message -->
+<section class="section-card mt-4">
+  <h3 class="section-title">Your Role: {{ role or 'Employee' }}</h3>
+  {% if role in ['Admin','company_admin'] %}
+    <p>Company administrator tools are available. Visit <a href="{{ url_for('dashboard.admin_setup') }}">Setup & Billing</a>.</p>
+  {% elif role == 'HR' %}
+    <p>HR tools are available: attendance, leave approvals, talent rating.</p>
+  {% elif role == 'Manager' %}
+    <p>Manager tools are available: team approvals, performance sign offs.</p>
+  {% elif role == 'CHRO' %}
+    <p>CHRO analytics are available: attrition and advanced workforce metrics.</p>
+  {% else %}
+    <p>Employee dashboard: monitor your attendance, leave, and profile details.</p>
+  {% endif %}
+</section>
+
 <!-- Quick Actions -->
 <section class="section-card mt-4">
   <h3 class="section-title">Quick Actions</h3>
   <div class="quick-actions">
-    <a href="{{ url_for('employees.add_employee') }}" class="action-btn action-blue">
-      ➕ Add Employee
-    </a>
-    <a href="{{ url_for('attendance.mark') }}" class="action-btn action-green">
-      📅 Mark Attendance
-    </a>
-    <a href="{{ url_for('leave.apply') }}" class="action-btn action-orange">
-      ✈️ Apply Leave
-    </a>
-    <a href="{{ url_for('payroll.process') }}" class="action-btn action-purple">
-      💰 Run Payroll
-    </a>
+    {% if role in ['Admin','HR','company_admin'] %}
+      <a href="{{ url_for('employees.add_employee') }}" class="action-btn action-blue">➕ Add Employee</a>
+      <a href="{{ url_for('attendance.mark') }}" class="action-btn action-green">📅 Mark Attendance</a>
+    {% endif %}
+
+    <a href="{{ url_for('leave.apply') }}" class="action-btn action-orange">✈️ Apply Leave</a>
+
+    {% if role in ['Admin','HR','CHRO','company_admin'] %}
+      <a href="{{ url_for('payroll.process') }}" class="action-btn action-purple">💰 Run Payroll</a>
+    {% endif %}
+
+    {% if role in ['Admin','company_admin'] %}
+      <a href="{{ url_for('dashboard.admin_setup') }}" class="action-btn action-dark">⚙️ Setup / Billing</a>
+    {% endif %}
+
+    {% if role in ['Employee', 'Manager', 'HR', 'Admin', 'CHRO', 'company_admin'] %}
+      <a href="{{ url_for('employees.profile', emp_id=session.get('user_id')) }}" class="action-btn action-cyan">👤 My Profile</a>
+    {% endif %}
   </div>
 </section>
 

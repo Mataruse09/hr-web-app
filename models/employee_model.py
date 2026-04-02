@@ -1,3 +1,4 @@
+from datetime import date
 from models.db import query, mutate
 
 
@@ -142,3 +143,21 @@ def get_next_employee_code(company_id: int) -> str:
     )
     n = (row['cnt'] if row else 0) + 1
     return f"EMP{n:04d}"
+
+
+def get_average_rating(company_id: int, employee_id: int) -> float:
+    row = query(
+        "SELECT AVG(overall_rating) AS avg_rating "
+        "FROM performance_reviews "
+        "WHERE company_id=%s AND employee_id=%s AND status IN ('Submitted','Acknowledged')",
+        (company_id, employee_id), one=True
+    )
+    return round(float(row['avg_rating'] or 0), 1) if row else 0.0
+
+
+def add_performance_review(company_id: int, employee_id: int, reviewer_id: int, rating: float, comments: str):
+    return mutate(
+        "INSERT INTO performance_reviews (company_id, employee_id, reviewer_id, review_period, review_date, overall_rating, comments, status) "
+        "VALUES (%s,%s,%s,%s,%s,%s,%s,%s)",
+        (company_id, employee_id, reviewer_id, 'Auto-'+str(date.today().year), date.today(), rating, comments, 'Submitted')
+    )

@@ -15,7 +15,7 @@
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-brand">
       <span class="brand-icon">⬡</span>
-      <span class="brand-name">HRCore</span>
+      <span class="brand-name">{{ session.company_name or 'HRCore' }}</span>
     </div>
 
     <nav class="sidebar-nav">
@@ -30,6 +30,13 @@
          class="nav-item {% if 'employees' in request.endpoint %}active{% endif %}">
         <span class="nav-icon">👥</span><span class="nav-label">Employees</span>
       </a>
+
+      {% if session.role in ['Admin','company_admin'] %}
+      <a href="{{ url_for('admin.users') }}"
+         class="nav-item {% if 'admin.users' in request.endpoint %}active{% endif %}">
+        <span class="nav-icon">🔐</span><span class="nav-label">User Management</span>
+      </a>
+      {% endif %}
       <a href="{{ url_for('attendance.mark') }}"
          class="nav-item {% if 'attendance' in request.endpoint %}active{% endif %}">
         <span class="nav-icon">📅</span><span class="nav-label">Attendance</span>

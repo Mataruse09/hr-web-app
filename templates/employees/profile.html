@@ -16,6 +16,16 @@
       {{ employee.status }}
     </span>
     <span class="badge badge-type ml-1">{{ employee.employment_type }}</span>
+    <div class="mt-2">
+      <strong>Performance Rating:</strong> {{ rating or 0 }} / 5
+      <span class="stars">{% for i in range(1,6) %}
+        {% if i <= (rating|round(0,'floor')|int) %}
+          ★
+        {% else %}
+          ☆
+        {% endif %}
+      {% endfor %}</span>
+    </div>
   </div>
   <div class="profile-actions">
     {% if session.role in ['Admin', 'HR'] %}
@@ -25,6 +35,18 @@
        class="btn btn-primary">💰 Set Compensation</a>
     {% endif %}
   </div>
+
+  {% if session.role in ['Admin', 'HR', 'Manager', 'CHRO'] %}
+  <div class="section-card mt-3">
+    <h3 class="section-title">Add Performance Rating</h3>
+    <form action="{{ url_for('employees.rate_employee', emp_id=employee.id) }}" method="POST" class="form-inline">
+      <label class="form-label" style="margin-right:0.5rem">Score</label>
+      <input type="number" name="rating" min="1" max="5" step="0.5" value="{{ rating or 0 }}" class="form-control" required style="width:6rem; margin-right:0.5rem" />
+      <input type="text" name="comments" placeholder="Comments" class="form-control" style="margin-right:0.5rem" />
+      <button type="submit" class="btn btn-primary">Save Rating</button>
+    </form>
+  </div>
+  {% endif %}
 </div>
 
 <div class="profile-grid">

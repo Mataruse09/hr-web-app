@@ -46,7 +46,7 @@ def apply():
 
 @leave_bp.route('/<int:req_id>/approve', methods=['POST'])
 @login_required
-@roles_required('Admin', 'HR', 'CHRO')
+@roles_required('Admin', 'HR', 'CHRO', 'Manager')
 def approve(req_id):
     company_id = session['company_id']
     notes      = request.form.get('notes', '')
@@ -58,7 +58,7 @@ def approve(req_id):
 
 @leave_bp.route('/<int:req_id>/reject', methods=['POST'])
 @login_required
-@roles_required('Admin', 'HR', 'CHRO')
+@roles_required('Admin', 'HR', 'CHRO', 'Manager')
 def reject(req_id):
     company_id = session['company_id']
     notes      = request.form.get('notes', 'Rejected.')

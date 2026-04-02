@@ -82,8 +82,31 @@ def profile(emp_id):
     from datetime import date
     comp    = payroll_model.get_compensation(emp_id, company_id)
     balance = leave_model.get_balance(emp_id, company_id, date.today().year)
+    rating  = employee_model.get_average_rating(company_id, emp_id)
     return render_template('employees/profile.html',
-                           employee=employee, comp=comp, balance=balance)
+                           employee=employee, comp=comp, balance=balance, rating=rating)
+
+
+@employee_bp.route('/<int:emp_id>/rate', methods=['POST'])
+@login_required
+@roles_required('Admin', 'HR', 'Manager', 'CHRO')
+def rate_employee(emp_id):
+    company_id = session['company_id']
+    employee = employee_model.get_by_id(emp_id, company_id)
+    if not employee:
+        flash('Employee not found.', 'warning')
+        return redirect(url_for('employees.list_employees'))
+
+    score = float(request.form.get('rating', 0))
+    comments = request.form.get('comments', '').strip()
+
+    if score <= 0 or score > 5:
+        flash('Rating must be between 1 and 5 stars.', 'danger')
+        return redirect(url_for('employees.profile', emp_id=emp_id))
+
+    employee_model.add_performance_review(company_id, emp_id, session['user_id'], score, comments)
+    flash('Performance rating saved.', 'success')
+    return redirect(url_for('employees.profile', emp_id=emp_id))
 
 
 @employee_bp.route('/<int:emp_id>/delete', methods=['POST'])

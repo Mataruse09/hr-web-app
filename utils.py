@@ -13,13 +13,15 @@ def login_required(f):
 
 
 def roles_required(*allowed_roles):
-    """Usage:  @roles_required('Admin', 'HR')"""
+    """Usage:  @roles_required('Admin', 'HR', 'company_admin', 'Manager', 'Employee', 'CHRO')"""
+    normalized = {r.strip().lower() for r in allowed_roles}
     def decorator(f):
         @wraps(f)
         def wrapper(*args, **kwargs):
             if 'user_id' not in session:
                 return redirect(url_for('auth.login'))
-            if session.get('role') not in allowed_roles:
+            user_role = session.get('role', '').strip().lower()
+            if user_role not in normalized:
                 flash('Access denied — insufficient permissions.', 'danger')
                 return redirect(url_for('dashboard.index'))
             return f(*args, **kwargs)
