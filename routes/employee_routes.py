@@ -3,8 +3,11 @@ from flask import (
     redirect, url_for, flash, session,
 )
 import bcrypt
+import logging
 from utils import login_required, roles_required, send_email
 from models import employee_model, user_model
+
+logger = logging.getLogger(__name__)
 
 employee_bp = Blueprint('employees', __name__)
 
@@ -33,45 +36,70 @@ def add_employee():
 
     if request.method == 'POST':
         data = request.form.to_dict()
+
+        email = data.get('email', '').strip().lower()
+        first_name = data.get('first_name', '').strip()
+        last_name = data.get('last_name', '').strip()
+
+        if not email or not first_name or not last_name:
+            flash('First name, last name and email are required.', 'danger')
+            return render_template('employees/form.html', action='add', departments=departments, next_code=next_code, employee=None)
+
+        employee_code = data.get('employee_code', '').strip()
+        if not employee_code:
+            employee_code = next_code
+            data['employee_code'] = employee_code
+
         try:
             emp_id = employee_model.create(company_id, data)
 
-            username = data.get('employee_code', f'EMP{emp_id:04d}').strip().lower()
-            default_password = f"{username}@{emp_id}"  # simple default, change policy as needed
+            username = employee_code.strip().lower() if employee_code else f'emp{emp_id:04d}'
+            if not username:
+                username = f'emp{emp_id:04d}'
+
+            import secrets
+            default_password = secrets.token_urlsafe(10)
             password_hash = bcrypt.hashpw(default_password.encode(), bcrypt.gensalt()).decode()
 
             # Create user account for employee
             new_user_id = user_model.create_user(
                 company_id,
                 username,
-                data.get('email', '').strip().lower(),
-                f"{data.get('first_name','').strip()} {data.get('last_name','').strip()}",
+                email,
+                f"{first_name} {last_name}",
                 password_hash,
                 role='Employee'
             )
+
+            if not new_user_id:
+                employee_model.delete(emp_id, company_id)
+                raise RuntimeError('Failed to create the user account for employee.')
+
             user_model.assign_role_to_user(new_user_id, company_id, 'Employee')
 
-            # Send onboarding email
+            # Send onboarding email (non-blocking)
             try:
                 reset_link = f"{request.url_root.rstrip('/')}/auth/reset-password?user={username}"
                 email_body = (
-                    f"Hello {data.get('first_name','')},\n\n"
+                    f"Hello {first_name},\n\n"
                     f"Your employee account has been created.\n"
                     f"Username: {username}\n"
                     f"Temporary password: {default_password}\n\n"
                     f"Please login and change your password here: {reset_link}\n\n"
                     f"Thank you."
                 )
-                send_email(data.get('email', '').strip().lower(),
-                           'Your new HRCore employee account',
-                           email_body)
+                send_email(email, 'Your new HRCore employee account', email_body)
             except Exception as email_error:
-                flash(f'Employee created, but failed to send email: {email_error}', 'warning')
+                logger.warning('SMTP onboarding email failed for %s: %s', email, email_error)
+                flash('Employee created; email delivery failed. Verify SMTP settings.', 'warning')
 
             flash('Employee added successfully and login created.', 'success')
             return redirect(url_for('employees.profile', emp_id=emp_id))
         except Exception as e:
-            flash(f'Error adding employee: {str(e)}', 'danger')
+            if 'emp_id' in locals() and emp_id:
+                employee_model.delete(emp_id, company_id)
+            logger.exception('Failed to add employee and user: %s', e)
+            flash('Error adding employee. Please check input and ensure unique email/username.', 'danger')
 
     return render_template('employees/form.html',
                            action='add', departments=departments,
@@ -91,14 +119,25 @@ def edit_employee(emp_id):
         return redirect(url_for('employees.list_employees'))
 
     if request.method == 'POST':
-        data = request.form.to_dict()
-        try:
-            employee_model.update(emp_id, company_id, data)
-            flash('Employee updated successfully.', 'success')
-            return redirect(url_for('employees.profile', emp_id=emp_id))
-        except Exception as e:
-            flash(f'Error updating employee: {str(e)}', 'danger')
+            data = request.form.to_dict()
+            try:
+                employee_model.update(emp_id, company_id, data)
 
+                # Keep user profile in sync for email/full name
+                username = data.get('employee_code', employee['employee_code']).strip().lower()
+                user = user_model.get_by_username(username, company_id)
+                if user:
+                    try:
+                        user_model.update_user_info(user['id'], company_id, data.get('email', user['email']), f"{data.get('first_name','').strip()} {data.get('last_name','').strip()}")
+                    except Exception as user_err:
+                        logger.warning('Failed to sync user profile for employee %s: %s', username, user_err)
+                        flash('Employee saved; but user profile update failed (email may be duplicate).', 'warning')
+
+                flash('Employee updated successfully.', 'success')
+                return redirect(url_for('employees.profile', emp_id=emp_id))
+            except Exception as e:
+                logger.exception('Failed to update employee %s', emp_id)
+                flash('Error updating employee. Please make sure the fields are correct.', 'danger')
     return render_template('employees/form.html',
                            action='edit', departments=departments,
                            employee=employee, next_code=None)

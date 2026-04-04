@@ -27,6 +27,18 @@ def get_by_id(user_id: int, company_id: int):
 
 def create_user(company_id: int, username: str, email: str, full_name: str, password_hash: str, role: str = 'HR'):
     normalized_username = username.strip().lower()
+
+    existing_user = get_by_username(normalized_username, company_id)
+    if existing_user:
+        raise ValueError(f"Username '{normalized_username}' already exists for company ID {company_id}.")
+
+    existing_email = query(
+        "SELECT id FROM users WHERE company_id = %s AND email = %s",
+        (company_id, email.strip().lower()), one=True
+    )
+    if existing_email:
+        raise ValueError(f"Email '{email.strip().lower()}' already exists for company ID {company_id}.")
+
     normalized_role = role.strip().lower()
     if normalized_role == 'hr':
         normalized_role = 'HR'
@@ -85,6 +97,13 @@ def update_user_role(user_id: int, company_id: int, role: str):
     )
 
 
+def update_user_info(user_id: int, company_id: int, email: str, full_name: str):
+    return mutate(
+        "UPDATE users SET email=%s, full_name=%s WHERE id=%s AND company_id=%s",
+        (email.strip().lower(), full_name.strip(), user_id, company_id)
+    )
+
+
 def get_by_username_any(username: str):
     normalized_username = username.strip().lower()
     return query(
@@ -111,7 +130,32 @@ def assign_role_to_user(user_id: int, company_id: int, role_name: str):
     )
 
 
+def ensure_user_indexes():
+    # Ensure username uniqueness is per company, not global.
+    try:
+        mutate("ALTER TABLE users DROP INDEX uq_username")
+    except Exception:
+        # Index may not exist; ignore
+        pass
+
+    try:
+        mutate("CREATE UNIQUE INDEX uq_username_company ON users (company_id, username)")
+    except Exception:
+        # already created or unsupported
+        pass
+
+
+def ensure_role_column_type():
+    try:
+        mutate("ALTER TABLE users MODIFY role VARCHAR(50) NOT NULL DEFAULT 'HR'")
+    except Exception:
+        # may already be the correct type or no permission
+        pass
+
+
 def seed_roles():
+    ensure_user_indexes()
+    ensure_role_column_type()
     default_roles = [
         ('company_admin', 'Manage company settings and users'),
         ('Admin', 'Full administrator'),
