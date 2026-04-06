@@ -58,6 +58,8 @@ def add_employee():
                 username = f'emp{emp_id:04d}'
 
             import secrets
+            from datetime import datetime, timedelta
+
             default_password = secrets.token_urlsafe(10)
             password_hash = bcrypt.hashpw(default_password.encode(), bcrypt.gensalt()).decode()
 
@@ -77,24 +79,38 @@ def add_employee():
 
             user_model.assign_role_to_user(new_user_id, company_id, 'Employee')
 
+            # =========================
+            # ✅ NEW: SECURE RESET TOKEN
+            # =========================
+            reset_token = secrets.token_urlsafe(32)
+            expiry = datetime.utcnow() + timedelta(minutes=30)
+
+            user_model.save_reset_token(new_user_id, reset_token, expiry)
+
             # Send onboarding email (non-blocking)
             try:
-                reset_link = f"{request.url_root.rstrip('/')}/auth/reset-password?user={username}"
+                # ✅ FIX: use company_id instead of company_name
+                reset_link = f"{request.url_root.rstrip('/')}/auth/reset-password?token={reset_token}&company_id={company_id}"
+
                 email_body = (
                     f"Hello {first_name},\n\n"
                     f"Your employee account has been created.\n"
                     f"Username: {username}\n"
                     f"Temporary password: {default_password}\n\n"
-                    f"Please login and change your password here: {reset_link}\n\n"
+                    f"Please set your password using this secure link (valid for 30 minutes):\n"
+                    f"{reset_link}\n\n"
                     f"Thank you."
                 )
+
                 send_email(email, 'Your new HRCore employee account', email_body)
+
             except Exception as email_error:
                 logger.warning('SMTP onboarding email failed for %s: %s', email, email_error)
                 flash('Employee created; email delivery failed. Verify SMTP settings.', 'warning')
 
             flash('Employee added successfully and login created.', 'success')
             return redirect(url_for('employees.profile', emp_id=emp_id))
+
         except Exception as e:
             if 'emp_id' in locals() and emp_id:
                 employee_model.delete(emp_id, company_id)
@@ -123,7 +139,6 @@ def edit_employee(emp_id):
             try:
                 employee_model.update(emp_id, company_id, data)
 
-                # Keep user profile in sync for email/full name
                 username = data.get('employee_code', employee['employee_code']).strip().lower()
                 user = user_model.get_by_username(username, company_id)
                 if user:

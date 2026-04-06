@@ -43,7 +43,6 @@ def login():
         session['username'] = user['username']
         session['full_name'] = user['full_name']
 
-        # normalize role in session for route authorization consistently
         role = user['role'].strip().lower()
         if role == 'admin':
             session['role'] = 'Admin'
@@ -104,7 +103,6 @@ def register_company():
             role='Admin'
         )
 
-        # Ensure relation in user_roles for immediate access rights
         user_model.assign_role_to_user(new_user_id, new_company_id, 'Admin')
 
         flash('Company registered successfully. Please login.', 'success')
@@ -113,35 +111,60 @@ def register_company():
     return render_template('register_company.html')
 
 
+# ✅ FULL SECURE RESET (NOW supports company_id + fallback)
 @auth_bp.route('/reset-password', methods=['GET', 'POST'])
 def reset_password():
-    token_user = request.args.get('user', '')
+    token = request.args.get('token', '').strip()
+    company_id = request.args.get('company_id', type=int)
+    company_name = request.args.get('company', '').strip()
+
+    # ❗ Require at least one identifier
+    if not token or (not company_id and not company_name):
+        session.clear()
+        flash('Invalid or expired reset link.', 'danger')
+        return redirect(url_for('auth.login'))
+
+    # ✅ Prefer company_id (new way)
+    if company_id:
+        company = {'id': company_id}
+    else:
+        company = company_model.get_by_name(company_name)
+
+    if not company:
+        session.clear()
+        flash('Invalid company.', 'danger')
+        return redirect(url_for('auth.login'))
+
+    # 🔒 secure lookup
+    user = user_model.get_by_reset_token(token, company['id'])
+
+    if not user:
+        session.clear()
+        flash('Reset link expired or invalid.', 'danger')
+        return redirect(url_for('auth.login'))
 
     if request.method == 'POST':
-        username = request.form.get('username', '').strip().lower()
         new_password = request.form.get('new_password', '').strip()
         confirm_password = request.form.get('confirm_password', '').strip()
 
-        if not username or not new_password:
-            flash('Username and new password are required.', 'danger')
-            return render_template('reset_password.html', username=username)
+        if not new_password:
+            flash('New password is required.', 'danger')
+            return render_template('reset_password.html', username=user['username'])
 
         if new_password != confirm_password:
             flash('Passwords do not match.', 'danger')
-            return render_template('reset_password.html', username=username)
-
-        user = user_model.get_by_username_any(username)
-
-        if not user:
-            flash('User not found.', 'danger')
-            return render_template('reset_password.html', username=username)
+            return render_template('reset_password.html', username=user['username'])
 
         hash_pw = bcrypt.hashpw(new_password.encode(), bcrypt.gensalt()).decode()
         user_model.update_password(user['id'], hash_pw)
+
+        user_model.clear_reset_token(user['id'])
+
+        session.clear()
         flash('Password has been updated. Please login.', 'success')
         return redirect(url_for('auth.login'))
 
-    return render_template('reset_password.html', username=token_user)
+    return render_template('reset_password.html', username=user['username'])
 
 
 @auth_bp.route('/logout')

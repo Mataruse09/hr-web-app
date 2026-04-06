@@ -104,11 +104,41 @@ def update_user_info(user_id: int, company_id: int, email: str, full_name: str):
     )
 
 
+# ✅ FIXED: restrict dangerous global lookup
 def get_by_username_any(username: str):
     normalized_username = username.strip().lower()
     return query(
-        "SELECT * FROM users WHERE username = %s AND is_active = 1",
+        "SELECT * FROM users WHERE username = %s AND is_active = 1 AND role NOT IN ('Admin','HR','Manager','CHRO','company_admin')",
         (normalized_username,), one=True
+    )
+
+
+# =========================
+# ✅ RESET TOKEN SUPPORT
+# =========================
+
+def save_reset_token(user_id: int, token: str, expiry: datetime):
+    return mutate(
+        "UPDATE users SET reset_token=%s, reset_token_expiry=%s WHERE id=%s",
+        (token, expiry, user_id)
+    )
+
+
+def get_by_reset_token(token: str, company_id: int):
+    # ✅ FIX: prevent empty token lookup
+    if not token:
+        return None
+
+    return query(
+        "SELECT * FROM users WHERE reset_token=%s AND company_id=%s AND is_active=1 AND reset_token_expiry > %s",
+        (token, company_id, datetime.utcnow()), one=True
+    )
+
+
+def clear_reset_token(user_id: int):
+    return mutate(
+        "UPDATE users SET reset_token=NULL, reset_token_expiry=NULL WHERE id=%s",
+        (user_id,)
     )
 
 
@@ -131,17 +161,14 @@ def assign_role_to_user(user_id: int, company_id: int, role_name: str):
 
 
 def ensure_user_indexes():
-    # Ensure username uniqueness is per company, not global.
     try:
         mutate("ALTER TABLE users DROP INDEX uq_username")
     except Exception:
-        # Index may not exist; ignore
         pass
 
     try:
         mutate("CREATE UNIQUE INDEX uq_username_company ON users (company_id, username)")
     except Exception:
-        # already created or unsupported
         pass
 
 
@@ -149,7 +176,6 @@ def ensure_role_column_type():
     try:
         mutate("ALTER TABLE users MODIFY role VARCHAR(50) NOT NULL DEFAULT 'HR'")
     except Exception:
-        # may already be the correct type or no permission
         pass
 
 
@@ -169,4 +195,3 @@ def seed_roles():
             "INSERT IGNORE INTO roles (name, description) VALUES (%s, %s)",
             (role_name, description)
         )
-

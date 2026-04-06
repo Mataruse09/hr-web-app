@@ -75,6 +75,8 @@ CREATE TABLE IF NOT EXISTS users (
     role          VARCHAR(50) NOT NULL DEFAULT 'HR',
     is_active     TINYINT(1)  NOT NULL DEFAULT 1,
     last_login    DATETIME    NULL,
+    reset_token          VARCHAR(255) NULL,
+    reset_token_expiry   DATETIME     NULL,
     created_at    TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
     UNIQUE  KEY uq_username_company (company_id, username),
     UNIQUE  KEY uq_email_company     (company_id, email),

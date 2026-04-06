@@ -5,7 +5,7 @@ import smtplib
 from email.message import EmailMessage
 
 
-def send_email(to_address: str, subject: str, body: str):
+def send_email(to_address: str, subject: str, body: str, html: str = None):
     smtp_host = os.getenv('SMTP_HOST') or os.getenv('SMTP_SERVER')
     smtp_port = int(os.getenv('SMTP_PORT', '587'))
     smtp_user = os.getenv('SMTP_USER') or os.getenv('SMTP_EMAIL')
@@ -20,7 +20,13 @@ def send_email(to_address: str, subject: str, body: str):
     message['Subject'] = subject
     message['From'] = smtp_user
     message['To'] = to_address
-    message.set_content(body)
+
+    # ✅ FIX: support HTML emails for reset links
+    if html:
+        message.set_content(body)  # fallback text
+        message.add_alternative(html, subtype='html')
+    else:
+        message.set_content(body)
 
     try:
         if smtp_use_ssl or smtp_port == 465:
@@ -36,7 +42,6 @@ def send_email(to_address: str, subject: str, body: str):
                 server.login(smtp_user, smtp_pass)
                 server.send_message(message)
     except Exception as exc:
-        # Keep exceptions readable for caller logging/display
         raise RuntimeError(f"SMTP send failed ({type(exc).__name__}): {exc}")
 
 
@@ -57,6 +62,7 @@ def roles_required(*allowed_roles):
         @wraps(f)
         def wrapper(*args, **kwargs):
             if 'user_id' not in session:
+                session.clear()  # ✅ FIX (keep session consistent)
                 return redirect(url_for('auth.login'))
             user_role = session.get('role', '').strip().lower()
             if user_role not in normalized:
