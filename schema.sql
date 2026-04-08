@@ -104,32 +104,47 @@ CREATE TABLE IF NOT EXISTS departments (
 CREATE TABLE IF NOT EXISTS employees_core (
     id                      INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     company_id              INT UNSIGNED NOT NULL,
+    user_id                 INT UNSIGNED NULL,  -- ✅ NEW LINK
+
     employee_code           VARCHAR(50)  NOT NULL,
     first_name              VARCHAR(100) NOT NULL,
     last_name               VARCHAR(100) NOT NULL,
     email                   VARCHAR(150) NOT NULL,
     phone                   VARCHAR(30),
+
     department_id           INT UNSIGNED NULL,
     job_title               VARCHAR(150),
     employment_type         ENUM('Full-Time','Part-Time','Contract','Intern') DEFAULT 'Full-Time',
     status                  ENUM('Active','Inactive','Terminated','On Leave')  DEFAULT 'Active',
+
     hire_date               DATE NOT NULL,
     termination_date        DATE NULL,
     date_of_birth           DATE NULL,
     gender                  ENUM('Male','Female','Other','Prefer not to say') DEFAULT 'Prefer not to say',
     nationality             VARCHAR(100),
     address                 TEXT,
+
     emergency_contact_name  VARCHAR(200),
     emergency_contact_phone VARCHAR(30),
+
     created_at              TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at              TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
     UNIQUE  KEY uq_emp_code_company (company_id, employee_code),
-    FOREIGN KEY fk_emp_company      (company_id)   REFERENCES companies(id)   ON DELETE CASCADE,
-    FOREIGN KEY fk_emp_department   (department_id) REFERENCES departments(id) ON DELETE SET NULL,
+
+    -- ✅ FOREIGN KEYS
+    FOREIGN KEY fk_emp_company    (company_id)    REFERENCES companies(id)   ON DELETE CASCADE,
+    FOREIGN KEY fk_emp_department (department_id) REFERENCES departments(id) ON DELETE SET NULL,
+
+    -- ✅ NEW FK LINK
+    FOREIGN KEY fk_emp_user (user_id) REFERENCES users(id) ON DELETE SET NULL,
+
+    -- ✅ INDEXES
     INDEX idx_emp_company    (company_id),
     INDEX idx_emp_status     (status),
     INDEX idx_emp_department (department_id),
-    INDEX idx_emp_hire_date  (hire_date)
+    INDEX idx_emp_hire_date  (hire_date),
+    INDEX idx_emp_user       (user_id)   -- ✅ IMPORTANT
 ) ENGINE=InnoDB;
 
 -- ─────────────────────────────────────────────────────────────

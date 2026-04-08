@@ -23,6 +23,14 @@ def get_by_id(emp_id: int, company_id: int):
     """, (emp_id, company_id), one=True)
 
 
+def get_by_user_id(user_id: int, company_id: int):
+    return query(
+        "SELECT * FROM employees_core WHERE user_id = %s AND company_id = %s",
+        (user_id, company_id),
+        one=True
+    )
+
+
 def get_active_count(company_id: int) -> int:
     row = query(
         "SELECT COUNT(*) AS cnt FROM employees_core "
@@ -74,17 +82,30 @@ def create(company_id: int, data: dict) -> int:
         VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
     """, (
         company_id,
-        data['employee_code'], data['first_name'], data['last_name'],
-        data['email'],         data.get('phone',''),
+        data.get('employee_code'),   # ✅ FIXED
+        data.get('first_name'),
+        data.get('last_name'),
+        data.get('email'),
+        data.get('phone',''),
         data.get('department_id') or None,
-        data.get('job_title',''),  data.get('employment_type','Full-Time'),
-        data.get('status','Active'), data['hire_date'],
+        data.get('job_title',''),
+        data.get('employment_type','Full-Time'),
+        data.get('status','Active'),
+        data.get('hire_date'),       # ✅ FIXED
         data.get('date_of_birth') or None,
         data.get('gender','Prefer not to say'),
-        data.get('nationality',''), data.get('address',''),
+        data.get('nationality',''),
+        data.get('address',''),
         data.get('emergency_contact_name',''),
         data.get('emergency_contact_phone',''),
     ))
+
+
+def link_user(emp_id: int, user_id: int, company_id: int):
+    return mutate(
+        "UPDATE employees_core SET user_id=%s WHERE id=%s AND company_id=%s",
+        (user_id, emp_id, company_id)
+    )
 
 
 def update(emp_id: int, company_id: int, data: dict):
@@ -98,14 +119,19 @@ def update(emp_id: int, company_id: int, data: dict):
           termination_date=%s
         WHERE id=%s AND company_id=%s
     """, (
-        data['first_name'], data['last_name'], data['email'],
+        data.get('first_name'),
+        data.get('last_name'),
+        data.get('email'),
         data.get('phone',''),
         data.get('department_id') or None,
-        data.get('job_title',''),  data.get('employment_type','Full-Time'),
-        data.get('status','Active'), data['hire_date'],
+        data.get('job_title',''),
+        data.get('employment_type','Full-Time'),
+        data.get('status','Active'),
+        data.get('hire_date'),   # ✅ FIXED
         data.get('date_of_birth') or None,
         data.get('gender','Prefer not to say'),
-        data.get('nationality',''), data.get('address',''),
+        data.get('nationality',''),
+        data.get('address',''),
         data.get('emergency_contact_name',''),
         data.get('emergency_contact_phone',''),
         data.get('termination_date') or None,
@@ -137,12 +163,24 @@ def create_department(company_id: int, name: str, description: str = '') -> int:
 
 
 def get_next_employee_code(company_id: int) -> str:
-    row = query(
-        "SELECT COUNT(*) AS cnt FROM employees_core WHERE company_id=%s",
-        (company_id,), one=True
-    )
-    n = (row['cnt'] if row else 0) + 1
-    return f"EMP{n:04d}"
+    row = query("""
+        SELECT employee_code
+        FROM employees_core
+        WHERE company_id = %s
+        ORDER BY id DESC
+        LIMIT 1
+    """, (company_id,), one=True)
+
+    if not row or not row.get('employee_code'):
+        return "EMP0001"
+
+    try:
+        last_code = row['employee_code']
+        number = int(last_code.replace('EMP', ''))
+        return f"EMP{number + 1:04d}"
+    except Exception:
+        # fallback safety
+        return "EMP0001"
 
 
 def get_average_rating(company_id: int, employee_id: int) -> float:

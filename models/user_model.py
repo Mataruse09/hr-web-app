@@ -13,7 +13,8 @@ def get_by_username(username: str, company_id: int):
 def get_by_username_email(username: str, email: str, company_id: int):
     return query(
         "SELECT * FROM users WHERE (username = %s OR email = %s) AND company_id = %s",
-        (username, email, company_id), one=True
+        (username.strip().lower(), email.strip().lower(), company_id),  # ✅ FIXED normalization
+        one=True
     )
 
 
@@ -27,6 +28,7 @@ def get_by_id(user_id: int, company_id: int):
 
 def create_user(company_id: int, username: str, email: str, full_name: str, password_hash: str, role: str = 'HR'):
     normalized_username = username.strip().lower()
+    normalized_email = email.strip().lower()  # ✅ FIXED
 
     existing_user = get_by_username(normalized_username, company_id)
     if existing_user:
@@ -34,29 +36,25 @@ def create_user(company_id: int, username: str, email: str, full_name: str, pass
 
     existing_email = query(
         "SELECT id FROM users WHERE company_id = %s AND email = %s",
-        (company_id, email.strip().lower()), one=True
+        (company_id, normalized_email), one=True
     )
     if existing_email:
-        raise ValueError(f"Email '{email.strip().lower()}' already exists for company ID {company_id}.")
+        raise ValueError(f"Email '{normalized_email}' already exists for company ID {company_id}.")
 
-    normalized_role = role.strip().lower()
-    if normalized_role == 'hr':
-        normalized_role = 'HR'
-    elif normalized_role == 'chro':
-        normalized_role = 'CHRO'
-    elif normalized_role == 'admin':
-        normalized_role = 'Admin'
-    elif normalized_role == 'manager':
-        normalized_role = 'Manager'
-    elif normalized_role == 'employee':
-        normalized_role = 'Employee'
-    else:
-        normalized_role = role.strip().title()
+    # ✅ Normalize role safely
+    role_map = {
+        'hr': 'HR',
+        'chro': 'CHRO',
+        'admin': 'Admin',
+        'manager': 'Manager',
+        'employee': 'Employee'
+    }
+    normalized_role = role_map.get(role.strip().lower(), role.strip().title())
 
     return mutate(
         "INSERT INTO users (company_id, username, password_hash, email, full_name, role) "
         "VALUES (%s,%s,%s,%s,%s,%s)",
-        (company_id, normalized_username, password_hash, email.strip().lower(), full_name.strip(), normalized_role)
+        (company_id, normalized_username, password_hash, normalized_email, full_name.strip(), normalized_role)
     )
 
 
@@ -104,11 +102,12 @@ def update_user_info(user_id: int, company_id: int, email: str, full_name: str):
     )
 
 
-# ✅ FIXED: restrict dangerous global lookup
+# ✅ SAFE: restrict global lookup (no admin leakage)
 def get_by_username_any(username: str):
     normalized_username = username.strip().lower()
     return query(
-        "SELECT * FROM users WHERE username = %s AND is_active = 1 AND role NOT IN ('Admin','HR','Manager','CHRO','company_admin')",
+        "SELECT * FROM users WHERE username = %s AND is_active = 1 "
+        "AND role = 'Employee'",   # ✅ STRICT FIX (was unsafe)
         (normalized_username,), one=True
     )
 
@@ -125,12 +124,12 @@ def save_reset_token(user_id: int, token: str, expiry: datetime):
 
 
 def get_by_reset_token(token: str, company_id: int):
-    # ✅ FIX: prevent empty token lookup
     if not token:
         return None
 
     return query(
-        "SELECT * FROM users WHERE reset_token=%s AND company_id=%s AND is_active=1 AND reset_token_expiry > %s",
+        "SELECT * FROM users WHERE reset_token=%s AND company_id=%s "
+        "AND is_active=1 AND reset_token_expiry > %s",
         (token, company_id, datetime.utcnow()), one=True
     )
 
@@ -141,6 +140,10 @@ def clear_reset_token(user_id: int):
         (user_id,)
     )
 
+
+# =========================
+# ROLES
+# =========================
 
 def get_role_id(role_name: str):
     return query(
@@ -159,6 +162,10 @@ def assign_role_to_user(user_id: int, company_id: int, role_name: str):
         (user_id, role['id'], company_id)
     )
 
+
+# =========================
+# MIGRATION HELPERS (SAFE)
+# =========================
 
 def ensure_user_indexes():
     try:
@@ -182,6 +189,7 @@ def ensure_role_column_type():
 def seed_roles():
     ensure_user_indexes()
     ensure_role_column_type()
+
     default_roles = [
         ('company_admin', 'Manage company settings and users'),
         ('Admin', 'Full administrator'),
@@ -190,6 +198,7 @@ def seed_roles():
         ('Employee', 'Employee self-service'),
         ('CHRO', 'Chief HR Officer'),
     ]
+
     for role_name, description in default_roles:
         mutate(
             "INSERT IGNORE INTO roles (name, description) VALUES (%s, %s)",

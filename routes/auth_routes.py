@@ -3,7 +3,9 @@ from flask import (
     redirect, url_for, flash, session,
 )
 import bcrypt
-from models import user_model, company_model
+from datetime import date
+
+from models import user_model, company_model, employee_model
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -31,33 +33,38 @@ def login():
 
         user = user_model.get_by_username(username, company['id'])
 
-        if not user or not bcrypt.checkpw(password.encode(), user['password_hash'].encode()):
+        # ✅ safer password check
+        if not user or not user.get('password_hash') or not bcrypt.checkpw(password.encode(), user['password_hash'].encode()):
             flash('Invalid credentials. Please try again.', 'danger')
             companies = company_model.all_active_companies()
             return render_template('login.html', companies=companies)
 
+        # ✅ clean session
+        session.clear()
         session.permanent = True
+
         session['user_id'] = user['id']
         session['company_id'] = user['company_id']
         session['company_name'] = company['name']
         session['username'] = user['username']
         session['full_name'] = user['full_name']
 
-        role = user['role'].strip().lower()
-        if role == 'admin':
-            session['role'] = 'Admin'
-        elif role == 'hr':
-            session['role'] = 'HR'
-        elif role == 'manager':
-            session['role'] = 'Manager'
-        elif role == 'chro':
-            session['role'] = 'CHRO'
-        elif role == 'company_admin':
-            session['role'] = 'company_admin'
-        else:
-            session['role'] = user['role'].strip().title()
+        # ✅ normalize role
+        role = (user.get('role') or '').strip().lower()
+
+        role_map = {
+            'admin': 'Admin',
+            'hr': 'HR',
+            'manager': 'Manager',
+            'chro': 'CHRO',
+            'company_admin': 'company_admin',
+            'employee': 'Employee'
+        }
+
+        session['role'] = role_map.get(role, role.title() if role else 'Employee')
 
         user_model.update_last_login(user['id'])
+
         flash(f'Welcome back, {user["full_name"]}!', 'success')
         return redirect(url_for('dashboard.index'))
 
@@ -75,9 +82,9 @@ def register_company():
         website = request.form.get('company_website', '').strip()
         address = request.form.get('company_address', '').strip()
 
-        admin_username = request.form.get('admin_username', '').strip()
+        admin_username = request.form.get('admin_username', '').strip().lower()
         admin_password = request.form.get('admin_password', '').strip()
-        admin_email = request.form.get('admin_email', '').strip()
+        admin_email = request.form.get('admin_email', '').strip().lower()
         admin_full_name = request.form.get('admin_full_name', '').strip()
 
         if not (company_name and admin_username and admin_password and admin_email and admin_full_name):
@@ -89,21 +96,52 @@ def register_company():
             flash('Company already exists.', 'warning')
             return render_template('register_company.html')
 
+        # ✅ CREATE COMPANY
         new_company_id = company_model.create_company(
             company_name, industry, address, phone, email, website
         )
 
+        # ✅ CREATE ADMIN USER
         password_hash = bcrypt.hashpw(admin_password.encode(), bcrypt.gensalt()).decode()
+
         new_user_id = user_model.create_user(
             new_company_id,
-            admin_username.strip().lower(),
-            admin_email.strip().lower(),
-            admin_full_name.strip(),
+            admin_username,
+            admin_email,
+            admin_full_name,
             password_hash,
             role='Admin'
         )
 
         user_model.assign_role_to_user(new_user_id, new_company_id, 'Admin')
+
+        # ============================================================
+        # ✅ IMPORTANT FIX: CREATE EMPLOYEE FOR ADMIN
+        # ============================================================
+
+        employee_code = employee_model.get_next_employee_code(new_company_id)
+
+        name_parts = admin_full_name.split()
+        first_name = name_parts[0]
+        last_name = ' '.join(name_parts[1:]) if len(name_parts) > 1 else ''
+
+        emp_id = employee_model.create(new_company_id, {
+            'employee_code': employee_code,
+            'first_name': first_name,
+            'last_name': last_name,
+            'email': admin_email,
+            'phone': '',
+            'department_id': None,
+            'job_title': 'Administrator',
+            'employment_type': 'Full-Time',
+            'status': 'Active',
+            'hire_date': date.today(),
+        })
+
+        # ✅ LINK USER ↔ EMPLOYEE
+        employee_model.link_user(emp_id, new_user_id, new_company_id)
+
+        # ============================================================
 
         flash('Company registered successfully. Please login.', 'success')
         return redirect(url_for('auth.login'))
@@ -111,22 +149,20 @@ def register_company():
     return render_template('register_company.html')
 
 
-# ✅ FULL SECURE RESET (NOW supports company_id + fallback)
+# ✅ RESET PASSWORD
 @auth_bp.route('/reset-password', methods=['GET', 'POST'])
 def reset_password():
     token = request.args.get('token', '').strip()
     company_id = request.args.get('company_id', type=int)
     company_name = request.args.get('company', '').strip()
 
-    # ❗ Require at least one identifier
     if not token or (not company_id and not company_name):
         session.clear()
         flash('Invalid or expired reset link.', 'danger')
         return redirect(url_for('auth.login'))
 
-    # ✅ Prefer company_id (new way)
     if company_id:
-        company = {'id': company_id}
+        company = company_model.get_by_id(company_id)
     else:
         company = company_model.get_by_name(company_name)
 
@@ -135,7 +171,6 @@ def reset_password():
         flash('Invalid company.', 'danger')
         return redirect(url_for('auth.login'))
 
-    # 🔒 secure lookup
     user = user_model.get_by_reset_token(token, company['id'])
 
     if not user:

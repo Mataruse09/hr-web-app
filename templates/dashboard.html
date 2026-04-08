@@ -106,7 +106,10 @@
     {% endif %}
 
     {% if role in ['Employee', 'Manager', 'HR', 'Admin', 'CHRO', 'company_admin'] %}
-      <a href="{{ url_for('employees.profile', emp_id=session.get('user_id')) }}" class="action-btn action-cyan">👤 My Profile</a>
+      <!-- ✅ FIXED: uses safe mapping route -->
+      <a href="{{ url_for('employees.my_profile') }}" class="action-btn action-cyan">
+        👤 My Profile
+      </a>
     {% endif %}
   </div>
 </section>
