@@ -5,7 +5,7 @@ from datetime import datetime
 def get_by_username(username: str, company_id: int):
     normalized_username = username.strip().lower()
     return query(
-        "SELECT * FROM users WHERE username = %s AND company_id = %s AND is_active = 1",
+        "SELECT * FROM users WHERE username = %s AND company_id = %s AND is_active = TRUE",
         (normalized_username, company_id), one=True
     )
 
@@ -13,7 +13,7 @@ def get_by_username(username: str, company_id: int):
 def get_by_username_email(username: str, email: str, company_id: int):
     return query(
         "SELECT * FROM users WHERE (username = %s OR email = %s) AND company_id = %s",
-        (username.strip().lower(), email.strip().lower(), company_id),  # ✅ FIXED normalization
+        (username.strip().lower(), email.strip().lower(), company_id),
         one=True
     )
 
@@ -28,20 +28,19 @@ def get_by_id(user_id: int, company_id: int):
 
 def create_user(company_id: int, username: str, email: str, full_name: str, password_hash: str, role: str = 'HR'):
     normalized_username = username.strip().lower()
-    normalized_email = email.strip().lower()  # ✅ FIXED
+    normalized_email = email.strip().lower()
 
     existing_user = get_by_username(normalized_username, company_id)
     if existing_user:
-        raise ValueError(f"Username '{normalized_username}' already exists for company ID {company_id}.")
+        raise ValueError(f"Username '{normalized_username}' already exists.")
 
     existing_email = query(
         "SELECT id FROM users WHERE company_id = %s AND email = %s",
         (company_id, normalized_email), one=True
     )
     if existing_email:
-        raise ValueError(f"Email '{normalized_email}' already exists for company ID {company_id}.")
+        raise ValueError(f"Email '{normalized_email}' already exists.")
 
-    # ✅ Normalize role safely
     role_map = {
         'hr': 'HR',
         'chro': 'CHRO',
@@ -102,18 +101,16 @@ def update_user_info(user_id: int, company_id: int, email: str, full_name: str):
     )
 
 
-# ✅ SAFE: restrict global lookup (no admin leakage)
 def get_by_username_any(username: str):
     normalized_username = username.strip().lower()
     return query(
-        "SELECT * FROM users WHERE username = %s AND is_active = 1 "
-        "AND role = 'Employee'",   # ✅ STRICT FIX (was unsafe)
+        "SELECT * FROM users WHERE username = %s AND is_active = TRUE AND role = 'Employee'",
         (normalized_username,), one=True
     )
 
 
 # =========================
-# ✅ RESET TOKEN SUPPORT
+# RESET TOKEN
 # =========================
 
 def save_reset_token(user_id: int, token: str, expiry: datetime):
@@ -129,7 +126,7 @@ def get_by_reset_token(token: str, company_id: int):
 
     return query(
         "SELECT * FROM users WHERE reset_token=%s AND company_id=%s "
-        "AND is_active=1 AND reset_token_expiry > %s",
+        "AND is_active=TRUE AND reset_token_expiry > %s",
         (token, company_id, datetime.utcnow()), one=True
     )
 
@@ -142,65 +139,22 @@ def clear_reset_token(user_id: int):
 
 
 # =========================
-# ROLES
+# ROLES (POSTGRES SAFE)
 # =========================
-
-def get_role_id(role_name: str):
-    return query(
-        "SELECT id FROM roles WHERE name = %s",
-        (role_name,), one=True
-    )
-
-
-def assign_role_to_user(user_id: int, company_id: int, role_name: str):
-    role = get_role_id(role_name)
-    if not role:
-        raise ValueError(f"Role '{role_name}' does not exist")
-
-    return mutate(
-        "INSERT IGNORE INTO user_roles (user_id, role_id, company_id) VALUES (%s, %s, %s)",
-        (user_id, role['id'], company_id)
-    )
-
-
-# =========================
-# MIGRATION HELPERS (SAFE)
-# =========================
-
-def ensure_user_indexes():
-    try:
-        mutate("ALTER TABLE users DROP INDEX uq_username")
-    except Exception:
-        pass
-
-    try:
-        mutate("CREATE UNIQUE INDEX uq_username_company ON users (company_id, username)")
-    except Exception:
-        pass
-
-
-def ensure_role_column_type():
-    try:
-        mutate("ALTER TABLE users MODIFY role VARCHAR(50) NOT NULL DEFAULT 'HR'")
-    except Exception:
-        pass
-
 
 def seed_roles():
-    ensure_user_indexes()
-    ensure_role_column_type()
-
     default_roles = [
-        ('company_admin', 'Manage company settings and users'),
-        ('Admin', 'Full administrator'),
-        ('HR', 'Human resources user'),
-        ('Manager', 'Team manager'),
-        ('Employee', 'Employee self-service'),
+        ('company_admin', 'Manage company settings'),
+        ('Admin', 'Full admin'),
+        ('HR', 'HR user'),
+        ('Manager', 'Manager'),
+        ('Employee', 'Employee'),
         ('CHRO', 'Chief HR Officer'),
     ]
 
     for role_name, description in default_roles:
-        mutate(
-            "INSERT IGNORE INTO roles (name, description) VALUES (%s, %s)",
-            (role_name, description)
-        )
+        mutate("""
+            INSERT INTO roles (name, description)
+            VALUES (%s, %s)
+            ON CONFLICT (name) DO NOTHING
+        """, (role_name, description))

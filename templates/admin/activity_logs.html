@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+
+{% block title %}Activity Logs - Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h1 class="display-5">📋 Activity Logs</h1>
+            <p class="text-muted">Audit trail of all system activities</p>
+        </div>
+    </div>
+
+    {% if logs %}
+    <div class="table-responsive">
+        <table class="table table-hover table-striped">
+            <thead class="table-dark">
+                <tr>
+                    <th>Timestamp</th>
+                    <th>User</th>
+                    <th>Action</th>
+                    <th>Entity Type</th>
+                    <th>Details</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in logs %}
+                <tr>
+                    <td>
+                        <small>{{ log.created_at.strftime('%Y-%m-%d %H:%M:%S') if log.created_at else 'N/A' }}</small>
+                    </td>
+                    <td>
+                        <strong>{{ log.user_name or log.user_id }}</strong>
+                    </td>
+                    <td>
+                        <span class="badge bg-info">{{ log.action }}</span>
+                    </td>
+                    <td>
+                        {{ log.entity_type or '—' }}
+                    </td>
+                    <td>
+                        {% if log.old_value or log.new_value %}
+                            <small class="text-muted">
+                                {% if log.old_value %}Old: {{ log.old_value[:50] }}{% endif %}
+                                {% if log.new_value %} → New: {{ log.new_value[:50] }}{% endif %}
+                            </small>
+                        {% else %}
+                            —
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination -->
+    <nav aria-label="Activity log pagination" class="mt-4">
+        <ul class="pagination justify-content-center">
+            {% if page > 1 %}
+            <li class="page-item">
+                <a class="page-link" href="{{ url_for('admin.activity_logs', page=page-1) }}">← Previous</a>
+            </li>
+            {% endif %}
+            
+            <li class="page-item active">
+                <span class="page-link">Page {{ page }}</span>
+            </li>
+            
+            {% if logs|length >= 50 %}
+            <li class="page-item">
+                <a class="page-link" href="{{ url_for('admin.activity_logs', page=page+1) }}">Next →</a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+
+    {% else %}
+    <div class="alert alert-info" role="alert">
+        <h4 class="alert-heading">No Activity Yet</h4>
+        <p>There are no activity logs to display yet.</p>
+    </div>
+    {% endif %}
+
+    <!-- Navigation -->
+    <div class="mt-5 pt-4 border-top">
+        <a href="{{ url_for('admin.users') }}" class="btn btn-secondary">← Back to Users</a>
+        <a href="{{ url_for('admin.system_settings') }}" class="btn btn-primary">System Settings</a>
+    </div>
+</div>
+
+<style>
+    .table-hover tbody tr:hover {
+        background-color: rgba(52, 152, 219, 0.1);
+    }
+    
+    .badge {
+        font-size: 0.75rem;
+        padding: 0.35rem 0.65rem;
+    }
+</style>
+{% endblock %}

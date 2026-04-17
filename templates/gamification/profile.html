@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block title %}My Gamification Profile{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <h2 class="mb-4">👤 Your Gamification Profile</h2>
+
+            <div class="card shadow-sm mb-4">
+                <div class="card-body text-center">
+                    <h3 class="display-4">{{ profile.points }}</h3>
+                    <p class="text-muted fs-5">Total Points Earned</p>
+                </div>
+            </div>
+
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <div class="card shadow-sm">
+                        <div class="card-body text-center">
+                            <h4 class="display-6">📊 Level {{ profile.level }}</h4>
+                            <div class="progress mt-3">
+                                <div class="progress-bar bg-success" style="width: 65%"></div>
+                            </div>
+                            <small class="text-muted">{{ profile.points }} / 1000 to next level</small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="card shadow-sm">
+                        <div class="card-body text-center">
+                            <h4 class="display-6">🎖️ Badges</h4>
+                            <p class="fs-5 mt-3">
+                                {% if profile.badges %}
+                                    {{ profile.badges }}
+                                {% else %}
+                                    <span class="text-muted">Earn points to unlock badges</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card shadow-sm">
+                <div class="card-header bg-dark text-white">
+                    <h5 class="mb-0">🏆 Achievements Unlocked</h5>
+                </div>
+                <div class="card-body">
+                    {% if profile.achievements %}
+                        <p>{{ profile.achievements }}</p>
+                    {% else %}
+                        <p class="text-muted">Complete tasks to unlock achievements</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="mt-4">
+                <a href="{{ url_for('gamification.leaderboard') }}" class="btn btn-info">🏆 View Leaderboard</a>
+                <a href="{{ url_for('gamification.view_achievements') }}" class="btn btn-success">🎖️ View All Achievements</a>
+                <a href="{{ url_for('dashboard.index') }}" class="btn btn-secondary">← Dashboard</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

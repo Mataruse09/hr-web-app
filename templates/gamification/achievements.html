@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block title %}Achievements - Gamification{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <h1 class="display-5">🎖️ Available Achievements</h1>
+            <p class="text-muted">Unlock badges by completing tasks and reaching milestones</p>
+        </div>
+    </div>
+
+    <div class="row">
+        {% for achievement in achievements %}
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-body text-center">
+                    <div class="fs-1 mb-3">{{ achievement.title.split()[0] }}</div>
+                    <h5 class="card-title">{{ achievement.title }}</h5>
+                    <p class="card-text text-muted">{{ achievement.description }}</p>
+                    <div class="mt-3">
+                        <span class="badge bg-warning">Rare</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <div class="mt-5">
+        <h4>💡 How to Earn Achievements</h4>
+        <ul>
+            <li>✅ Mark attendance consistently</li>
+            <li>✅ Submit leave requests on time</li>
+            <li>✅ Receive excellent appraisal ratings</li>
+            <li>✅ Help teammates with tasks</li>
+            <li>✅ Reach performance milestones</li>
+        </ul>
+    </div>
+
+    <div class="mt-4">
+        <a href="{{ url_for('gamification.my_profile') }}" class="btn btn-primary">👤 My Profile</a>
+        <a href="{{ url_for('gamification.leaderboard') }}" class="btn btn-info">🏆 View Leaderboard</a>
+        <a href="{{ url_for('dashboard.index') }}" class="btn btn-secondary">← Dashboard</a>
+    </div>
+</div>
+{% endblock %}

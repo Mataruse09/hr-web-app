@@ -1,6 +1,7 @@
 """
 HR Management System — Application Factory
 """
+import logging
 from flask import Flask, redirect, url_for
 from datetime import timedelta  # ✅ ADDED
 from config.settings import Config
@@ -13,6 +14,13 @@ from routes.attendance_routes import attendance_bp
 from routes.leave_routes      import leave_bp
 from routes.payroll_routes    import payroll_bp
 from routes.admin_routes      import admin_bp
+from routes.appraisal_routes  import appraisal_bp
+from routes.gamification_routes import gamification_bp
+from routes.forecasting_routes import forecasting_bp
+from routes.attrition_routes  import attrition_bp
+from routes.compliance_routes import compliance_bp
+
+logger = logging.getLogger(__name__)
 
 
 def create_app(config=Config):
@@ -24,7 +32,11 @@ def create_app(config=Config):
 
     init_db(app)
     with app.app_context():
-        seed_roles()
+        try:
+            seed_roles()
+            logger.info("✅ Database roles seeded successfully")
+        except Exception as e:
+            logger.warning("⚠️  Could not seed database roles (DB may not be available): %s", e)
 
     app.register_blueprint(auth_bp,       url_prefix='/auth')
     app.register_blueprint(dashboard_bp)                       # handles '/' and '/dashboard'
@@ -33,6 +45,11 @@ def create_app(config=Config):
     app.register_blueprint(leave_bp,      url_prefix='/leave')
     app.register_blueprint(payroll_bp,    url_prefix='/payroll')
     app.register_blueprint(admin_bp,      url_prefix='/admin')
+    app.register_blueprint(appraisal_bp,  url_prefix='/appraisals')
+    app.register_blueprint(gamification_bp, url_prefix='/gamification')
+    app.register_blueprint(forecasting_bp, url_prefix='/forecasting')
+    app.register_blueprint(attrition_bp,  url_prefix='/attrition')
+    app.register_blueprint(compliance_bp, url_prefix='/compliance')
 
     @app.errorhandler(404)
     def not_found(_):

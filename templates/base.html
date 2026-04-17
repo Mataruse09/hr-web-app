@@ -36,6 +36,14 @@
          class="nav-item {% if 'admin.users' in request.endpoint %}active{% endif %}">
         <span class="nav-icon">🔐</span><span class="nav-label">User Management</span>
       </a>
+      <a href="{{ url_for('admin.activity_logs') }}"
+         class="nav-item {% if 'admin.activity_logs' in request.endpoint %}active{% endif %}">
+        <span class="nav-icon">📋</span><span class="nav-label">Activity Logs</span>
+      </a>
+      <a href="{{ url_for('admin.system_settings') }}"
+         class="nav-item {% if 'admin.system_settings' in request.endpoint %}active{% endif %}">
+        <span class="nav-icon">⚙️</span><span class="nav-label">System Settings</span>
+      </a>
       {% endif %}
       <a href="{{ url_for('attendance.mark') }}"
          class="nav-item {% if 'attendance' in request.endpoint %}active{% endif %}">

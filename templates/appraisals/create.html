@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+
+{% block title %}Create Appraisal{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <h2 class="mb-4">⭐ Create Appraisal for {{ employee.first_name }} {{ employee.last_name }}</h2>
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <form method="POST">
+                        <div class="mb-4 p-3 bg-light rounded">
+                            <p><strong>Position:</strong> {{ employee.job_title }}</p>
+                            <p><strong>Employee Code:</strong> {{ employee.employee_code }}</p>
+                            <p><strong>Email:</strong> {{ employee.email }}</p>
+                        </div>
+
+                        <!-- Rating Section -->
+                        <div class="mb-5">
+                            <h5 class="mb-4">Performance Ratings (1 = Poor, 5 = Excellent)</h5>
+
+                            <!-- Communication -->
+                            <div class="mb-4">
+                                <label class="form-label fw-bold">Communication & Collaboration</label>
+                                <div class="rating-selector" id="communication_rating">
+                                    {% for i in range(1, 6) %}
+                                    <input type="radio" name="communication" id="comm_{{ i }}" value="{{ i }}" class="rating-input">
+                                    <label for="comm_{{ i }}" class="rating-label">★</label>
+                                    {% endfor %}
+                                </div>
+                                <small class="text-muted">How well does the employee communicate and collaborate?</small>
+                            </div>
+
+                            <!-- Teamwork -->
+                            <div class="mb-4">
+                                <label class="form-label fw-bold">Teamwork & Cooperation</label>
+                                <div class="rating-selector" id="teamwork_rating">
+                                    {% for i in range(1, 6) %}
+                                    <input type="radio" name="teamwork" id="team_{{ i }}" value="{{ i }}" class="rating-input">
+                                    <label for="team_{{ i }}" class="rating-label">★</label>
+                                    {% endfor %}
+                                </div>
+                                <small class="text-muted">Does the employee work well with the team?</small>
+                            </div>
+
+                            <!-- Innovation -->
+                            <div class="mb-4">
+                                <label class="form-label fw-bold">Innovation & Problem Solving</label>
+                                <div class="rating-selector" id="innovation_rating">
+                                    {% for i in range(1, 6) %}
+                                    <input type="radio" name="innovation" id="innov_{{ i }}" value="{{ i }}" class="rating-input">
+                                    <label for="innov_{{ i }}" class="rating-label">★</label>
+                                    {% endfor %}
+                                </div>
+                                <small class="text-muted">Does the employee show creativity and innovation?</small>
+                            </div>
+
+                            <!-- Punctuality -->
+                            <div class="mb-4">
+                                <label class="form-label fw-bold">Punctuality & Reliability</label>
+                                <div class="rating-selector" id="punctuality_rating">
+                                    {% for i in range(1, 6) %}
+                                    <input type="radio" name="punctuality" id="punct_{{ i }}" value="{{ i }}" class="rating-input">
+                                    <label for="punct_{{ i }}" class="rating-label">★</label>
+                                    {% endfor %}
+                                </div>
+                                <small class="text-muted">Is the employee punctual and reliable?</small>
+                            </div>
+                        </div>
+
+                        <!-- Comments -->
+                        <div class="mb-4">
+                            <label for="comments" class="form-label fw-bold">Comments & Feedback</label>
+                            <textarea class="form-control" id="comments" name="comments" rows="5" placeholder="Add detailed feedback..."></textarea>
+                        </div>
+
+                        <!-- Buttons -->
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-success btn-lg">
+                                <i class="fas fa-save"></i> Save Appraisal
+                            </button>
+                            <a href="{{ url_for('appraisals.list_appraisals') }}" class="btn btn-secondary btn-lg">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .rating-selector {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .rating-input {
+        display: none;
+    }
+
+    .rating-label {
+        font-size: 2em;
+        color: #ddd;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .rating-input:checked ~ .rating-label,
+    .rating-label:hover,
+    .rating-input:checked ~ .rating-label ~ .rating-label {
+        color: #ffc107;
+    }
+
+    .rating-label:hover ~ .rating-label {
+        color: #ddd;
+    }
+</style>
+{% endblock %}

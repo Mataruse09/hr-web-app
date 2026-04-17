@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+
+{% block title %}View Appraisal{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-10 offset-md-1">
+            <h2 class="mb-4">⭐ Appraisal Review</h2>
+            
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-dark text-white">
+                    <h5 class="mb-0">{{ appraisal.first_name }} {{ appraisal.last_name }} - {{ appraisal.job_title }}</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <p><strong>Reviewer:</strong> {{ appraisal.reviewer_name }}</p>
+                            <p><strong>Date:</strong> {{ appraisal.created_at.strftime('%B %d, %Y') if appraisal.created_at else 'N/A' }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Status:</strong> <span class="badge bg-{% if appraisal.status == 'Approved' %}success{% elif appraisal.status == 'Submitted' %}warning{% else %}secondary{% endif %}">{{ appraisal.status }}</span></p>
+                            <p><strong>Overall Rating:</strong>
+                                <span class="fs-5">
+                                    {% for i in range(1, 6) %}
+                                        {% if i <= appraisal.overall_rating %}
+                                        <span style="color: #ffc107;">★</span>
+                                        {% else %}
+                                        <span style="color: #ddd;">☆</span>
+                                        {% endif %}
+                                    {% endfor %}
+                                    {{ "%.1f"|format(appraisal.overall_rating) }}/5.0
+                                </span>
+                            </p>
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    <h5 class="mb-3">Ratings Breakdown</h5>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <p><strong>Communication:</strong> {{ appraisal.communication_rating or 'N/A' }}/5</p>
+                            <div class="progress">
+                                <div class="progress-bar bg-info" style="width: {{ (appraisal.communication_rating or 0) * 20 }}%"></div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <p><strong>Teamwork:</strong> {{ appraisal.teamwork_rating or 'N/A' }}/5</p>
+                            <div class="progress">
+                                <div class="progress-bar bg-success" style="width: {{ (appraisal.teamwork_rating or 0) * 20 }}%"></div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <p><strong>Innovation:</strong> {{ appraisal.innovation_rating or 'N/A' }}/5</p>
+                            <div class="progress">
+                                <div class="progress-bar bg-warning" style="width: {{ (appraisal.innovation_rating or 0) * 20 }}%"></div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <p><strong>Punctuality:</strong> {{ appraisal.punctuality_rating or 'N/A' }}/5</p>
+                            <div class="progress">
+                                <div class="progress-bar bg-danger" style="width: {{ (appraisal.punctuality_rating or 0) * 20 }}%"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    <h5 class="mb-3">Comments</h5>
+                    <div class="bg-light p-3 rounded">
+                        {{ appraisal.comments or 'No comments provided.' }}
+                    </div>
+
+                    {% if appraisal.status == 'Draft' %}
+                    <hr>
+                    <div class="d-flex gap-2">
+                        <form method="POST" action="{{ url_for('appraisals.submit_appraisal', appraisal_id=appraisal.id) }}" style="display:inline;">
+                            <button type="submit" class="btn btn-warning">Submit for Approval</button>
+                        </form>
+                    </div>
+                    {% endif %}
+
+                    {% if appraisal.status == 'Submitted' and session.role in ['Admin', 'HR', 'CHRO'] %}
+                    <hr>
+                    <form method="POST" action="{{ url_for('appraisals.approve_appraisal', appraisal_id=appraisal.id) }}" style="display:inline;">
+                        <button type="submit" class="btn btn-success">Approve Appraisal</button>
+                    </form>
+                    {% endif %}
+                </div>
+            </div>
+
+            <a href="{{ url_for('appraisals.list_appraisals') }}" class="btn btn-secondary">← Back to Appraisals</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

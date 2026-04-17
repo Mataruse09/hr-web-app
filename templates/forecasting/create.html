@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block title %}Create Labour Forecast{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <h2 class="mb-4">📊 Create Labour Forecast</h2>
+            
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <form method="POST">
+                        <div class="mb-3">
+                            <label for="department_id" class="form-label fw-bold">Department</label>
+                            <select class="form-control" id="department_id" name="department_id" required>
+                                <option value="">-- Select Department --</option>
+                                {% for dept in departments %}
+                                <option value="{{ dept.id }}">{{ dept.department_name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="forecast_month" class="form-label fw-bold">Forecast Month</label>
+                            <input type="month" class="form-control" id="forecast_month" name="forecast_month" required>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="current_headcount" class="form-label fw-bold">Current Headcount</label>
+                                <input type="number" class="form-control" id="current_headcount" name="current_headcount" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="projected_headcount" class="form-label fw-bold">Projected Headcount</label>
+                                <input type="number" class="form-control" id="projected_headcount" name="projected_headcount" required>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="hiring_budget" class="form-label fw-bold">Hiring Budget</label>
+                            <input type="number" step="0.01" class="form-control" id="hiring_budget" name="hiring_budget" placeholder="0.00">
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="notes" class="form-label fw-bold">Notes</label>
+                            <textarea class="form-control" id="notes" name="notes" rows="4" placeholder="Add notes about this forecast..."></textarea>
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-success btn-lg">Save Forecast</button>
+                            <a href="{{ url_for('forecasting.list_forecasts') }}" class="btn btn-secondary btn-lg">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+
+{% block title %}Assign Compliance Policy{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <h2 class="mb-4">✅ Assign Compliance Policy to {{ employee.first_name }} {{ employee.last_name }}</h2>
+
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <form method="POST">
+                        <div class="mb-3">
+                            <label for="policy_name" class="form-label fw-bold">Select Policy *</label>
+                            <select class="form-control" id="policy_name" name="policy_name" required onchange="updateType()">
+                                <option value="">-- Select a Policy --</option>
+                                {% for policy in policies %}
+                                <option value="{{ policy.name }}">{{ policy.name }}</option>
+                                {% endfor %}
+                                <option value="custom">Custom Policy</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3" id="custom_policy" style="display:none;">
+                            <label for="custom_name" class="form-label fw-bold">Custom Policy Name</label>
+                            <input type="text" class="form-control" id="custom_name" name="custom_name" placeholder="Enter custom policy name">
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="compliance_type" class="form-label fw-bold">Type *</label>
+                            <select class="form-control" id="compliance_type" name="compliance_type" required>
+                                <option value="">-- Select Type --</option>
+                                <option value="Training">Training</option>
+                                <option value="Policy">Policy</option>
+                                <option value="Certification">Certification</option>
+                                <option value="Audit">Audit</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="due_date" class="form-label fw-bold">Due Date *</label>
+                            <input type="date" class="form-control" id="due_date" name="due_date" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="status" class="form-label fw-bold">Initial Status</label>
+                            <select class="form-control" id="status" name="status">
+                                <option value="Pending">Pending</option>
+                                <option value="In Progress">In Progress</option>
+                            </select>
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-success btn-lg">Assign Policy</button>
+                            <a href="{{ url_for('compliance.list_compliance') }}" class="btn btn-secondary btn-lg">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function updateType() {
+    const select = document.getElementById('policy_name');
+    const customDiv = document.getElementById('custom_policy');
+    const typeSelect = document.getElementById('compliance_type');
+    
+    if (select.value === 'custom') {
+        customDiv.style.display = 'block';
+    } else {
+        customDiv.style.display = 'none';
+        // Auto-populate type based on policy
+        const policyTypes = {
+            'Data Privacy Training': 'Training',
+            'Code of Conduct': 'Policy',
+            'Health & Safety': 'Training',
+            'Anti-Harassment Policy': 'Policy',
+            'ISO Certification': 'Certification'
+        };
+        if (policyTypes[select.value]) {
+            typeSelect.value = policyTypes[select.value];
+        }
+    }
+}
+</script>
+{% endblock %}

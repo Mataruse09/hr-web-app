@@ -64,8 +64,8 @@ def search(company_id: int, term: str):
         FROM   employees_core e
         LEFT JOIN departments d ON d.id = e.department_id
         WHERE  e.company_id = %s
-          AND (e.first_name LIKE %s OR e.last_name LIKE %s
-               OR e.email LIKE %s OR e.employee_code LIKE %s)
+          AND (e.first_name ILIKE %s OR e.last_name ILIKE %s
+               OR e.email ILIKE %s OR e.employee_code ILIKE %s)
         ORDER BY e.first_name
     """, (company_id, t, t, t, t))
 
@@ -76,13 +76,11 @@ def create(company_id: int, data: dict) -> int:
     return mutate("""
         INSERT INTO employees_core
           (company_id,employee_code,first_name,last_name,email,phone,
-           department_id,job_title,employment_type,status,hire_date,
-           date_of_birth,gender,nationality,address,
-           emergency_contact_name,emergency_contact_phone)
-        VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+           department_id,job_title,employment_type,status,hire_date)
+        VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
     """, (
         company_id,
-        data.get('employee_code'),   # ✅ FIXED
+        data.get('employee_code'),
         data.get('first_name'),
         data.get('last_name'),
         data.get('email'),
@@ -91,13 +89,7 @@ def create(company_id: int, data: dict) -> int:
         data.get('job_title',''),
         data.get('employment_type','Full-Time'),
         data.get('status','Active'),
-        data.get('hire_date'),       # ✅ FIXED
-        data.get('date_of_birth') or None,
-        data.get('gender','Prefer not to say'),
-        data.get('nationality',''),
-        data.get('address',''),
-        data.get('emergency_contact_name',''),
-        data.get('emergency_contact_phone',''),
+        data.get('hire_date'),
     ))
 
 
@@ -113,10 +105,7 @@ def update(emp_id: int, company_id: int, data: dict):
         UPDATE employees_core SET
           first_name=%s, last_name=%s, email=%s, phone=%s,
           department_id=%s, job_title=%s, employment_type=%s,
-          status=%s, hire_date=%s, date_of_birth=%s, gender=%s,
-          nationality=%s, address=%s,
-          emergency_contact_name=%s, emergency_contact_phone=%s,
-          termination_date=%s
+          status=%s, hire_date=%s
         WHERE id=%s AND company_id=%s
     """, (
         data.get('first_name'),
@@ -127,14 +116,7 @@ def update(emp_id: int, company_id: int, data: dict):
         data.get('job_title',''),
         data.get('employment_type','Full-Time'),
         data.get('status','Active'),
-        data.get('hire_date'),   # ✅ FIXED
-        data.get('date_of_birth') or None,
-        data.get('gender','Prefer not to say'),
-        data.get('nationality',''),
-        data.get('address',''),
-        data.get('emergency_contact_name',''),
-        data.get('emergency_contact_phone',''),
-        data.get('termination_date') or None,
+        data.get('hire_date'),
         emp_id, company_id,
     ))
 
@@ -179,7 +161,6 @@ def get_next_employee_code(company_id: int) -> str:
         number = int(last_code.replace('EMP', ''))
         return f"EMP{number + 1:04d}"
     except Exception:
-        # fallback safety
         return "EMP0001"
 
 

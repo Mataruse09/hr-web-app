@@ -8,15 +8,18 @@ class Config:
     # ── Security ────────────────────────────────────────────
     SECRET_KEY = os.getenv('SECRET_KEY', 'change-me-in-production-use-long-random-string')
 
-    # ── MySQL ────────────────────────────────────────────────
-    MYSQL_HOST     = os.getenv('MYSQL_HOST',     'localhost')
-    MYSQL_USER     = os.getenv('MYSQL_USER',     'root')
-    MYSQL_PASSWORD = os.getenv('MYSQL_PASSWORD', '')
-    MYSQL_DB       = os.getenv('MYSQL_DB',       'hr_system')
-    MYSQL_PORT     = int(os.getenv('MYSQL_PORT', 3306))
+    # ── PostgreSQL (Supabase) ───────────────────────────────
+    DB_HOST     = os.getenv('DB_HOST')
+    DB_USER     = os.getenv('DB_USER')
+    DB_PASSWORD = os.getenv('DB_PASSWORD')
+    DB_NAME     = os.getenv('DB_NAME', 'postgres')
+    DB_PORT     = int(os.getenv('DB_PORT', 5432))
+
+    # Optional: full URL support (if you switch later)
+    DATABASE_URL = os.getenv('DATABASE_URL')
 
     # ── Session ──────────────────────────────────────────────
-    SESSION_PERMANENT            = True
-    PERMANENT_SESSION_LIFETIME   = timedelta(hours=8)
-    SESSION_COOKIE_HTTPONLY      = True
-    SESSION_COOKIE_SAMESITE      = 'Lax'
+    SESSION_PERMANENT          = True
+    PERMANENT_SESSION_LIFETIME = timedelta(hours=8)
+    SESSION_COOKIE_HTTPONLY    = True
+    SESSION_COOKIE_SAMESITE    = 'Lax'

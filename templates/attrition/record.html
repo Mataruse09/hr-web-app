@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block title %}Record Employee Exit{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <h2 class="mb-4">Record Exit - {{ employee.first_name }} {{ employee.last_name }}</h2>
+
+            <div class="alert alert-warning" role="alert">
+                <strong>⚠️ This action will mark the employee as inactive.</strong> This cannot be undone easily.
+            </div>
+
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <form method="POST">
+                        <div class="mb-3">
+                            <label for="exit_date" class="form-label fw-bold">Exit Date *</label>
+                            <input type="date" class="form-control" id="exit_date" name="exit_date" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="exit_reason" class="form-label fw-bold">Reason for Exit</label>
+                            <select class="form-control" id="exit_reason" name="exit_reason">
+                                <option value="">-- Select Reason --</option>
+                                <option value="Resignation">Resignation</option>
+                                <option value="Retirement">Retirement</option>
+                                <option value="Termination">Termination</option>
+                                <option value="Layoff">Layoff/Redundancy</option>
+                                <option value="Contract End">Contract End</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="exit_interview" class="form-label fw-bold">Exit Interview Notes</label>
+                            <textarea class="form-control" id="exit_interview" name="exit_interview" rows="4" placeholder="Document exit interview details..."></textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="final_settlement" class="form-label fw-bold">Final Settlement Amount</label>
+                            <input type="number" step="0.01" class="form-control" id="final_settlement" name="final_settlement" placeholder="0.00">
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-danger btn-lg">Record Exit</button>
+                            <a href="{{ url_for('attrition.list_attrition') }}" class="btn btn-secondary btn-lg">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

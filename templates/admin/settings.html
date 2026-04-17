@@ -1,0 +1,226 @@
+{% extends "base.html" %}
+
+{% block title %}System Settings - Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row mb-4">
+        <div class="col-md-10">
+            <h1 class="display-5">⚙️ System Settings</h1>
+            <p class="text-muted">Manage company theme, notifications, and operational settings</p>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <form method="POST" id="settingsForm">
+                        <!-- Theme Section -->
+                        <fieldset class="mb-5">
+                            <legend class="h5 mb-4">
+                                <i class="fas fa-palette"></i> Theme & Branding
+                            </legend>
+                            
+                            <div class="row mb-4">
+                                <div class="col-md-6">
+                                    <label for="theme_primary_color" class="form-label">Primary Color</label>
+                                    <div class="input-group">
+                                        <input type="color" class="form-control form-control-color" 
+                                               id="theme_primary_color" name="theme_primary_color"
+                                               value="{{ settings.get('theme_primary_color', '#2c3e50') }}">
+                                        <span class="input-group-text">
+                                            {{ settings.get('theme_primary_color', '#2c3e50') }}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label for="theme_secondary_color" class="form-label">Secondary Color</label>
+                                    <div class="input-group">
+                                        <input type="color" class="form-control form-control-color" 
+                                               id="theme_secondary_color" name="theme_secondary_color"
+                                               value="{{ settings.get('theme_secondary_color', '#3498db') }}">
+                                        <span class="input-group-text">
+                                            {{ settings.get('theme_secondary_color', '#3498db') }}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row mb-4">
+                                <div class="col-md-6">
+                                    <label for="theme_background_color" class="form-label">Background Color</label>
+                                    <div class="input-group">
+                                        <input type="color" class="form-control form-control-color" 
+                                               id="theme_background_color" name="theme_background_color"
+                                               value="{{ settings.get('theme_background_color', '#ecf0f1') }}">
+                                        <span class="input-group-text">
+                                            {{ settings.get('theme_background_color', '#ecf0f1') }}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label for="payroll_currency" class="form-label">Payroll Currency</label>
+                                    <input type="text" class="form-control" id="payroll_currency" 
+                                           name="payroll_currency" maxlength="10"
+                                           value="{{ settings.get('payroll_currency', 'USD') }}"
+                                           placeholder="USD, GBP, EUR, ZWL, etc.">
+                                </div>
+                            </div>
+
+                            <!-- Theme Preview -->
+                            <div class="alert alert-light border" style="border-color: {{ settings.get('theme_primary_color', '#2c3e50') }} !important;">
+                                <h6 style="color: {{ settings.get('theme_primary_color', '#2c3e50') }};">
+                                    🎨 Theme Preview
+                                </h6>
+                                <p style="background-color: {{ settings.get('theme_background_color', '#ecf0f1') }}; padding: 10px; border-radius: 4px;">
+                                    Sample text with your background color
+                                </p>
+                                <button type="button" class="btn" style="background-color: {{ settings.get('theme_secondary_color', '#3498db') }}; color: white; border: none;">
+                                    Sample Button
+                                </button>
+                            </div>
+                        </fieldset>
+
+                        <hr>
+
+                        <!-- Notifications Section -->
+                        <fieldset class="mb-5">
+                            <legend class="h5 mb-4">
+                                <i class="fas fa-bell"></i> Notifications
+                            </legend>
+                            
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" id="notification_email_enabled" 
+                                       name="notification_email_enabled" 
+                                       {% if settings.get('notification_email_enabled') == True or settings.get('notification_email_enabled') == 'True' %}checked{% endif %}>
+                                <label class="form-check-label" for="notification_email_enabled">
+                                    Enable Email Notifications
+                                    <small class="d-block text-muted">Send email alerts for important events (payroll, leave approvals, etc.)</small>
+                                </label>
+                            </div>
+                        </fieldset>
+
+                        <hr>
+
+                        <!-- Payroll Settings -->
+                        <fieldset class="mb-5">
+                            <legend class="h5 mb-4">
+                                <i class="fas fa-money-bill-wave"></i> Payroll Configuration
+                            </legend>
+                            
+                            <div class="mb-4">
+                                <label for="work_hours_per_day" class="form-label">Standard Work Hours Per Day</label>
+                                <input type="number" class="form-control" id="work_hours_per_day" 
+                                       name="work_hours_per_day" min="1" max="24" step="0.5"
+                                       value="{{ settings.get('work_hours_per_day', '8') }}"
+                                       placeholder="8">
+                                <small class="text-muted">Used for overtime calculations and proration</small>
+                            </div>
+                        </fieldset>
+
+                        <hr>
+
+                        <!-- Submit Buttons -->
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-success btn-lg">
+                                <i class="fas fa-save"></i> Save Settings
+                            </button>
+                            <a href="{{ url_for('admin.users') }}" class="btn btn-secondary btn-lg">
+                                <i class="fas fa-arrow-left"></i> Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Settings Info Panel -->
+        <div class="col-lg-4">
+            <div class="card shadow-sm mb-4" style="border-left: 4px solid #3498db;">
+                <div class="card-body">
+                    <h6 class="card-title">💡 About Settings</h6>
+                    <p class="small">
+                        These settings control how your HR system appears and behaves across all users in your company.
+                    </p>
+                    <ul class="small list-unstyled">
+                        <li>✓ Theme colors apply to dashboards and reports</li>
+                        <li>✓ Notifications can be toggled on/off</li>
+                        <li>✓ Currency affects all payroll displays</li>
+                        <li>✓ Work hours impact overtime calculations</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="card shadow-sm" style="border-left: 4px solid #27ae60;">
+                <div class="card-body">
+                    <h6 class="card-title">🔒 Who Can Edit?</h6>
+                    <p class="small">
+                        Only <strong>Company Admins</strong> can manage these system-wide settings. Changes apply immediately to all users.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <div class="mt-5 pt-4 border-top">
+        <a href="{{ url_for('admin.users') }}" class="btn btn-secondary">← Back to Users</a>
+        <a href="{{ url_for('admin.activity_logs') }}" class="btn btn-info">View Activity Logs</a>
+    </div>
+</div>
+
+<script>
+    // Update color preview text
+    document.querySelectorAll('input[type="color"]').forEach(input => {
+        input.addEventListener('change', function() {
+            const nextSpan = this.parentElement.querySelector('.input-group-text');
+            if (nextSpan) {
+                nextSpan.textContent = this.value.toUpperCase();
+            }
+        });
+    });
+
+    // Form validation
+    document.getElementById('settingsForm').addEventListener('submit', function(e) {
+        const workHours = parseInt(document.getElementById('work_hours_per_day').value);
+        if (workHours < 1 || workHours > 24) {
+            e.preventDefault();
+            alert('Work hours must be between 1 and 24');
+        }
+    });
+</script>
+
+<style>
+    fieldset {
+        border: none;
+        padding: 0;
+    }
+
+    legend {
+        padding-bottom: 1rem;
+        border-bottom: 2px solid #e9ecef;
+        margin-bottom: 2rem !important;
+    }
+
+    .form-control-color {
+        cursor: pointer;
+        height: 45px;
+    }
+
+    .card {
+        border: none;
+        border-radius: 8px;
+    }
+
+    .input-group-text {
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+        font-weight: 500;
+        min-width: 100px;
+        text-align: center;
+    }
+</style>
+{% endblock %}

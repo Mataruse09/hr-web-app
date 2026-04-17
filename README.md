@@ -1,6 +1,6 @@
 # 🧑‍💼 WorkZen HR — HR Management System
 
-A modern, web-based HR Management System built with Flask and MySQL.
+A modern, web-based HR Management System built with Flask and PostgreSQL (Supabase).
 WorkZen HR helps organizations manage employees, attendance, payroll, and leave processes efficiently in one centralized platform.
 
 ---
@@ -59,12 +59,12 @@ WorkZen HR is designed to simplify HR operations by providing a clean interface 
 
 ## 🛠️ Tech Stack
 
-| Layer           | Technology            |
-| --------------- | --------------------- |
-| Backend         | Python (Flask)        |
-| Database        | MySQL                 |
-| Frontend        | HTML, CSS, JavaScript |
-| Version Control | Git & GitHub          |
+| Layer           | Technology                     |
+| --------------- | ------------------------------ |
+| Backend         | Python (Flask)                 |
+| Database        | PostgreSQL (Supabase)          |
+| Frontend        | HTML, CSS, JavaScript          |
+| Version Control | Git & GitHub                   |
 
 ---
 
@@ -122,17 +122,28 @@ pip install -r requirements.txt
 
 ### 4️⃣ Setup Database
 
-* Open MySQL
-* Create database:
+* Create a Supabase project and PostgreSQL database.
+* Set your environment variables from Supabase or your PostgreSQL provider.
 
-```sql
-CREATE DATABASE hr_system;
+```bash
+export DB_HOST=your_host
+export DB_PORT=your_port
+export DB_USER=your_user
+export DB_PASSWORD=your_password
+export DB_NAME=your_database
+export DATABASE_URL=postgresql://user:password@host:port/dbname
 ```
 
-* Import schema:
+* Create database schema from `schema.sql`:
 
-```id="schema"
-Get-Content schema.sql | mysql -u root -p hr_system
+```bash
+psql "${DATABASE_URL}" -f schema.sql
+```
+
+Or with explicit connection parameters:
+
+```bash
+psql -h $DB_HOST -p $DB_PORT -U $DB_USER -d $DB_NAME -f schema.sql
 ```
 
 ---
@@ -174,9 +185,11 @@ Create environment variables:
 
 ```
 DB_HOST=your_host
+DB_PORT=5432
 DB_USER=your_user
 DB_PASSWORD=your_password
-DB_NAME=hr_system
+DB_NAME=your_database
+DATABASE_URL=postgresql://user:password@host:port/dbname
 SECRET_KEY=your_secret_key
 ```
 
@@ -187,7 +200,7 @@ SECRET_KEY=your_secret_key
 This app can be deployed using:
 
 * Render (recommended)
-* Railway (for database)
+* Supabase (PostgreSQL)
 * Any cloud platform supporting Flask
 
 ---
@@ -208,7 +221,7 @@ This app can be deployed using:
 This project demonstrates:
 
 * Full-stack web development using Flask
-* Database design with MySQL
+* Database design with PostgreSQL
 * Authentication & session handling
 * Modular route structuring
 * Real-world HR system workflows

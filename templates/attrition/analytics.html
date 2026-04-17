@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+
+{% block title %}Attrition Analytics{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <h1 class="display-5 mb-4">📈 Attrition Analytics</h1>
+
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-header bg-dark text-white">
+                    <h5 class="mb-0">Top Exit Reasons</h5>
+                </div>
+                <div class="card-body">
+                    {% if exit_reasons %}
+                        {% for reason in exit_reasons %}
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between">
+                                <strong>{{ reason.reason or 'Unknown' }}</strong>
+                                <span class="badge bg-primary">{{ reason.count }}</span>
+                            </div>
+                            <div class="progress">
+                                <div class="progress-bar" style="width: {% if exit_reasons %}{{ reason.count * 100 / exit_reasons[0].count }}{% else %}0{% endif %}%"></div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-muted">No data available</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-header bg-dark text-white">
+                    <h5 class="mb-0">Monthly Attrition Trend</h5>
+                </div>
+                <div class="card-body">
+                    {% if monthly_attrition %}
+                        {% for month in monthly_attrition %}
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between">
+                                <strong>{{ month.month.strftime('%B %Y') if month.month else 'Unknown' }}</strong>
+                                <span class="badge bg-warning">{{ month.count }} exits</span>
+                            </div>
+                            <div class="progress">
+                                <div class="progress-bar bg-warning" style="width: {% if monthly_attrition %}{{ month.count * 100 / monthly_attrition[0].count }}{% else %}0{% endif %}%"></div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-muted">No data available</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <a href="{{ url_for('attrition.list_attrition') }}" class="btn btn-secondary">← Back to Attrition Records</a>
+</div>
+{% endblock %}

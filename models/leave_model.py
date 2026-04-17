@@ -63,11 +63,13 @@ def update_status(request_id: int, company_id: int,
             }
             col = col_map[row['leave_type']]
             yr  = row['start_date'].year
+
             mutate(f"""
                 INSERT INTO leave_balances
-                  (company_id, employee_id, year)
-                VALUES(%s,%s,%s)
-                ON DUPLICATE KEY UPDATE {col} = {col} + %s
+                  (company_id, employee_id, year, {col})
+                VALUES(%s,%s,%s,%s)
+                ON CONFLICT (company_id, employee_id, year)
+                DO UPDATE SET {col} = leave_balances.{col} + EXCLUDED.{col}
             """, (row['company_id'], row['employee_id'], yr, row['days_requested']))
 
 

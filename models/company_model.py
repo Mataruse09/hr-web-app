@@ -12,7 +12,7 @@ def create_company(name, industry, address, phone, email, website):
 def get_by_id(company_id: int):
     return query(
         "SELECT id, name, industry, address, phone, email, website, is_active "
-        "FROM companies WHERE id = %s AND is_active = 1",
+        "FROM companies WHERE id = %s AND is_active = TRUE",
         (company_id,), one=True
     )
 
@@ -20,12 +20,12 @@ def get_by_id(company_id: int):
 def get_by_name(name: str):
     return query(
         "SELECT id, name, industry, address, phone, email, website, is_active "
-        "FROM companies WHERE name = %s AND is_active = 1",
+        "FROM companies WHERE name = %s AND is_active = TRUE",
         (name,), one=True
     )
 
 
 def all_active_companies():
     return query(
-        "SELECT id, name FROM companies WHERE is_active = 1 ORDER BY name"
+        "SELECT id, name FROM companies WHERE is_active = TRUE ORDER BY name"
     )

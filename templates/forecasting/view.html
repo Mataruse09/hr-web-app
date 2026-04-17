@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+
+{% block title %}Forecast Details{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-10 offset-md-1">
+            <h2 class="mb-4">📊 Forecast for {{ forecast.department_name or 'All' }} - {{ forecast.forecast_month }}</h2>
+
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <h5>Current Headcount</h5>
+                            <h2 class="text-primary">{{ forecast.current_headcount }}</h2>
+                        </div>
+                        <div class="col-md-3">
+                            <h5>Projected Headcount</h5>
+                            <h2 class="text-info">{{ forecast.projected_headcount }}</h2>
+                        </div>
+                        <div class="col-md-3">
+                            <h5>Change Required</h5>
+                            {% set change = forecast.projected_headcount - forecast.current_headcount %}
+                            <h2 class="{% if change > 0 %}text-danger{% elif change < 0 %}text-success{% else %}text-secondary{% endif %}">
+                                {% if change > 0 %}+{% endif %}{{ change }}
+                            </h2>
+                        </div>
+                        <div class="col-md-3">
+                            <h5>Budget Allocated</h5>
+                            <h2 class="text-success">{{ "%.2f"|format(forecast.hiring_budget or 0) }}</h2>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-dark text-white">
+                    <h5 class="mb-0">📈 Recommendations</h5>
+                </div>
+                <div class="card-body">
+                    {% for rec in forecast.recommendations %}
+                        <p class="mb-2"><strong>{{ rec }}</strong></p>
+                    {% endfor %}
+                </div>
+            </div>
+
+            {% if forecast.notes %}
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="mb-0">📝 Notes</h5>
+                </div>
+                <div class="card-body">
+                    {{ forecast.notes }}
+                </div>
+            </div>
+            {% endif %}
+
+            <a href="{{ url_for('forecasting.list_forecasts') }}" class="btn btn-secondary">← Back to Forecasts</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block title %}Labour Forecasts{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row mb-4">
+        <div class="col-md-10">
+            <h1 class="display-5">📊 Labour Forecasting</h1>
+            <p class="text-muted">Workforce planning and projections</p>
+        </div>
+        <div class="col-md-2">
+            <a href="{{ url_for('forecasting.create_forecast') }}" class="btn btn-primary w-100">+ New Forecast</a>
+        </div>
+    </div>
+
+    {% if forecasts %}
+    <div class="table-responsive">
+        <table class="table table-hover table-striped">
+            <thead class="table-dark">
+                <tr>
+                    <th>Department</th>
+                    <th>Forecast Month</th>
+                    <th>Current</th>
+                    <th>Projected</th>
+                    <th>Change</th>
+                    <th>Budget</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for forecast in forecasts %}
+                <tr>
+                    <td><strong>{{ forecast.department_name or 'All' }}</strong></td>
+                    <td>{{ forecast.forecast_month }}</td>
+                    <td>{{ forecast.current_headcount }} staff</td>
+                    <td>{{ forecast.projected_headcount }} staff</td>
+                    <td>
+                        {% set change = forecast.projected_headcount - forecast.current_headcount %}
+                        {% if change > 0 %}
+                            <span class="badge bg-danger">+{{ change }}</span>
+                        {% elif change < 0 %}
+                            <span class="badge bg-success">{{ change }}</span>
+                        {% else %}
+                            <span class="badge bg-secondary">—</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ "%.2f"|format(forecast.hiring_budget or 0) }}</td>
+                    <td>
+                        <a href="{{ url_for('forecasting.view_forecast', forecast_id=forecast.id) }}" class="btn btn-sm btn-info">View</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="alert alert-info">
+        <h5>No forecasts created yet</h5>
+        <p>Create a forecast to start planning your workforce needs.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

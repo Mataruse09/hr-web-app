@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+
+{% block title %}Compliance Tracking{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row mb-4">
+        <div class="col-md-10">
+            <h1 class="display-5">✅ Compliance Tracking</h1>
+            <p class="text-muted">Policy compliance and training records</p>
+        </div>
+        <div class="col-md-2">
+            <a href="{{ url_for('compliance.compliance_dashboard') }}" class="btn btn-primary w-100">Dashboard</a>
+        </div>
+    </div>
+
+    {% if compliance_records %}
+    <div class="table-responsive">
+        <table class="table table-hover table-striped">
+            <thead class="table-dark">
+                <tr>
+                    <th>Employee</th>
+                    <th>Policy</th>
+                    <th>Type</th>
+                    <th>Status</th>
+                    <th>Due Date</th>
+                    <th>Completed</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for record in compliance_records %}
+                <tr>
+                    <td><strong>{{ record.first_name }} {{ record.last_name }}</strong></td>
+                    <td>{{ record.policy_name }}</td>
+                    <td><span class="badge bg-info">{{ record.compliance_type }}</span></td>
+                    <td>
+                        <span class="badge bg-{% if record.status == 'Completed' %}success{% elif record.status == 'Pending' %}warning{% else %}secondary{% endif %}">
+                            {{ record.status }}
+                        </span>
+                    </td>
+                    <td>{{ record.due_date.strftime('%Y-%m-%d') if record.due_date else 'N/A' }}</td>
+                    <td>{{ record.completed_at.strftime('%Y-%m-%d') if record.completed_at else '—' }}</td>
+                    <td>
+                        {% if record.status == 'Pending' %}
+                        <form method="POST" action="{{ url_for('compliance.mark_complete', compliance_id=record.id) }}" style="display:inline;">
+                            <button type="submit" class="btn btn-sm btn-success">Mark Done</button>
+                        </form>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="alert alert-info">
+        <h5>No compliance records yet</h5>
+        <p>Assign policies to employees to get started.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

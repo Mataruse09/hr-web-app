@@ -11,51 +11,97 @@ attendance_bp = Blueprint('attendance', __name__)
 
 @attendance_bp.route('/')
 @login_required
+@roles_required('Admin', 'HR', 'CHRO', 'Manager')
 def logs():
-    company_id = session['company_id']
-    from_date  = request.args.get('from', date.today().replace(day=1).isoformat())
-    to_date    = request.args.get('to',   date.today().isoformat())
-    emp_id     = request.args.get('emp_id', type=int)
-    employees  = employee_model.get_all(company_id)
-    records    = attendance_model.get_logs(company_id, from_date, to_date, emp_id)
-    return render_template('attendance/logs.html',
-                           records=records, employees=employees,
-                           from_date=from_date, to_date=to_date,
-                           selected_emp=emp_id)
+    company_id = session.get('company_id')
+    if not company_id:
+        flash("Session expired. Please login again.", "danger")
+        return redirect(url_for('auth.login'))
+
+    # Safer defaults (PostgreSQL friendly)
+    today = date.today()
+    from_date = request.args.get(
+        'from',
+        today.replace(day=1).isoformat()
+    )
+    to_date = request.args.get(
+        'to',
+        today.isoformat()
+    )
+
+    emp_id = request.args.get('emp_id', default=None, type=int)
+
+    employees = employee_model.get_all(company_id)
+    records = attendance_model.get_logs(
+        company_id,
+        from_date,
+        to_date,
+        emp_id
+    )
+
+    return render_template(
+        'attendance/logs.html',
+        records=records,
+        employees=employees,
+        from_date=from_date,
+        to_date=to_date,
+        selected_emp=emp_id
+    )
 
 
 @attendance_bp.route('/mark', methods=['GET', 'POST'])
 @login_required
 @roles_required('Admin', 'HR', 'company_admin')
 def mark():
-    company_id  = session['company_id']
-    user_id     = session['user_id']
-    today       = date.today().isoformat()
-    employees   = employee_model.get_all(company_id)
-    existing    = attendance_model.get_by_date(company_id, today)
+    company_id = session.get('company_id')
+    user_id = session.get('user_id')
+
+    if not company_id or not user_id:
+        flash("Session expired. Please login again.", "danger")
+        return redirect(url_for('auth.login'))
+
+    today = date.today().isoformat()
+
+    employees = employee_model.get_all(company_id)
+    existing = attendance_model.get_by_date(company_id, today)
+
+    # Faster lookup
     existing_map = {r['employee_id']: r for r in existing}
 
     if request.method == 'POST':
-        work_date = request.form.get('work_date', today)
+        work_date = request.form.get('work_date') or today
         saved = 0
+
         for emp in employees:
-            eid     = emp['id']
-            status  = request.form.get(f'status_{eid}')
+            eid = emp['id']
+
+            status = request.form.get(f'status_{eid}')
             if not status:
                 continue
-            check_in  = request.form.get(f'check_in_{eid}', '')
-            check_out = request.form.get(f'check_out_{eid}', '')
-            notes     = request.form.get(f'notes_{eid}', '')
+
+            check_in = request.form.get(f'check_in_{eid}') or None
+            check_out = request.form.get(f'check_out_{eid}') or None
+            notes = request.form.get(f'notes_{eid}') or None
+
             attendance_model.upsert(
-                company_id, eid, work_date,
-                check_in or None, check_out or None,
-                status, notes, user_id,
+                company_id,
+                eid,
+                work_date,
+                check_in,
+                check_out,
+                status,
+                notes,
+                user_id,
             )
+
             saved += 1
+
         flash(f'Attendance saved for {saved} employee(s).', 'success')
         return redirect(url_for('attendance.mark'))
 
-    return render_template('attendance/mark.html',
-                           employees=employees,
-                           existing_map=existing_map,
-                           today=today)
+    return render_template(
+        'attendance/mark.html',
+        employees=employees,
+        existing_map=existing_map,
+        today=today
+    )

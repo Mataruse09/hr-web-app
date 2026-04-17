@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+
+{% block title %}Appraisals - Performance Reviews{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row mb-4">
+        <div class="col-md-10">
+            <h1 class="display-5">⭐ Performance Appraisals</h1>
+            <p class="text-muted">Manage employee performance reviews and ratings</p>
+        </div>
+        <div class="col-md-2">
+            <a href="{{ url_for('employees.list_employees') }}" class="btn btn-primary w-100">+ New Appraisal</a>
+        </div>
+    </div>
+
+    {% if appraisals %}
+    <div class="table-responsive">
+        <table class="table table-hover table-striped">
+            <thead class="table-dark">
+                <tr>
+                    <th>Employee</th>
+                    <th>Position</th>
+                    <th>Reviewer</th>
+                    <th>Rating</th>
+                    <th>Status</th>
+                    <th>Date</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for appraisal in appraisals %}
+                <tr>
+                    <td><strong>{{ appraisal.first_name }} {{ appraisal.last_name }}</strong></td>
+                    <td>{{ appraisal.job_title }}</td>
+                    <td>{{ appraisal.reviewer_name or 'System' }}</td>
+                    <td>
+                        <div class="rating-stars">
+                            {% for i in range(1, 6) %}
+                                {% if i <= appraisal.overall_rating %}
+                                    <span class="star filled">★</span>
+                                {% else %}
+                                    <span class="star">☆</span>
+                                {% endif %}
+                            {% endfor %}
+                            <span class="ms-2">{{ "%.1f"|format(appraisal.overall_rating) }}/5</span>
+                        </div>
+                    </td>
+                    <td>
+                        <span class="badge bg-{% if appraisal.status == 'Approved' %}success{% elif appraisal.status == 'Submitted' %}warning{% else %}secondary{% endif %}">
+                            {{ appraisal.status }}
+                        </span>
+                    </td>
+                    <td>{{ appraisal.created_at.strftime('%Y-%m-%d') if appraisal.created_at else 'N/A' }}</td>
+                    <td>
+                        <a href="{{ url_for('appraisals.view_appraisal', appraisal_id=appraisal.id) }}" class="btn btn-sm btn-info">View</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="alert alert-info">
+        <h5>No appraisals yet</h5>
+        <p>Create appraisals from the employee list to get started.</p>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+    .rating-stars {
+        font-size: 1.2em;
+        letter-spacing: 0.3em;
+    }
+    .star {
+        color: #ddd;
+        cursor: pointer;
+    }
+    .star.filled {
+        color: #ffc107;
+    }
+</style>
+{% endblock %}

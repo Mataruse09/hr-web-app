@@ -76,20 +76,22 @@ def upsert_run(company_id: int, employee_id: int, pay_period: str,
            gross_salary,bonus,income_tax,total_deductions,net_salary,
            working_days,present_days,status,processed_by,processed_at)
         VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
-        ON DUPLICATE KEY UPDATE
-          basic_salary=%s, total_allowances=%s, gross_salary=%s,
-          bonus=%s, income_tax=%s, total_deductions=%s, net_salary=%s,
-          working_days=%s, present_days=%s, status=%s,
-          processed_by=%s, processed_at=%s
+        ON CONFLICT (company_id, employee_id, pay_period)
+        DO UPDATE SET
+          basic_salary=EXCLUDED.basic_salary,
+          total_allowances=EXCLUDED.total_allowances,
+          gross_salary=EXCLUDED.gross_salary,
+          bonus=EXCLUDED.bonus,
+          income_tax=EXCLUDED.income_tax,
+          total_deductions=EXCLUDED.total_deductions,
+          net_salary=EXCLUDED.net_salary,
+          working_days=EXCLUDED.working_days,
+          present_days=EXCLUDED.present_days,
+          status=EXCLUDED.status,
+          processed_by=EXCLUDED.processed_by,
+          processed_at=EXCLUDED.processed_at
     """, (
         company_id, employee_id, pay_period,
-        payload['basic_salary'],  payload['total_allowances'],
-        payload['gross_salary'],  payload['bonus'],
-        payload['income_tax'],    payload['total_deductions'],
-        payload['net_salary'],    payload['working_days'],
-        payload['present_days'],  payload['status'],
-        payload['processed_by'],  payload['processed_at'],
-        # UPDATE part
         payload['basic_salary'],  payload['total_allowances'],
         payload['gross_salary'],  payload['bonus'],
         payload['income_tax'],    payload['total_deductions'],
