@@ -5,7 +5,7 @@ import logging
 from flask import Flask, redirect, url_for
 from datetime import timedelta  # ✅ ADDED
 from config.settings import Config
-from models.db import init_db
+from models.db import init_db  # MySQL connection handler
 from models.user_model import seed_roles
 from routes.auth_routes       import auth_bp
 from routes.dashboard_routes  import dashboard_bp

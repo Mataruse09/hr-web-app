@@ -8,14 +8,14 @@ class Config:
     # ── Security ────────────────────────────────────────────
     SECRET_KEY = os.getenv('SECRET_KEY', 'change-me-in-production-use-long-random-string')
 
-    # ── PostgreSQL (Supabase) ───────────────────────────────
-    DB_HOST     = os.getenv('DB_HOST')
-    DB_USER     = os.getenv('DB_USER')
-    DB_PASSWORD = os.getenv('DB_PASSWORD')
-    DB_NAME     = os.getenv('DB_NAME', 'postgres')
-    DB_PORT     = int(os.getenv('DB_PORT', 5432))
+    # ── MySQL (Railway) ─────────────────────────────────────
+    DB_HOST     = os.getenv('DB_HOST', 'mysql.railway.internal')
+    DB_USER     = os.getenv('DB_USER', 'root')
+    DB_PASSWORD = os.getenv('DB_PASSWORD', '')
+    DB_NAME     = os.getenv('DB_NAME', 'railway')
+    DB_PORT     = int(os.getenv('DB_PORT', 3306))
 
-    # Optional: full URL support (if you switch later)
+    # Full connection URL support (MySQL format)
     DATABASE_URL = os.getenv('DATABASE_URL')
 
     # ── Session ──────────────────────────────────────────────
