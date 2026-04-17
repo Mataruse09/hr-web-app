@@ -14,25 +14,15 @@ logger = logging.getLogger(__name__)
 pool = None
 
 
-def _get_connection_args(cfg, use_local=False):
-    """Get connection arguments. If use_local=True, try localhost PostgreSQL."""
-    if use_local:
-        return {
-            'host': 'localhost',
-            'user': os.getenv('LOCAL_DB_USER', 'postgres'),
-            'password': os.getenv('LOCAL_DB_PASSWORD', 'postgres'),
-            'dbname': os.getenv('LOCAL_DB_NAME', 'hr_system'),
-            'port': int(os.getenv('LOCAL_DB_PORT', 5432)),
-            'connect_timeout': 5,
-        }
-    
+def _get_connection_args(cfg):
+    """Get connection arguments for Supabase/online database only."""
     # Prefer DATABASE_URL from environment (standard for cloud platforms)
     if cfg.get('DATABASE_URL') or os.getenv('DATABASE_URL'):
         database_url = cfg.get('DATABASE_URL') or os.getenv('DATABASE_URL')
         # For Supabase, add connection parameters to the URL
-        # Format: postgresql://user:password@host:port/dbname?sslmode=require&connect_timeout=10&statement_timeout=30000
+        # Only use sslmode and connect_timeout (statement_timeout causes DSN parsing errors)
         if '?' not in database_url:
-            database_url += '?sslmode=require&connect_timeout=10&statement_timeout=30000'
+            database_url += '?sslmode=require&connect_timeout=10'
         return {'dsn': database_url}
     
     # Fallback to individual environment variables
@@ -44,7 +34,6 @@ def _get_connection_args(cfg, use_local=False):
         'port': int(cfg.get('DB_PORT', 5432) or os.getenv('DB_PORT', 5432)),
         'sslmode': 'require',
         'connect_timeout': 10,
-        'statement_timeout': 30000,
     }
 
 
@@ -55,33 +44,21 @@ def init_pool(app):
     cfg = app.config
     print("DB_HOST =", cfg.get('DB_HOST'))
 
-    # Try online database first
+    # Connect to Supabase/online database only
     try:
         pool = SimpleConnectionPool(
             minconn=1,
             maxconn=10,
             **_get_connection_args(cfg)
         )
-        logger.info("✅ Connected to online database")
+        logger.info("✅ Connected to Supabase database")
     except Exception as e:
-        logger.warning("⚠️  Online database failed: %s", e)
-        logger.info("🔄 Trying local PostgreSQL fallback...")
-        
-        # Try local fallback
-        try:
-            pool = SimpleConnectionPool(
-                minconn=1,
-                maxconn=10,
-                **_get_connection_args(cfg, use_local=True)
-            )
-            logger.info("✅ Connected to local PostgreSQL fallback")
-        except Exception as e2:
-            logger.error("❌ Local fallback also failed: %s", e2)
-            pool = None
+        logger.error("❌ Failed to connect to Supabase: %s", e)
+        pool = None
 
 
 def get_db():
-    """Return (or create) a per-request PostgreSQL connection."""
+    """Return (or create) a per-request PostgreSQL connection to Supabase."""
     if 'db' not in g:
         cfg = current_app.config
 
@@ -89,25 +66,18 @@ def get_db():
             if pool:
                 g.db = pool.getconn()
             else:
-                # Try online first, then local fallback
-                try:
-                    conn_args = _get_connection_args(cfg)
-                    logger.debug(f"Attempting connection to: {conn_args.get('dsn', conn_args.get('host', 'unknown'))}")
-                    g.db = psycopg2.connect(**conn_args)
-                    logger.info("✅ Connected to Supabase/Online database")
-                except psycopg2.OperationalError as e:
-                    logger.warning(f"⚠️  Online database failed (timeout/unreachable): {str(e)[:100]}")
-                    logger.info("🔄 Attempting local PostgreSQL fallback...")
-                    try:
-                        g.db = psycopg2.connect(**_get_connection_args(cfg, use_local=True))
-                        logger.info("✅ Connected to local PostgreSQL fallback")
-                    except psycopg2.OperationalError as e2:
-                        logger.error(f"❌ Both online and local database failed: {str(e2)[:100]}")
-                        raise RuntimeError(
-                            "Database connection failed. "
-                            "Ensure DATABASE_URL or DB_* environment variables are set correctly. "
-                            f"Error: {str(e)[:50]}"
-                        )
+                # Direct connection to Supabase/online database only
+                conn_args = _get_connection_args(cfg)
+                logger.debug(f"Attempting connection to: {conn_args.get('dsn', conn_args.get('host', 'unknown'))}")
+                g.db = psycopg2.connect(**conn_args)
+                logger.info("✅ Connected to Supabase database")
+        except (psycopg2.OperationalError, psycopg2.ProgrammingError) as e:
+            logger.error(f"DB connection error: {e}")
+            raise RuntimeError(
+                "Database connection failed. "
+                "Ensure DATABASE_URL or DB_* environment variables are set correctly. "
+                f"Error: {str(e)[:100]}"
+            )
         except Exception as e:
             logger.error(f"DB connection error: {e}")
             raise
