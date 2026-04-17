@@ -20,10 +20,17 @@ def _get_connection_args(cfg):
     # Prefer DATABASE_URL from environment (standard for cloud platforms)
     if cfg.get('DATABASE_URL') or os.getenv('DATABASE_URL'):
         database_url = cfg.get('DATABASE_URL') or os.getenv('DATABASE_URL')
-        # For Supabase, add connection parameters to the URL
-        # Add TCP keepalive to handle network issues (Render <-> Supabase)
+        
+        # Remove pgbouncer parameter if present (psycopg2 doesn't recognize it)
+        database_url = database_url.replace('?pgbouncer=true', '').replace('&pgbouncer=true', '')
+        
+        # Add TCP keepalive and connection parameters for psycopg2
         if '?' not in database_url:
             database_url += '?sslmode=require&connect_timeout=10&keepalives=1&keepalives_idle=30&keepalives_interval=10&keepalives_count=5'
+        else:
+            # Already has parameters, just add our keepalive settings
+            database_url += '&keepalives=1&keepalives_idle=30&keepalives_interval=10&keepalives_count=5'
+        
         return {'dsn': database_url}
     
     # Fallback to individual environment variables
