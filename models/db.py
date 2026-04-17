@@ -3,6 +3,7 @@ Database connection helper (PostgreSQL - Supabase)
 """
 import logging
 import os
+import time
 import psycopg2
 from psycopg2.extras import RealDictCursor
 from psycopg2.pool import SimpleConnectionPool
@@ -20,9 +21,9 @@ def _get_connection_args(cfg):
     if cfg.get('DATABASE_URL') or os.getenv('DATABASE_URL'):
         database_url = cfg.get('DATABASE_URL') or os.getenv('DATABASE_URL')
         # For Supabase, add connection parameters to the URL
-        # Only use sslmode and connect_timeout (statement_timeout causes DSN parsing errors)
+        # Add TCP keepalive to handle network issues (Render <-> Supabase)
         if '?' not in database_url:
-            database_url += '?sslmode=require&connect_timeout=10'
+            database_url += '?sslmode=require&connect_timeout=10&keepalives=1&keepalives_idle=30&keepalives_interval=10&keepalives_count=5'
         return {'dsn': database_url}
     
     # Fallback to individual environment variables
@@ -34,6 +35,10 @@ def _get_connection_args(cfg):
         'port': int(cfg.get('DB_PORT', 5432) or os.getenv('DB_PORT', 5432)),
         'sslmode': 'require',
         'connect_timeout': 10,
+        'keepalives': 1,
+        'keepalives_idle': 30,
+        'keepalives_interval': 10,
+        'keepalives_count': 5,
     }
 
 
@@ -61,23 +66,35 @@ def get_db():
     """Return (or create) a per-request PostgreSQL connection to Supabase."""
     if 'db' not in g:
         cfg = current_app.config
+        max_retries = 2
+        retry_delay = 1  # seconds
 
         try:
             if pool:
                 g.db = pool.getconn()
             else:
-                # Direct connection to Supabase/online database only
+                # Direct connection to Supabase/online database with retries
                 conn_args = _get_connection_args(cfg)
-                logger.debug(f"Attempting connection to: {conn_args.get('dsn', conn_args.get('host', 'unknown'))}")
-                g.db = psycopg2.connect(**conn_args)
-                logger.info("✅ Connected to Supabase database")
-        except (psycopg2.OperationalError, psycopg2.ProgrammingError) as e:
-            logger.error(f"DB connection error: {e}")
-            raise RuntimeError(
-                "Database connection failed. "
-                "Ensure DATABASE_URL or DB_* environment variables are set correctly. "
-                f"Error: {str(e)[:100]}"
-            )
+                
+                for attempt in range(max_retries + 1):
+                    try:
+                        logger.debug(f"Connection attempt {attempt + 1}/{max_retries + 1}: {conn_args.get('dsn', conn_args.get('host', 'unknown'))}")
+                        g.db = psycopg2.connect(**conn_args)
+                        logger.info("✅ Connected to Supabase database")
+                        break
+                    except (psycopg2.OperationalError, psycopg2.ProgrammingError) as e:
+                        if attempt < max_retries:
+                            logger.warning(f"Connection attempt {attempt + 1} failed, retrying in {retry_delay}s: {str(e)[:80]}")
+                            time.sleep(retry_delay)
+                        else:
+                            logger.error(f"DB connection error (final attempt): {e}")
+                            raise RuntimeError(
+                                "Database connection failed after retries. "
+                                "Ensure DATABASE_URL or DB_* environment variables are set correctly. "
+                                f"Error: {str(e)[:100]}"
+                            )
+        except RuntimeError:
+            raise
         except Exception as e:
             logger.error(f"DB connection error: {e}")
             raise
