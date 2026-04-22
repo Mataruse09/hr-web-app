@@ -20,9 +20,14 @@ def delete_user_permanently(company_id, user_id, deleted_by_user_id):
     - user_roles (delete role assignments)
     - activity_logs (keep for audit, mark as deleted)
     - payroll_runs (delete payroll records)
-    - attendance_logs (delete attendance records)
-    - leave_applications (delete leave applications)
-    - appraisals (mark as deleted or remove)
+    - attendance (delete attendance records)
+    - leave_requests (delete leave requests)
+    - leave_balances (delete leave balances)
+    - appraisals (delete appraisals)
+    - performance_reviews (delete performance reviews)
+    - gamification_points (delete gamification records)
+    - compliance_records (delete compliance records)
+    - attrition_records (delete attrition records)
     
     Args:
         company_id: Company ID for multi-tenant isolation
@@ -75,15 +80,23 @@ def delete_user_permanently(company_id, user_id, deleted_by_user_id):
         # 5. Delete attendance records
         if employee_id:
             result = mutate(
-                "DELETE FROM attendance_logs WHERE employee_id = %s",
+                "DELETE FROM attendance WHERE employee_id = %s",
                 (employee_id,)
             )
             deleted_count += result.get('rows_affected', 0) if isinstance(result, dict) else 0
         
-        # 6. Delete leave applications
+        # 6. Delete leave requests
         if employee_id:
             result = mutate(
-                "DELETE FROM leave_applications WHERE employee_id = %s",
+                "DELETE FROM leave_requests WHERE employee_id = %s",
+                (employee_id,)
+            )
+            deleted_count += result.get('rows_affected', 0) if isinstance(result, dict) else 0
+        
+        # 6b. Delete leave balances
+        if employee_id:
+            result = mutate(
+                "DELETE FROM leave_balances WHERE employee_id = %s",
                 (employee_id,)
             )
             deleted_count += result.get('rows_affected', 0) if isinstance(result, dict) else 0
@@ -92,7 +105,15 @@ def delete_user_permanently(company_id, user_id, deleted_by_user_id):
         if employee_id:
             result = mutate(
                 "DELETE FROM appraisals WHERE (employee_id = %s OR reviewer_id = %s) AND company_id = %s",
-                (employee_id, user_id, company_id)
+                (employee_id, employee_id, company_id)
+            )
+            deleted_count += result.get('rows_affected', 0) if isinstance(result, dict) else 0
+        
+        # 7b. Delete performance reviews
+        if employee_id:
+            result = mutate(
+                "DELETE FROM performance_reviews WHERE (employee_id = %s OR reviewer_id = %s) AND company_id = %s",
+                (employee_id, employee_id, company_id)
             )
             deleted_count += result.get('rows_affected', 0) if isinstance(result, dict) else 0
         

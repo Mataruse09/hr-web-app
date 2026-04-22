@@ -32,7 +32,7 @@ CREATE TABLE IF NOT EXISTS plans (
 CREATE TABLE IF NOT EXISTS subscriptions (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     company_id INT UNSIGNED NOT NULL,
-    plan_id INT UNSIGNED NOT NULL,
+    plan_id INT UNSIGNED,
     status VARCHAR(50) DEFAULT 'trial',
     started_at TIMESTAMP NOT NULL,
     expires_at TIMESTAMP NOT NULL,
@@ -58,7 +58,7 @@ CREATE TABLE IF NOT EXISTS users (
     reset_token_expiry TIMESTAMP NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE,
-    UNIQUE KEY unique_email (email),
+    UNIQUE KEY unique_email (company_id, email),
     INDEX idx_company (company_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -77,7 +77,7 @@ CREATE TABLE IF NOT EXISTS departments (
 CREATE TABLE IF NOT EXISTS employees_core (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     company_id INT UNSIGNED NOT NULL,
-    user_id INT,
+    user_id INT UNSINED,
     employee_code VARCHAR(50) NOT NULL,
     first_name VARCHAR(100),
     last_name VARCHAR(100),
@@ -144,8 +144,15 @@ CREATE TABLE IF NOT EXISTS leave_requests (
     start_date DATE,
     end_date DATE,
     days_requested INT,
+    reason LONGTEXT,
     status VARCHAR(50) DEFAULT 'Pending',
+    reviewed_by INT UNSIGNED,
+    reviewed_at TIMESTAMP NULL,
+    review_notes LONGTEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE,
+    FOREIGN KEY (employee_id) REFERENCES employees_core(id) ON DELETE CASCADE,
+    FOREIGN KEY (reviewed_by) REFERENCES users(id) ON DELETE SET NULL,
     INDEX idx_employee (employee_id),
     INDEX idx_status (status)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -223,7 +230,7 @@ CREATE TABLE IF NOT EXISTS activity_logs (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL,
-    INDEX idx_company_created (company_id, created_at DESC),
+    INDEX idx_company_created (company_id, created_at),
     INDEX idx_user (user_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 

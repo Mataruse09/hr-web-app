@@ -37,24 +37,36 @@ def get_logs(company_id: int, from_date: str, to_date: str, emp_id=None):
 
 def upsert(company_id: int, employee_id: int, work_date: str,
            check_in, check_out, status: str, notes: str, recorded_by: int):
-    """Insert or update an attendance record for a given employee+date."""
+    """Insert or update an attendance record with proper time validation and cross-midnight handling."""
 
     hours = None
 
     if check_in and check_out:
-        from datetime import datetime
+        from datetime import datetime, timedelta
 
         fmt = "%H:%M"
         try:
-            ci = datetime.strptime(str(check_in)[:5], fmt)
-            co = datetime.strptime(str(check_out)[:5], fmt)
+            ci_str = str(check_in)[:5]  # "HH:MM"
+            co_str = str(check_out)[:5]
 
-            diff = (co - ci).total_seconds() / 3600  # ✅ FIXED
+            ci = datetime.strptime(ci_str, fmt)
+            co = datetime.strptime(co_str, fmt)
 
-            if diff > 0:
+            diff = (co - ci).total_seconds() / 3600
+
+            # Handle cross-midnight shifts (check_out < check_in)
+            if diff < 0:
+                diff = (24 + diff)  # Adds 24 hours for overnight shifts
+                if diff > 0:
+                    hours = round(diff, 2)
+            elif diff > 0:
                 hours = round(diff, 2)
+            # If diff == 0, hours stays None (same time)
 
-        except Exception:
+        except Exception as e:
+            # Log error but don't fail - NULL hours indicates data issue
+            import logging
+            logging.warning(f"Attendance time parse error: {e}")
             hours = None
 
     mutate("""
@@ -62,14 +74,13 @@ def upsert(company_id: int, employee_id: int, work_date: str,
           (company_id, employee_id, work_date, check_in, check_out, status,
            working_hours, notes, recorded_by)
         VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)
-        ON CONFLICT (company_id, employee_id, work_date)
-        DO UPDATE SET
-          check_in = EXCLUDED.check_in,
-          check_out = EXCLUDED.check_out,
-          status = EXCLUDED.status,
-          working_hours = EXCLUDED.working_hours,
-          notes = EXCLUDED.notes,
-          recorded_by = EXCLUDED.recorded_by
+        ON DUPLICATE KEY UPDATE
+          check_in = VALUES(check_in),
+          check_out = VALUES(check_out),
+          status = VALUES(status),
+          working_hours = VALUES(working_hours),
+          notes = VALUES(notes),
+          recorded_by = VALUES(recorded_by)
     """, (
         company_id,
         employee_id,
@@ -78,7 +89,7 @@ def upsert(company_id: int, employee_id: int, work_date: str,
         check_out or None,
         status,
         hours,
-        (notes or None),   # ✅ FIXED
+        (notes or None),
         recorded_by
     ))
 

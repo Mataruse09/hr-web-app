@@ -10,16 +10,21 @@ import logging
 logger = logging.getLogger(__name__)
 
 # Email configuration
-SMTP_SERVER = os.getenv('SMTP_SERVER', 'smtp.gmail.com')
+SMTP_SERVER = os.getenv('SMTP_HOST') or os.getenv('SMTP_SERVER', 'smtp.gmail.com')
 SMTP_PORT = int(os.getenv('SMTP_PORT', 587))
-SENDER_EMAIL = os.getenv('SENDER_EMAIL', 'noreply@hrapp.com')
-SENDER_PASSWORD = os.getenv('SENDER_PASSWORD', '')
+SENDER_EMAIL = os.getenv('SMTP_USER') or os.getenv('SENDER_EMAIL', 'noreply@hrapp.com')
+SENDER_PASSWORD = os.getenv('SMTP_PASS') or os.getenv('SENDER_PASSWORD', '')
 SUPPORT_EMAIL = 'tinashemataruse226@gmail.com'
 
 
 def send_email(recipient_email: str, subject: str, body: str, is_html: bool = False):
     """Send an email to a recipient."""
     try:
+        # Validate configuration
+        if not SENDER_EMAIL or not SENDER_PASSWORD:
+            logger.error(f"❌ Email configuration incomplete: SENDER_EMAIL={bool(SENDER_EMAIL)}, SENDER_PASSWORD={bool(SENDER_PASSWORD)}")
+            return False
+            
         msg = MIMEMultipart('alternative')
         msg['Subject'] = subject
         msg['From'] = SENDER_EMAIL
@@ -36,7 +41,7 @@ def send_email(recipient_email: str, subject: str, body: str, is_html: bool = Fa
         logger.info(f"✅ Email sent to {recipient_email}")
         return True
     except Exception as e:
-        logger.error(f"❌ Email send failed to {recipient_email}: {e}")
+        logger.error(f"❌ Email send failed to {recipient_email} ({type(e).__name__}): {e}")
         return False
 
 

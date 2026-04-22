@@ -79,7 +79,7 @@ def init_pool(app):
     global pool
 
     cfg = app.config
-    print("DB_HOST =", cfg.get('DB_HOST'))
+   
 
     # Connect to MySQL database
     try:
@@ -176,14 +176,22 @@ def query(sql: str, params: tuple = (), one: bool = False):
 def mutate(sql: str, params: tuple = ()):
     """
     Execute INSERT / UPDATE / DELETE
+    Returns last inserted ID for INSERT statements, True for UPDATE/DELETE
     """
     db = get_db()
     cur = db.cursor()
 
     try:
         cur.execute(sql, params)
-        db.commit()
-        return True
+        
+        # For INSERT statements, return the last inserted ID
+        if sql.strip().upper().startswith('INSERT'):
+            last_id = cur.lastrowid
+            db.commit()
+            return last_id
+        else:
+            db.commit()
+            return True
 
     except Error as exc:
         db.rollback()
@@ -192,3 +200,36 @@ def mutate(sql: str, params: tuple = ()):
 
     finally:
         cur.close()
+
+
+def begin_transaction():
+    """Start a database transaction for batch operations."""
+    conn = get_db()
+    if conn:
+        conn.autocommit = False
+        conn.start_transaction()
+    return conn
+
+
+def commit_transaction(conn):
+    """Commit the current transaction."""
+    try:
+        if conn:
+            conn.commit()
+            logger.info("Transaction committed successfully")
+    except Error as e:
+        if conn:
+            conn.rollback()
+        logger.error("Transaction commit failed: %s", e)
+        raise
+
+
+def rollback_transaction(conn):
+    """Rollback the current transaction."""
+    try:
+        if conn:
+            conn.rollback()
+            logger.warning("Transaction rolled back")
+    except Error as e:
+        logger.error("Transaction rollback failed: %s", e)
+        raise

@@ -3,47 +3,38 @@ from datetime import datetime
 
 
 def get_compensation(employee_id: int, company_id: int):
+    """Get employee base compensation (basic salary)"""
     return query("""
-        SELECT * FROM compensation
+        SELECT id, employee_id, company_id, basic_salary, currency, created_at
+        FROM compensation
         WHERE employee_id=%s AND company_id=%s
-        ORDER BY effective_date DESC LIMIT 1
+        ORDER BY created_at DESC LIMIT 1
     """, (employee_id, company_id), one=True)
 
 
 def save_compensation(company_id: int, employee_id: int, data: dict):
+    """Save employee base compensation (basic salary only)"""
     existing = get_compensation(employee_id, company_id)
     if existing:
         mutate("""
             UPDATE compensation SET
-              basic_salary=%s, housing_allowance=%s, transport_allowance=%s,
-              meal_allowance=%s, other_allowances=%s, income_tax_rate=%s,
-              social_insurance=%s, health_insurance=%s, other_deductions=%s,
-              currency=%s, effective_date=%s
+              basic_salary=%s, currency=%s
             WHERE id=%s
         """, (
-            data['basic_salary'],  data.get('housing_allowance', 0),
-            data.get('transport_allowance', 0), data.get('meal_allowance', 0),
-            data.get('other_allowances', 0),    data.get('income_tax_rate', 15),
-            data.get('social_insurance', 0),    data.get('health_insurance', 0),
-            data.get('other_deductions', 0),    data.get('currency', 'USD'),
-            data.get('effective_date'),          existing['id'],
+            data.get('basic_salary', 0),
+            data.get('currency', 'USD'),
+            existing['id'],
         ))
     else:
         mutate("""
             INSERT INTO compensation
-              (company_id,employee_id,basic_salary,housing_allowance,
-               transport_allowance,meal_allowance,other_allowances,
-               income_tax_rate,social_insurance,health_insurance,
-               other_deductions,currency,effective_date)
-            VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+              (company_id, employee_id, basic_salary, currency)
+            VALUES(%s, %s, %s, %s)
         """, (
-            company_id, employee_id,
-            data['basic_salary'],  data.get('housing_allowance', 0),
-            data.get('transport_allowance', 0), data.get('meal_allowance', 0),
-            data.get('other_allowances', 0),    data.get('income_tax_rate', 15),
-            data.get('social_insurance', 0),    data.get('health_insurance', 0),
-            data.get('other_deductions', 0),    data.get('currency', 'USD'),
-            data.get('effective_date'),
+            company_id,
+            employee_id,
+            data.get('basic_salary', 0),
+            data.get('currency', 'USD'),
         ))
 
 
@@ -70,34 +61,50 @@ def get_runs(company_id: int, pay_period: str = None):
 
 def upsert_run(company_id: int, employee_id: int, pay_period: str,
                payload: dict) -> int:
+    """Insert or update payroll run - uses schema_complete.sql columns."""
     return mutate("""
         INSERT INTO payroll_runs
-          (company_id,employee_id,pay_period,basic_salary,total_allowances,
-           gross_salary,bonus,income_tax,total_deductions,net_salary,
-           working_days,present_days,status,processed_by,processed_at)
-        VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
-        ON CONFLICT (company_id, employee_id, pay_period)
-        DO UPDATE SET
-          basic_salary=EXCLUDED.basic_salary,
-          total_allowances=EXCLUDED.total_allowances,
-          gross_salary=EXCLUDED.gross_salary,
-          bonus=EXCLUDED.bonus,
-          income_tax=EXCLUDED.income_tax,
-          total_deductions=EXCLUDED.total_deductions,
-          net_salary=EXCLUDED.net_salary,
-          working_days=EXCLUDED.working_days,
-          present_days=EXCLUDED.present_days,
-          status=EXCLUDED.status,
-          processed_by=EXCLUDED.processed_by,
-          processed_at=EXCLUDED.processed_at
+          (company_id, employee_id, pay_period, basic_salary, gross_salary,
+           overtime_hours, overtime_amount, prorated_salary,
+           housing_allowance, transport_allowance, meal_allowance,
+           performance_bonus, income_tax, social_security, 
+           health_insurance, other_deductions, net_salary, status, notes)
+        VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+        ON DUPLICATE KEY UPDATE
+          basic_salary=VALUES(basic_salary),
+          gross_salary=VALUES(gross_salary),
+          overtime_hours=VALUES(overtime_hours),
+          overtime_amount=VALUES(overtime_amount),
+          prorated_salary=VALUES(prorated_salary),
+          housing_allowance=VALUES(housing_allowance),
+          transport_allowance=VALUES(transport_allowance),
+          meal_allowance=VALUES(meal_allowance),
+          performance_bonus=VALUES(performance_bonus),
+          income_tax=VALUES(income_tax),
+          social_security=VALUES(social_security),
+          health_insurance=VALUES(health_insurance),
+          other_deductions=VALUES(other_deductions),
+          net_salary=VALUES(net_salary),
+          status=VALUES(status),
+          notes=VALUES(notes)
     """, (
         company_id, employee_id, pay_period,
-        payload['basic_salary'],  payload['total_allowances'],
-        payload['gross_salary'],  payload['bonus'],
-        payload['income_tax'],    payload['total_deductions'],
-        payload['net_salary'],    payload['working_days'],
-        payload['present_days'],  payload['status'],
-        payload['processed_by'],  payload['processed_at'],
+        payload.get('basic_salary', 0),
+        payload.get('gross_salary', 0),
+        payload.get('overtime_hours', 0),
+        payload.get('overtime_amount', 0),
+        payload.get('prorated_salary', 0),
+        payload.get('housing_allowance', 0),
+        payload.get('transport_allowance', 0),
+        payload.get('meal_allowance', 0),
+        payload.get('performance_bonus', 0),
+        payload.get('income_tax', 0),
+        payload.get('social_security', 0),
+        payload.get('health_insurance', 0),
+        payload.get('other_deductions', 0),
+        payload.get('net_salary', 0),
+        payload.get('status', 'Draft'),
+        payload.get('notes', ''),
     ))
 
 
@@ -111,16 +118,13 @@ def pending_count(company_id: int) -> int:
 
 
 def average_net_salary(company_id: int):
+    """Get average net salary from recent payroll runs"""
     row = query("""
-        SELECT AVG(c.basic_salary +
-                   c.housing_allowance + c.transport_allowance +
-                   c.meal_allowance + c.other_allowances -
-                   (c.basic_salary * c.income_tax_rate / 100) -
-                   c.social_insurance - c.health_insurance - c.other_deductions
-               ) AS avg_net
-        FROM compensation c
-        JOIN employees_core e ON e.id = c.employee_id
-        WHERE c.company_id=%s AND e.status='Active'
+        SELECT AVG(p.net_salary) AS avg_net
+        FROM payroll_runs p
+        JOIN employees_core e ON e.id = p.employee_id
+        WHERE p.company_id=%s AND e.status='Active' AND p.status IN ('Approved','Finalized')
+        AND p.created_at >= DATE_SUB(NOW(), INTERVAL 3 MONTH)
     """, (company_id,), one=True)
     v = row['avg_net'] if row else None
     return float(v) if v else 0.0

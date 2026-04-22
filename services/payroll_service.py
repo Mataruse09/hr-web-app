@@ -143,20 +143,20 @@ def create_payroll_run(company_id: int, employee_id: int, pay_period: str, calcu
                 income_tax, social_security, health_insurance, other_deductions, net_salary,
                 status, created_at
             ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-            ON CONFLICT (company_id, employee_id, pay_period) DO UPDATE
-            SET basic_salary = EXCLUDED.basic_salary,
-                housing_allowance = EXCLUDED.housing_allowance,
-                transport_allowance = EXCLUDED.transport_allowance,
-                meal_allowance = EXCLUDED.meal_allowance,
-                overtime_hours = EXCLUDED.overtime_hours,
-                overtime_amount = EXCLUDED.overtime_amount,
-                performance_bonus = EXCLUDED.performance_bonus,
-                gross_salary = EXCLUDED.gross_salary,
-                income_tax = EXCLUDED.income_tax,
-                social_security = EXCLUDED.social_security,
-                health_insurance = EXCLUDED.health_insurance,
-                other_deductions = EXCLUDED.other_deductions,
-                net_salary = EXCLUDED.net_salary
+            ON DUPLICATE KEY UPDATE
+            basic_salary = VALUES(basic_salary),
+                housing_allowance = VALUES(housing_allowance),
+                transport_allowance = VALUES(transport_allowance),
+                meal_allowance = VALUES(meal_allowance),
+                overtime_hours = VALUES(overtime_hours),
+                overtime_amount = VALUES(overtime_amount),
+                performance_bonus = VALUES(performance_bonus),
+                gross_salary = VALUES(gross_salary),
+                income_tax = VALUES(income_tax),
+                social_security = VALUES(social_security),
+                health_insurance = VALUES(health_insurance),
+                other_deductions = VALUES(other_deductions),
+                net_salary = VALUES(net_salary)
         """, (
             company_id, employee_id, pay_period,
             calculated_data['basic_salary'], calculated_data['housing_allowance'],

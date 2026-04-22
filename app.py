@@ -6,7 +6,6 @@ from flask import Flask, redirect, url_for
 from datetime import timedelta  # ✅ ADDED
 from config.settings import Config
 from models.db import init_db  # MySQL connection handler
-from models.user_model import seed_roles
 from routes.auth_routes       import auth_bp
 from routes.dashboard_routes  import dashboard_bp
 from routes.employee_routes   import employee_bp
@@ -31,12 +30,6 @@ def create_app(config=Config):
     app.permanent_session_lifetime = timedelta(minutes=30)
 
     init_db(app)
-    with app.app_context():
-        try:
-            seed_roles()
-            logger.info("✅ Database roles seeded successfully")
-        except Exception as e:
-            logger.warning("⚠️  Could not seed database roles (DB may not be available): %s", e)
 
     app.register_blueprint(auth_bp,       url_prefix='/auth')
     app.register_blueprint(dashboard_bp)                       # handles '/' and '/dashboard'

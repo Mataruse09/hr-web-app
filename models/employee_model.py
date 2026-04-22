@@ -58,14 +58,15 @@ def get_total_count(company_id: int) -> int:
 
 
 def search(company_id: int, term: str):
+    """Search employees by name, email, or code using MySQL LIKE operator."""
     t = f"%{term}%"
     return query("""
         SELECT e.*, d.name AS department_name
         FROM   employees_core e
         LEFT JOIN departments d ON d.id = e.department_id
         WHERE  e.company_id = %s
-          AND (e.first_name ILIKE %s OR e.last_name ILIKE %s
-               OR e.email ILIKE %s OR e.employee_code ILIKE %s)
+          AND (e.first_name LIKE %s OR e.last_name LIKE %s
+               OR e.email LIKE %s OR e.employee_code LIKE %s)
         ORDER BY e.first_name
     """, (company_id, t, t, t, t))
 

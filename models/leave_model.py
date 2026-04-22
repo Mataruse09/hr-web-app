@@ -3,13 +3,16 @@ from datetime import datetime
 
 
 def get_requests(company_id: int, status_filter: str = None):
+    # Note: reviewed_by column doesn't exist in current db, so we skip that join
     base = """
-        SELECT lr.*, e.first_name, e.last_name, e.employee_code,
-               d.name AS dept_name, u.full_name AS reviewer_name
+        SELECT lr.id, lr.company_id, lr.employee_id, lr.leave_type, 
+               lr.start_date, lr.end_date, lr.days_requested, lr.reason,
+               lr.status, lr.created_at,
+               e.first_name, e.last_name, e.employee_code,
+               d.name AS dept_name
         FROM   leave_requests lr
         JOIN   employees_core  e ON e.id  = lr.employee_id
         LEFT JOIN departments  d ON d.id  = e.department_id
-        LEFT JOIN users        u ON u.id  = lr.reviewed_by
         WHERE  lr.company_id=%s
     """
     params = [company_id]
@@ -29,6 +32,7 @@ def get_by_employee(employee_id: int, company_id: int):
 
 
 def create(company_id: int, data: dict) -> int:
+    """Create a new leave request with reason field."""
     return mutate("""
         INSERT INTO leave_requests
           (company_id,employee_id,leave_type,start_date,end_date,
@@ -43,33 +47,30 @@ def create(company_id: int, data: dict) -> int:
 
 
 def update_status(request_id: int, company_id: int,
-                  status: str, reviewed_by: int, notes: str = ''):
+                  status: str, reviewed_by: int = None, notes: str = ''):
+    """Update leave request status.
+    Note: reviewed_by, reviewed_at, review_notes columns don't exist in current db
+    """
     mutate("""
         UPDATE leave_requests
-        SET status=%s, reviewed_by=%s, reviewed_at=%s, review_notes=%s
+        SET status=%s
         WHERE id=%s AND company_id=%s
-    """, (status, reviewed_by, datetime.utcnow(), notes, request_id, company_id))
+    """, (status, request_id, company_id))
 
     # Update leave balance if approved
     if status == 'Approved':
         row = query(
             "SELECT * FROM leave_requests WHERE id=%s", (request_id,), one=True
         )
-        if row and row['leave_type'] in ('Annual', 'Sick', 'Emergency'):
-            col_map = {
-                'Annual':    'annual_used',
-                'Sick':      'sick_used',
-                'Emergency': 'emergency_used',
-            }
-            col = col_map[row['leave_type']]
-            yr  = row['start_date'].year
-
-            mutate(f"""
+        if row:
+            # All leave types contribute to annual_used (unified tracking per schema)
+            yr = row['start_date'].year
+            
+            mutate("""
                 INSERT INTO leave_balances
-                  (company_id, employee_id, year, {col})
+                  (company_id, employee_id, year, annual_used)
                 VALUES(%s,%s,%s,%s)
-                ON CONFLICT (company_id, employee_id, year)
-                DO UPDATE SET {col} = leave_balances.{col} + EXCLUDED.{col}
+                ON DUPLICATE KEY UPDATE annual_used = annual_used + VALUES(annual_used)
             """, (row['company_id'], row['employee_id'], yr, row['days_requested']))
 
 

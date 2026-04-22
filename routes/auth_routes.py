@@ -3,12 +3,15 @@ from flask import (
     redirect, url_for, flash, session,
 )
 import bcrypt
+import logging
 from datetime import date
 
 from models import user_model, company_model, employee_model
 from services.email_service import send_admin_registration_email
 from services.activity_service import log_activity
 from services.settings_service import initialize_default_settings
+
+logger = logging.getLogger(__name__)
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -37,14 +40,25 @@ def login():
         user = user_model.get_by_username(username, company['id'])
 
         # ✅ safer password check (PostgreSQL-safe)
-        if (
-            not user
-            or not user.get('password_hash')
-            or not bcrypt.checkpw(
-                password.encode(),
-                user['password_hash'].encode()
-            )
-        ):
+        if not user or not user.get('password_hash'):
+            flash('Invalid credentials. Please try again.', 'danger')
+            companies = company_model.all_active_companies()
+            return render_template('login.html', companies=companies)
+        
+        # Handle password hash that may already be bytes or string
+        password_hash = user['password_hash']
+        if isinstance(password_hash, str):
+            password_hash = password_hash.encode('utf-8')
+        
+        try:
+            password_matches = bcrypt.checkpw(password.encode('utf-8'), password_hash)
+        except Exception as e:
+            logger.error(f"Password check error: {e}")
+            flash('Invalid credentials. Please try again.', 'danger')
+            companies = company_model.all_active_companies()
+            return render_template('login.html', companies=companies)
+        
+        if not password_matches:
             flash('Invalid credentials. Please try again.', 'danger')
             companies = company_model.all_active_companies()
             return render_template('login.html', companies=companies)
@@ -129,16 +143,55 @@ def register_company():
             bcrypt.gensalt()
         ).decode()
 
-        new_user_id = user_model.create_user(
-            new_company_id,
-            admin_username,
-            admin_email,
-            admin_full_name,
-            password_hash,
-            role='Admin'
-        )
+        try:
+            new_user_id = user_model.create_user(
+                new_company_id,
+                admin_username,
+                admin_email,
+                admin_full_name,
+                password_hash,
+                role='Admin'
+            )
+        except ValueError as e:
+            # Username collision - try auto-generating one
+            logger.warning(f"Username collision during registration: {e}. Attempting auto-generate.")
+            try:
+                # Generate unique username: username_companyid or username1, username2, etc
+                base_username = admin_username
+                counter = 1
+                while counter < 100:
+                    test_username = f"{base_username}{counter}"
+                    test_user = user_model.get_by_username(test_username, new_company_id)
+                    if not test_user:
+                        new_user_id = user_model.create_user(
+                            new_company_id,
+                            test_username,
+                            admin_email,
+                            admin_full_name,
+                            password_hash,
+                            role='Admin'
+                        )
+                        flash(f'Username "{admin_username}" was taken. Using "{test_username}" instead.', 'info')
+                        break
+                    counter += 1
+                else:
+                    flash('Could not generate a unique username. Please try again with a different username.', 'danger')
+                    return render_template('register_company.html')
+            except Exception as e2:
+                logger.error(f"Failed to create admin user: {e2}")
+                flash('Failed to create admin account. Please try again.', 'danger')
+                return render_template('register_company.html')
+        except Exception as e:
+            logger.error(f"Unexpected error creating user: {e}")
+            flash(f'Failed to create admin account: {str(e)}', 'danger')
+            return render_template('register_company.html')
 
-        user_model.assign_role_to_user(new_user_id, new_company_id, 'Admin')
+        # ✅ ASSIGN ROLE TO USER_ROLES TABLE
+        try:
+            user_model.assign_role_to_user(new_user_id, new_company_id, 'Admin')
+            logger.info(f"✅ Admin user (ID: {new_user_id}) assigned role: Admin")
+        except Exception as e:
+            logger.error(f"⚠️ Failed to assign role to user_roles table: {e}")
 
         # ✅ CREATE EMPLOYEE FOR ADMIN
         employee_code = employee_model.get_next_employee_code(new_company_id)
@@ -164,21 +217,30 @@ def register_company():
         employee_model.link_user(emp_id, new_user_id, new_company_id)
 
         # ✅ INITIALIZE DEFAULT SETTINGS FOR COMPANY
-        initialize_default_settings(new_company_id)
+        try:
+            initialize_default_settings(new_company_id)
+        except Exception as e:
+            logger.warning(f"Failed to initialize settings for company {new_company_id}: {e}")
 
         # ✅ LOG ACTIVITY
-        log_activity(
-            new_company_id,
-            new_user_id,
-            'Company registered',
-            'Company',
-            new_company_id,
-            None,
-            f"Company '{company_name}' created by {admin_full_name}"
-        )
+        try:
+            log_activity(
+                new_company_id,
+                new_user_id,
+                'Company registered',
+                'Company',
+                new_company_id,
+                None,
+                f"Company '{company_name}' created by {admin_full_name}"
+            )
+        except Exception as e:
+            logger.warning(f"Failed to log activity: {e}")
 
         # ✅ SEND WELCOME EMAIL TO ADMIN
-        send_admin_registration_email(admin_full_name, admin_email, company_name)
+        try:
+            send_admin_registration_email(admin_full_name, admin_email, company_name)
+        except Exception as e:
+            logger.warning(f"Failed to send registration email: {e}")
 
         flash('Company registered successfully! Check your email for welcome message. Please login.', 'success')
         return redirect(url_for('auth.login'))

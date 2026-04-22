@@ -4,8 +4,12 @@ from flask import (
 )
 from utils import login_required, roles_required
 from models import payroll_model, employee_model
+from models.db import begin_transaction, commit_transaction, rollback_transaction
 from services.calculation_services import build_payroll_for_employee
 from datetime import date
+import logging
+
+logger = logging.getLogger(__name__)
 
 payroll_bp = Blueprint('payroll', __name__)
 
@@ -57,39 +61,56 @@ def process():
         except ValueError:
             working_days = 22
 
+        # Start transaction for batch payroll processing
+        conn = None
         processed = 0
         errors = 0
 
-        for emp in active_emps:
-            try:
-                bonus = float(request.form.get(f'bonus_{emp["id"]}') or 0)
+        try:
+            conn = begin_transaction()
+            
+            for emp in active_emps:
+                try:
+                    bonus = float(request.form.get(f'bonus_{emp["id"]}') or 0)
 
-                payload = build_payroll_for_employee(
-                    company_id=company_id,
-                    employee_id=emp['id'],
-                    pay_period=pay_period,
-                    processed_by=user_id,
-                    bonus=bonus,
-                    working_days=working_days,
+                    payload = build_payroll_for_employee(
+                        company_id=company_id,
+                        employee_id=emp['id'],
+                        pay_period=pay_period,
+                        processed_by=user_id,
+                        bonus=bonus,
+                        working_days=working_days,
+                    )
+
+                    if payload:
+                        payroll_model.upsert_run(
+                            company_id,
+                            emp['id'],
+                            pay_period,
+                            payload
+                        )
+                        processed += 1
+
+                except Exception as e:
+                    errors += 1
+                    logger.error(f"Payroll error for employee {emp['id']}: {str(e)}")
+
+            # Commit if no errors, else rollback
+            if errors == 0:
+                commit_transaction(conn)
+                flash(f'Payroll processed: {processed} records saved.', 'success')
+            else:
+                rollback_transaction(conn)
+                flash(
+                    f'Payroll processing completed with {errors} errors. All changes rolled back for consistency.',
+                    'error'
                 )
 
-                if payload:
-                    payroll_model.upsert_run(
-                        company_id,
-                        emp['id'],
-                        pay_period,
-                        payload
-                    )
-                    processed += 1
-
-            except Exception:
-                errors += 1
-
-        flash(
-            f'Payroll processed: {processed} records saved'
-            + (f', {errors} errors.' if errors else '.'),
-            'success' if not errors else 'warning',
-        )
+        except Exception as e:
+            if conn:
+                rollback_transaction(conn)
+            logger.error(f"Payroll batch processing error: {str(e)}")
+            flash(f'Payroll batch processing error: {str(e)}', 'danger')
 
         return redirect(url_for('payroll.list_payroll', period=pay_period))
 

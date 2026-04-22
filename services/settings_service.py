@@ -94,11 +94,11 @@ def set_setting(company_id: int, setting_key: str, setting_value, setting_type: 
             value_str = str(setting_value)
         
         mutate("""
-            INSERT INTO system_settings (company_id, setting_key, setting_value, setting_type)
-            VALUES (%s, %s, %s, %s)
-            ON CONFLICT (company_id, setting_key) DO UPDATE
-            SET setting_value = EXCLUDED.setting_value,
-                setting_type = EXCLUDED.setting_type,
+            INSERT INTO system_settings (company_id, setting_key, setting_value, setting_type, updated_at)
+            VALUES (%s, %s, %s, %s, NOW())
+            ON DUPLICATE KEY UPDATE
+                setting_value = VALUES(setting_value),
+                setting_type = VALUES(setting_type),
                 updated_at = NOW()
         """, (company_id, setting_key, value_str, setting_type))
         

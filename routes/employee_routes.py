@@ -120,7 +120,11 @@ def add_employee():
                 employee_model.delete(emp_id, company_id)
                 raise RuntimeError('Failed to create user account.')
 
-            user_model.assign_role_to_user(new_user_id, company_id, 'Employee')
+            try:
+                user_model.assign_role_to_user(new_user_id, company_id, 'Employee')
+                logger.info(f"✅ Employee user (ID: {new_user_id}) assigned role: Employee")
+            except Exception as e:
+                logger.error(f"⚠️ Failed to assign role to user_roles table: {e}")
 
             # 3️⃣ LINK
             employee_model.link_user(emp_id, new_user_id, company_id)

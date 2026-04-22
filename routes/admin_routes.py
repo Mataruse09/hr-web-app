@@ -69,8 +69,9 @@ def add_user():
             # ⚠️ OPTIONAL: skip if you didn’t create user_roles table
             try:
                 user_model.assign_role_to_user(created_id, company_id, role)
-            except Exception:
-                pass  # safe fallback
+                logger.info(f"✅ User {username} (ID: {created_id}) assigned role: {role}")
+            except Exception as e:
+                logger.error(f"⚠️ Failed to assign role to user_roles table: {e}")
 
             # ────────────────
             # 2️⃣ CREATE EMPLOYEE

@@ -30,16 +30,22 @@ def create_user(company_id: int, username: str, email: str, full_name: str, pass
     normalized_username = username.strip().lower()
     normalized_email = email.strip().lower()
 
-    existing_user = get_by_username(normalized_username, company_id)
+    # Check if username exists ONLY in this company
+    existing_user = query(
+        "SELECT id FROM users WHERE username = %s AND company_id = %s",
+        (normalized_username, company_id), one=True
+    )
     if existing_user:
-        raise ValueError(f"Username '{normalized_username}' already exists.")
+        raise ValueError(f"Username '{normalized_username}' already exists in this company.")
 
-    existing_email = query(
+    # Check if email exists in this company
+    # ✅ NOTE: Schema has UNIQUE(company_id, email) - allows same email across different companies
+    existing_email_same_company = query(
         "SELECT id FROM users WHERE company_id = %s AND email = %s",
         (company_id, normalized_email), one=True
     )
-    if existing_email:
-        raise ValueError(f"Email '{normalized_email}' already exists.")
+    if existing_email_same_company:
+        raise ValueError(f"Email '{normalized_email}' already exists in this company.")
 
     role_map = {
         'hr': 'HR',
@@ -139,22 +145,36 @@ def clear_reset_token(user_id: int):
 
 
 # =========================
-# ROLES (POSTGRES SAFE)
+# ROLE MANAGEMENT
 # =========================
 
-def seed_roles():
-    default_roles = [
-        ('company_admin', 'Manage company settings'),
-        ('Admin', 'Full admin'),
-        ('HR', 'HR user'),
-        ('Manager', 'Manager'),
-        ('Employee', 'Employee'),
-        ('CHRO', 'Chief HR Officer'),
-    ]
+def assign_role_to_user(user_id: int, company_id: int, role: str):
+    """Assign a role to a user in the user_roles table"""
+    return mutate(
+        "INSERT INTO user_roles (user_id, company_id, role) "
+        "VALUES (%s, %s, %s) "
+        "ON DUPLICATE KEY UPDATE role = %s",
+        (user_id, company_id, role, role)
+    )
 
-    for role_name, description in default_roles:
-        mutate("""
-            INSERT INTO roles (name, description)
-            VALUES (%s, %s)
-            ON CONFLICT (name) DO NOTHING
-        """, (role_name, description))
+
+def get_user_roles(user_id: int, company_id: int):
+    """Get all roles for a user in a company"""
+    return query(
+        "SELECT role FROM user_roles WHERE user_id = %s AND company_id = %s",
+        (user_id, company_id)
+    )
+
+
+def remove_role_from_user(user_id: int, company_id: int, role: str = None):
+    """Remove role(s) from a user"""
+    if role:
+        return mutate(
+            "DELETE FROM user_roles WHERE user_id = %s AND company_id = %s AND role = %s",
+            (user_id, company_id, role)
+        )
+    else:
+        return mutate(
+            "DELETE FROM user_roles WHERE user_id = %s AND company_id = %s",
+            (user_id, company_id)
+        )
