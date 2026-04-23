@@ -253,3 +253,94 @@ def get_dashboard_kpis(company_id: int) -> dict:
         'attrition_rate':   attr_rate,
         'terminated_count': terminated,
     }
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# PERSONAL EMPLOYEE KPIs
+# ═══════════════════════════════════════════════════════════════════════════
+
+def get_personal_kpis(company_id: int, employee_id: int) -> dict:
+    """
+    Get personal KPIs for an employee - their own attendance, leave, etc.
+    """
+    from datetime import timedelta
+    
+    today = date.today()
+    today_str = today.isoformat()
+    current_year = today.year
+    
+    # Get this year's attendance
+    year_start = f"{current_year}-01-01"
+    year_end = f"{current_year}-12-31"
+    
+    attendance_logs = attendance_model.get_logs(company_id, year_start, year_end, employee_id)
+    
+    # Calculate personal stats
+    present_days = 0
+    absent_days = 0
+    late_days = 0
+    wfh_days = 0
+    half_day = 0
+    total_hours = 0.0
+    
+    if attendance_logs:
+        for att in attendance_logs:
+            status = att.get('status', '')
+            if status in ['Present']:
+                present_days += 1
+            elif status in ['Absent']:
+                absent_days += 1
+            elif status in ['Late']:
+                late_days += 1
+            elif status in ['Work From Home']:
+                wfh_days += 1
+            elif status in ['Half-Day']:
+                half_day += 1
+            if att.get('working_hours'):
+                total_hours += float(att.get('working_hours', 0))
+    
+    # Get today's attendance status
+    today_att = attendance_model.get_logs(company_id, today_str, today_str, employee_id)
+    today_status = None
+    if today_att:
+        today_status = today_att[0].get('status')
+    
+    # Get leave balance
+    leave_bal = leave_model.get_balance(employee_id, company_id, current_year)
+    
+    # Get pending leave requests
+    from models.db import query
+    pending_leaves = query("""
+        SELECT COUNT(*) as cnt FROM leave_requests
+        WHERE employee_id = %s AND company_id = %s AND status = 'Pending'
+    """, (employee_id, company_id), one=True)
+    pending_leave_count = pending_leaves['cnt'] if pending_leaves else 0
+    
+    # Calculate attendance rate for this employee
+    total_days = present_days + absent_days + late_days + wfh_days + half_day
+    personal_att_rate = round((present_days + wfh_days + half_day) / total_days * 100, 1) if total_days > 0 else 0
+    
+    return {
+        'total_employees': 1,  # Self
+        'active_employees': 1,
+        'present_today': 1 if today_status == 'Present' else 0,
+        'absent_today': 1 if today_status == 'Absent' else 0,
+        'on_leave_today': 1 if today_status in ['On Leave', 'Leave'] else 0,
+        'pending_payroll': 0,
+        'average_salary': 0,
+        'attendance_rate': personal_att_rate,
+        'attrition_rate': 0,
+        'terminated_count': 0,
+        # Personal fields
+        'personal_present_days': present_days,
+        'personal_absent_days': absent_days,
+        'personal_late_days': late_days,
+        'personal_wfh_days': wfh_days,
+        'personal_half_days': half_day,
+        'personal_total_hours': round(total_hours, 1),
+        'personal_today_status': today_status,
+        'personal_leave_remaining': leave_bal['annual_remaining'] if leave_bal and 'annual_remaining' in leave_bal else (leave_bal['annual_total'] - leave_bal['annual_used']) if leave_bal else 0,
+        'personal_leave_used': leave_bal['annual_used'] if leave_bal else 0,
+        'personal_leave_total': leave_bal['annual_total'] if leave_bal else 0,
+        'personal_pending_leaves': pending_leave_count,
+    }

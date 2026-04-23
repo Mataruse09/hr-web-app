@@ -49,6 +49,120 @@
   {% endif %}
 </div>
 
+{# ───────────────────────────────────────────────────────────── #}
+{# PERSONAL STATS - Shown to the employee themselves           #}
+{# ───────────────────────────────────────────────────────────── #}
+{% if show_sensitive_data %}
+<div class="kpi-grid">
+  <div class="kpi-card kpi-green">
+    <div class="kpi-icon">✅</div>
+    <div class="kpi-body">
+      <div class="kpi-value">{{ present_days }}</div>
+      <div class="kpi-label">Present Days</div>
+    </div>
+    <div class="kpi-sub">this year</div>
+  </div>
+  <div class="kpi-card kpi-blue">
+    <div class="kpi-icon">🏠</div>
+    <div class="kpi-body">
+      <div class="kpi-value">{{ wfh_days }}</div>
+      <div class="kpi-label">Work From Home</div>
+    </div>
+    <div class="kpi-sub">this year</div>
+  </div>
+  <div class="kpi-card kpi-orange">
+    <div class="kpi-icon">⏰</div>
+    <div class="kpi-body">
+      <div class="kpi-value">{{ late_days }}</div>
+      <div class="kpi-label">Late Arrivals</div>
+    </div>
+    <div class="kpi-sub">this year</div>
+  </div>
+  <div class="kpi-card kpi-red">
+    <div class="kpi-icon">❌</div>
+    <div class="kpi-body">
+      <div class="kpi-value">{{ absent_days }}</div>
+      <div class="kpi-label">Absent Days</div>
+    </div>
+    <div class="kpi-sub">this year</div>
+  </div>
+  <div class="kpi-card kpi-purple">
+    <div class="kpi-icon">⏳</div>
+    <div class="kpi-body">
+      <div class="kpi-value">{{ total_hours }}h</div>
+      <div class="kpi-label">Hours This Year</div>
+    </div>
+    <div class="kpi-sub">this year</div>
+  </div>
+</div>
+
+{# Quick Actions for Employees #}
+<div class="section-card" style="margin-bottom: 1.5rem; background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);">
+  <h3 class="section-title">⚡ Quick Actions</h3>
+  <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+    <a href="{{ url_for('attendance.mark') }}" class="btn btn-primary">📍 Mark Attendance</a>
+    <a href="{{ url_for('leave.apply') }}" class="btn btn-outline">🏖️ Apply for Leave</a>
+    <a href="{{ url_for('attendance.logs') }}?emp_id={{ employee.id }}" class="btn btn-outline">📊 View My Attendance</a>
+    <a href="{{ url_for('employees.my_profile') }}" class="btn btn-outline">👤 My Profile</a>
+  </div>
+</div>
+
+{# Recent Attendance This Week #}
+{% if recent_attendance %}
+<div class="section-card" style="margin-bottom: 1.5rem;">
+  <h3 class="section-title">📅 This Week's Attendance</h3>
+  <div style="display: flex; gap: 0.5rem; overflow-x: auto; padding-bottom: 0.5rem;">
+    {% for att in recent_attendance %}
+    <div class="attendance-day" style="min-width: 80px; text-align: center; padding: 0.75rem; border-radius: 8px; background: {% if att.status in ['Present','Work From Home'] %}#d4edda{% elif att.status == 'Late' %}#fff3cd{% elif att.status == 'Absent' %}#f8d7da{% else %}#e2e3e5{% endif %};">
+      <div style="font-size: 0.75rem; color: #6c757d;">{{ att.work_date.strftime('%a') if att.work_date else '' }}</div>
+      <div style="font-size: 0.85rem; font-weight: bold;">{{ att.work_date.strftime('%d') if att.work_date else '' }}</div>
+      <div style="font-size: 0.7rem; {% if att.status == 'Present' %}color: #28a745{% elif att.status == 'Late' %}color: #856404{% elif att.status == 'Absent' %}color: #dc3545{% else %}color: #6c757d{% endif %};">
+        {% if att.status %}{{ att.status[:8] }}{% else %}—{% endif %}
+      </div>
+      {% if att.working_hours %}
+      <div style="font-size: 0.7rem; color: #6c757d;">{{ att.working_hours }}h</div>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+{# Personal Leave History #}
+{% if personal_leaves %}
+<div class="section-card" style="margin-bottom: 1.5rem;">
+  <h3 class="section-title">🏖️ My Recent Leave Requests</h3>
+  <table class="data-table" style="font-size: 0.9rem;">
+    <thead>
+      <tr>
+        <th>Type</th>
+        <th>Dates</th>
+        <th>Status</th>
+        <th>Applied</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for leave in personal_leaves %}
+      <tr>
+        <td>{{ leave.leave_type }}</td>
+        <td>{{ leave.start_date }} → {{ leave.end_date }}</td>
+        <td>
+          <span class="badge badge-status-{{ leave.status | lower }}">
+            {{ leave.status }}
+          </span>
+        </td>
+        <td>{{ leave.created_at.strftime('%Y-%m-%d') if leave.created_at else '—' }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <div style="margin-top: 0.75rem;">
+    <a href="{{ url_for('leave.manage') }}" class="btn btn-sm btn-outline">View All Leaves →</a>
+  </div>
+</div>
+{% endif %}
+{% endif %}
+
 <div class="profile-grid">
 
   <!-- Personal Details -->
@@ -107,13 +221,13 @@
   <!-- Leave Balance -->
   <div class="section-card">
     <h3 class="section-title">Leave Balance ({{ balance.year if balance else 'N/A' }})</h3>
-    {% if balance %}
+    {% if balance and balance.annual_total is defined %}
     <div class="leave-bars">
-      {% set types = [('Annual','annual'),('Sick','sick'),('Emergency','emergency')] %}
+      {% set types = [('Annual','annual')] %}
       {% for label, key in types %}
-      {% set total = balance[key ~ '_total'] %}
-      {% set used  = balance[key ~ '_used'] %}
-      {% set rem   = [total - used, 0] | max %}
+      {% set total = balance[key ~ '_total'] if balance[key ~ '_total'] is defined else 21 %}
+      {% set used = balance[key ~ '_used'] if balance[key ~ '_used'] is defined else 0 %}
+      {% set rem = total - used if total > used else 0 %}
       <div class="leave-bar-item">
         <div class="leave-bar-label">
           <span>{{ label }}</span>

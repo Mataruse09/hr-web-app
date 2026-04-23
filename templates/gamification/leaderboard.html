@@ -25,17 +25,17 @@
                 </tr>
             </thead>
             <tbody>
-                {% for idx, employee in enumerate(leaderboard, 1) %}
-                <tr {% if idx == 1 %}class="table-warning fw-bold"{% elif idx <= 3 %}class="table-info"{% endif %}>
+                {% for employee in leaderboard %}
+                <tr {% if loop.index == 1 %}class="table-warning fw-bold"{% elif loop.index <= 3 %}class="table-info"{% endif %}>
                     <td>
-                        {% if idx == 1 %}
+                        {% if loop.index == 1 %}
                             🥇
-                        {% elif idx == 2 %}
+                        {% elif loop.index == 2 %}
                             🥈
-                        {% elif idx == 3 %}
+                        {% elif loop.index == 3 %}
                             🥉
                         {% else %}
-                            #{{ idx }}
+                            #{{ loop.index }}
                         {% endif %}
                     </td>
                     <td>

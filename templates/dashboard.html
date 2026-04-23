@@ -3,8 +3,124 @@
 {% block page_title %}Dashboard{% endblock %}
 
 {% block content %}
-<section class="kpi-grid">
 
+{# ───────────────────────────────────────────────────────────── #}
+{# PERSONAL EMPLOYEE DASHBOARD - Shown only to employees        #}
+{# ───────────────────────────────────────────────────────────── #}
+{% if is_personal %}
+<section class="section-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; margin-bottom: 1.5rem; padding: 1.5rem; border-radius: 12px;">
+  <div style="display: flex; align-items: center; gap: 1.5rem; flex-wrap: wrap;">
+    {# Avatar Circle #}
+    <div style="width: 70px; height: 70px; border-radius: 50%; background: rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; font-size: 1.75rem; font-weight: 600; border: 2px solid rgba(255,255,255,0.3);">
+      {{ employee.first_name[0] }}{{ employee.last_name[0] }}
+    </div>
+    {# Welcome Text #}
+    <div style="flex: 1; min-width: 200px;">
+      <h2 style="margin: 0; color: white; font-size: 1.5rem; font-weight: 600;">Welcome back, {{ employee.first_name }}! 👋</h2>
+      <p style="margin: 0.5rem 0 0; opacity: 0.9; font-size: 0.95rem;">
+        <span style="background: rgba(255,255,255,0.2); padding: 0.25rem 0.75rem; border-radius: 20px; margin-right: 0.5rem;">
+          {{ employee.job_title or 'Employee' }}
+        </span>
+        <span style="margin-left: 0.25rem;">·</span>
+        <span style="margin-left: 0.5rem;">{{ employee.department_name or 'No Department' }}</span>
+      </p>
+    </div>
+    {# Attendance Badge #}
+    <div style="background: rgba(255,255,255,0.15); padding: 0.75rem 1.5rem; border-radius: 10px; text-align: center; border: 1px solid rgba(255,255,255,0.2);">
+      <div style="font-size: 2rem; font-weight: 700; line-height: 1;">{{ kpis.attendance_rate }}%</div>
+      <div style="font-size: 0.8rem; opacity: 0.85; text-transform: uppercase; letter-spacing: 0.5px;">Attendance</div>
+    </div>
+  </div>
+</section>
+
+
+<!-- Unified KPI Grid for Employee Dashboard -->
+<div class="kpi-grid">
+  <div class="kpi-card kpi-green">
+    <div class="kpi-icon">✅</div>
+    <div class="kpi-body">
+      <div class="kpi-value">{{ kpis.personal_present_days }}</div>
+      <div class="kpi-label">Present Days</div>
+    </div>
+    <div class="kpi-sub">this year</div>
+  </div>
+  <div class="kpi-card kpi-blue">
+    <div class="kpi-icon">🏠</div>
+    <div class="kpi-body">
+      <div class="kpi-value">{{ kpis.personal_wfh_days }}</div>
+      <div class="kpi-label">Work From Home</div>
+    </div>
+    <div class="kpi-sub">this year</div>
+  </div>
+  <div class="kpi-card kpi-orange">
+    <div class="kpi-icon">⏰</div>
+    <div class="kpi-body">
+      <div class="kpi-value">{{ kpis.personal_late_days }}</div>
+      <div class="kpi-label">Late Arrivals</div>
+    </div>
+    <div class="kpi-sub">this year</div>
+  </div>
+  <div class="kpi-card kpi-red">
+    <div class="kpi-icon">❌</div>
+    <div class="kpi-body">
+      <div class="kpi-value">{{ kpis.personal_absent_days }}</div>
+      <div class="kpi-label">Absent Days</div>
+    </div>
+    <div class="kpi-sub">this year</div>
+  </div>
+  <div class="kpi-card kpi-purple">
+    <div class="kpi-icon">⏳</div>
+    <div class="kpi-body">
+      <div class="kpi-value">{{ kpis.personal_total_hours }}h</div>
+      <div class="kpi-label">Hours This Year</div>
+    </div>
+    <div class="kpi-sub">this year</div>
+  </div>
+  <div class="kpi-card kpi-teal">
+    <div class="kpi-icon">🏖️</div>
+    <div class="kpi-body">
+      <div class="kpi-value">{{ kpis.personal_leave_remaining }}</div>
+      <div class="kpi-label">Leave Remaining</div>
+    </div>
+    <div class="kpi-sub">of {{ kpis.personal_leave_total }} days</div>
+  </div>
+</div>
+
+{# Today's Status #}
+{% if kpis.personal_today_status %}
+<section class="section-card mt-4" style="border-left: 4px solid {% if kpis.personal_today_status == 'Present' %}#28a745{% elif kpis.personal_today_status == 'Late' %}#ffc107{% elif kpis.personal_today_status == 'Absent' %}#dc3545{% else %}#6c757d{% endif %};">
+  <h3 class="section-title">📅 Today's Status: <span style="color: {% if kpis.personal_today_status == 'Present' %}#28a745{% elif kpis.personal_today_status == 'Late' %}#ffc107{% elif kpis.personal_today_status == 'Absent' %}#dc3545{% else %}#6c757d{% endif %};">{{ kpis.personal_today_status }}</span></h3>
+</section>
+{% endif %}
+
+{# Pending Leaves #}
+{% if kpis.personal_pending_leaves > 0 %}
+<section class="section-card mt-4" style="background: #fff3cd;">
+  <h3 class="section-title">⏳ Pending Leave Requests</h3>
+  <p>You have <strong>{{ kpis.personal_pending_leaves }}</strong> leave request(s) waiting for approval.</p>
+  <a href="{{ url_for('leave.manage') }}" class="btn btn-outline">View My Leaves</a>
+</section>
+{% endif %}
+
+{# Personal Quick Actions #}
+<section class="section-card mt-4">
+  <h3 class="section-title">⚡ Quick Actions</h3>
+  <div class="quick-actions">
+    <a href="{{ url_for('attendance.mark') }}" class="action-btn action-green">📍 Mark Attendance</a>
+    <a href="{{ url_for('leave.apply') }}" class="action-btn action-orange">✈️ Apply Leave</a>
+    <a href="{{ url_for('attendance.logs') }}" class="action-btn action-blue">📊 My Attendance</a>
+    <a href="{{ url_for('employees.my_profile') }}" class="action-btn action-cyan">👤 My Profile</a>
+  </div>
+</section>
+
+{# Hide company-wide data for employees #}
+{% else %}
+
+{# ───────────────────────────────────────────────────────────── #}
+{# COMPANY DASHBOARD - Shown to Admin, HR, CHRO, Manager       #}
+{# ───────────────────────────────────────────────────────────── #}
+
+<div class="kpi-grid">
   <div class="kpi-card kpi-blue">
     <div class="kpi-icon">👥</div>
     <div class="kpi-body">
@@ -67,8 +183,7 @@
     </div>
     <div class="kpi-sub">{{ kpis.terminated_count }} terminated</div>
   </div>
-
-</section>
+</div>
 
 <!-- Role-specific message -->
 <section class="section-card mt-4">
@@ -138,4 +253,5 @@
     </tbody>
   </table>
 </section>
+{% endif %}
 {% endblock %}

@@ -39,6 +39,11 @@ def login():
 
         user = user_model.get_by_username(username, company['id'])
 
+        # Debug: Log the user data retrieved
+        logger.info(f"User found: {user}")
+        if user:
+            logger.info(f"User role from DB: '{user.get('role')}'")
+
         # ✅ safer password check (PostgreSQL-safe)
         if not user or not user.get('password_hash'):
             flash('Invalid credentials. Please try again.', 'danger')
@@ -76,19 +81,30 @@ def login():
         # ✅ normalize role
         role = (user.get('role') or '').strip().lower()
 
+        # If role is empty or None, check user_roles table
+        if not role:
+            from models import user_model as um
+            user_roles = um.get_user_roles(user['id'], company['id'])
+            if user_roles and len(user_roles) > 0:
+                role = user_roles[0]['role'].strip().lower()
+                logger.info(f"Role from user_roles table: '{role}'")
+
         role_map = {
             'admin': 'Admin',
             'hr': 'HR',
             'manager': 'Manager',
             'chro': 'CHRO',
             'company_admin': 'company_admin',
-            'employee': 'Employee'
+            'employee': 'Employee',
+            'emp': 'Employee',
+            'staff': 'Employee',
+            'user': 'Employee'
         }
 
-        session['role'] = role_map.get(
-            role,
-            role.title() if role else 'Employee'
-        )
+        session['role'] = role_map.get(role, 'Employee')
+
+        # Debug logging
+        logger.info(f"User {user['username']} logged in with role: {session['role']}")
 
         user_model.update_last_login(user['id'])
         
@@ -241,6 +257,51 @@ def register_company():
             send_admin_registration_email(admin_full_name, admin_email, company_name)
         except Exception as e:
             logger.warning(f"Failed to send registration email: {e}")
+
+        # ✅ SEND NOTIFICATION TO SUPPORT EMAIL
+        try:
+            from services.email_service import send_email
+            support_subject = f"New Company Registration - {company_name}"
+            support_body = f"""
+            <html>
+            <body style="font-family: Arial, sans-serif; color: #333;">
+                <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+                    <h2 style="color: #2c3e50;">New Company Registered!</h2>
+                    
+                    <p>A new company has registered on <strong>WorkZen HR</strong>.</p>
+                    
+                    <h3>Company Details:</h3>
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <tr>
+                            <td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>Company Name:</strong></td>
+                            <td style="padding: 8px; border-bottom: 1px solid #ddd;">{company_name}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>Industry:</strong></td>
+                            <td style="padding: 8px; border-bottom: 1px solid #ddd;">{industry}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>Admin Name:</strong></td>
+                            <td style="padding: 8px; border-bottom: 1px solid #ddd;">{admin_full_name}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>Admin Email:</strong></td>
+                            <td style="padding: 8px; border-bottom: 1px solid #ddd;">{admin_email}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>Phone:</strong></td>
+                            <td style="padding: 8px; border-bottom: 1px solid #ddd;">{phone}</td>
+                        </tr>
+                    </table>
+                    
+                    <p style="margin-top: 20px;">This is an automated notification from the WorkZen HR system.</p>
+                </div>
+            </body>
+            </html>
+            """
+            send_email('tinashemataruse226@gmail.com', support_subject, support_body, is_html=True)
+        except Exception as e:
+            logger.warning(f"Failed to send support notification email: {e}")
 
         flash('Company registered successfully! Check your email for welcome message. Please login.', 'success')
         return redirect(url_for('auth.login'))

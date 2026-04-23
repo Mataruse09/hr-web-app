@@ -52,7 +52,8 @@ def create_user(company_id: int, username: str, email: str, full_name: str, pass
         'chro': 'CHRO',
         'admin': 'Admin',
         'manager': 'Manager',
-        'employee': 'Employee'
+        'employee': 'Employee',
+        'company_admin': 'company_admin'
     }
     normalized_role = role_map.get(role.strip().lower(), role.strip().title())
 

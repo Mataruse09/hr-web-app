@@ -3,59 +3,648 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Login — HRCore ERP</title>
+  <title>Login — WorkZen HR</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
   <link rel="stylesheet"
         href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <style>
+    /* ── Custom Login Redesign ─────────────────────────────── */
+    .login-page-wrapper {
+      min-height: 100vh;
+      background: linear-gradient(135deg, #0f1c2e 0%, #1a3a5c 100%);
+      padding: 0;
+      position: relative;
+      overflow-x: hidden;
+    }
+    
+    /* Bold Pentagon Blue Area */
+    .pentagon-features-area {
+      background: linear-gradient(180deg, #0a2540 0%, #1e3a5f 50%, #142850 100%);
+      clip-path: polygon(0 0, 100% 0, 100% 70%, 50% 100%, 0 70%);
+      padding: 35px 0 50px 0;
+      box-shadow: 0 10px 50px rgba(10,37,64,0.6);
+      position: relative;
+      z-index: 2;
+      border-bottom: 3px solid #2a5a8f;
+    }
+    
+    /* Top Corner Buttons - Get Started & Need Help Only */
+    .corner-buttons {
+      display: flex;
+      justify-content: space-between;
+      padding: 0 40px;
+      max-width: 1000px;
+      margin: 0 auto;
+      position: relative;
+      z-index: 10;
+    }
+    .corner-btn {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 18px 36px;
+      border-radius: 40px;
+      font-size: 1.15rem;
+      font-weight: 700;
+      text-decoration: none;
+      transition: all 0.3s ease;
+      box-shadow: 0 6px 25px rgba(0,0,0,0.4);
+      cursor: pointer;
+      border: none;
+    }
+    .corner-btn.get-started {
+      background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+      color: #1a1a2e;
+    }
+    .corner-btn.get-started:hover {
+      transform: scale(1.08);
+      box-shadow: 0 12px 40px rgba(255, 215, 0, 0.6);
+    }
+    .corner-btn.help-btn {
+      background: linear-gradient(135deg, #00CED1 0%, #20B2AA 100%);
+      color: #fff;
+    }
+    .corner-btn.help-btn:hover {
+      transform: scale(1.08);
+      box-shadow: 0 12px 40px rgba(0, 206, 209, 0.6);
+    }
+    .corner-btn i {
+      font-size: 1.3rem;
+    }
+    
+    /* Dropdown for Get Started */
+    .dropdown-container {
+      position: relative;
+    }
+    .dropdown-content {
+      display: none;
+      position: absolute;
+      top: calc(100% + 18px);
+      left: 0;
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 25px 80px rgba(0,0,0,0.5);
+      min-width: 480px;
+      z-index: 100;
+      overflow: hidden;
+      animation: slideDown 0.35s ease;
+    }
+    .dropdown-container:hover .dropdown-content {
+      display: block;
+    }
+    @keyframes slideDown {
+      from { opacity: 0; transform: translateY(-20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .dropdown-header {
+      background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+      color: #1a1a2e;
+      padding: 22px 28px;
+      font-weight: 700;
+      font-size: 1.15rem;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .dropdown-body {
+      padding: 28px;
+      color: #333;
+    }
+    .dropdown-body ol {
+      margin: 0;
+      padding-left: 22px;
+    }
+    .dropdown-body li {
+      margin-bottom: 16px;
+      line-height: 1.7;
+      font-size: 1rem;
+    }
+    .dropdown-body strong {
+      color: #0a2540;
+    }
+    
+    /* Help Dropdown */
+    .help-dropdown-content {
+      display: none;
+      position: absolute;
+      top: calc(100% + 18px);
+      right: 0;
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 25px 80px rgba(0,0,0,0.5);
+      min-width: 360px;
+      z-index: 100;
+      overflow: hidden;
+    }
+    .help-dropdown-container:hover .help-dropdown-content {
+      display: block;
+    }
+    .help-dropdown-header {
+      background: linear-gradient(135deg, #00CED1 0%, #20B2AA 100%);
+      color: white;
+      padding: 22px 28px;
+      font-weight: 700;
+      font-size: 1.15rem;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .help-dropdown-body {
+      padding: 28px;
+      color: #333;
+      text-align: center;
+    }
+    .help-dropdown-body p {
+      margin-bottom: 14px;
+      font-size: 1rem;
+    }
+    .help-email {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      background: linear-gradient(135deg, #0a2540 0%, #1e3a5f 100%);
+      color: white;
+      padding: 16px 28px;
+      border-radius: 35px;
+      font-weight: 600;
+      text-decoration: none;
+      font-size: 1rem;
+      transition: all 0.3s ease;
+    }
+    .help-email:hover {
+      transform: scale(1.08);
+      box-shadow: 0 10px 30px rgba(0, 206, 209, 0.5);
+    }
+    
+    /* Features Row - Following Diagonal Clip-Path Edge */
+    .features-diagonal-row {
+      position: absolute;
+      bottom: -18px;
+      left: 0;
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      gap: 24px;
+      z-index: 15;
+      padding: 0 50px;
+    }
+    .diagonal-feature {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background: linear-gradient(135deg, #1e3a5f 0%, #142850 100%);
+      border-radius: 14px;
+      padding: 12px 18px;
+      color: #fff;
+      box-shadow: 0 6px 20px rgba(10,37,64,0.6);
+      border: 1px solid rgba(255,255,255,0.2);
+      transition: all 0.3s ease;
+      min-width: 80px;
+    }
+    .diagonal-feature:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 12px 35px rgba(10,37,64,0.8);
+      border-color: rgba(255,215,0,0.5);
+    }
+    .diagonal-feature .icon {
+      font-size: 1.4rem;
+      margin-bottom: 6px;
+    }
+    .diagonal-feature .label {
+      font-size: 0.6rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    /* Features Row - Following Diagonal Clip-Path Edge on the Opposite Side */
+    .features-diagonal-row-right {
+      position: absolute;
+      bottom: -15px;
+      right: 0;
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      z-index: 15;
+      padding: 0 40px;
+    }
+    .diagonal-feature-right {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background: linear-gradient(135deg, #1e3a5f 0%, #142850 100%);
+      border-radius: 12px;
+      padding: 10px 14px;
+      color: #fff;
+      box-shadow: 0 4px 15px rgba(10,37,64,0.5);
+      border: 1px solid rgba(255,255,255,0.15);
+      transition: all 0.3s ease;
+      min-width: 70px;
+    }
+    .diagonal-feature-right:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 25px rgba(10,37,64,0.7);
+      border-color: rgba(255,255,255,0.3);
+    }
+    .diagonal-feature-right .icon {
+      font-size: 1.3rem;
+      margin-bottom: 4px;
+    }
+    .diagonal-feature-right .label {
+      font-size: 0.55rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    /* Login Center Area - Raised Higher */
+    .login-center-area {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-top: -35px;
+      z-index: 5;
+      position: relative;
+      padding: 0 20px;
+    }
+    
+    .login-card-wrapper {
+      background: #fff;
+      border-radius: 24px;
+      padding: 42px 36px 34px 36px;
+      box-shadow: 0 35px 120px rgba(0,0,0,0.55);
+      min-width: 360px;
+      max-width: 400px;
+      width: 100%;
+    }
+    
+    .login-card-header {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+    
+    .login-card-logo {
+      font-size: 56px;
+      color: var(--primary);
+      line-height: 1;
+    }
+    
+    .login-card-title {
+      font-size: 1.9rem;
+      font-weight: 800;
+      color: #1a1a2e;
+      margin-top: 12px;
+      letter-spacing: 0.5px;
+    }
+    
+    .login-card-subtitle {
+      font-size: 0.95rem;
+      color: #666;
+      margin-top: 8px;
+    }
+    
+    .login-form .form-group {
+      margin-bottom: 18px;
+    }
+    
+    .login-form .form-label {
+      display: block;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 8px;
+    }
+    
+    .login-form .form-control {
+      width: 100%;
+      padding: 15px 18px;
+      border: 2px solid #e0e0e0;
+      border-radius: 14px;
+      font-size: 1rem;
+      transition: all 0.3s ease;
+      box-sizing: border-box;
+    }
+    
+    .login-form .form-control:focus {
+      border-color: #667eea;
+      outline: none;
+      box-shadow: 0 0 0 4px rgba(102,126,234,0.15);
+    }
+    
+    .password-wrapper {
+      position: relative;
+    }
+    
+    .password-toggle {
+      position: absolute;
+      right: 16px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 1.25rem;
+      padding: 6px;
+    }
+    
+    .btn-signin {
+      width: 100%;
+      padding: 18px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 14px;
+      font-size: 1.15rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      margin-top: 14px;
+    }
+    
+    .btn-signin:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 12px 35px rgba(102,126,234,0.55);
+    }
+    
+    .login-links {
+      text-align: center;
+      margin-top: 20px;
+    }
+    
+    .login-links a {
+      color: #667eea;
+      text-decoration: none;
+      font-size: 0.95rem;
+    }
+    
+    .login-links a:hover { 
+      text-decoration: underline; 
+    }
+    
+    .login-links p { 
+      margin: 10px 0; 
+    }
+    
+    /* Social Links Row - At Bottom */
+    .social-links-row {
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      margin-top: 25px;
+      margin-bottom: 0;
+    }
+    
+    .social-links {
+      display: flex;
+      gap: 18px;
+      background: rgba(255,255,255,0.1);
+      padding: 12px 30px;
+      border-radius: 40px;
+      box-shadow: 0 2px 15px rgba(20,40,80,0.15);
+    }
+    
+    .social-link {
+      width: 46px;
+      height: 46px;
+      background: linear-gradient(135deg, #1a1a2e 0%, #2d3a5c 100%);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      text-decoration: none;
+      font-size: 1.3rem;
+      transition: all 0.3s ease;
+      border: 2px solid rgba(255,255,255,0.2);
+    }
+    
+    .social-link:hover {
+      transform: translateY(-4px) scale(1.1);
+      box-shadow: 0 8px 25px rgba(0,0,0,0.4);
+      border-color: #FFD700;
+    }
+    
+    /* YouTube Row */
+    .youtube-row {
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      margin-top: 20px;
+      margin-bottom: 30px;
+    }
+    
+    .youtube-link {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: linear-gradient(135deg, #FF0000 0%, #CC0000 100%);
+      color: #fff;
+      font-weight: 700;
+      font-size: 1rem;
+      padding: 14px 32px;
+      border-radius: 30px;
+      text-decoration: none;
+      box-shadow: 0 4px 20px rgba(255,0,0,0.3);
+      transition: all 0.3s ease;
+    }
+    
+    .youtube-link:hover {
+      transform: scale(1.05);
+      box-shadow: 0 6px 30px rgba(255,0,0,0.5);
+    }
+    
+    .youtube-icon {
+      font-size: 1.4rem;
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+      .corner-buttons { padding: 0 15px; }
+      .corner-btn { padding: 14px 24px; font-size: 1rem; }
+      .features-diagonal-row { gap: 10px; padding: 0 15px; }
+      .diagonal-feature { min-width: 55px; padding: 8px 10px; }
+      .diagonal-feature .icon { font-size: 1rem; }
+      .diagonal-feature .label { font-size: 0.45rem; }
+      .login-card-wrapper { padding: 28px 22px; }
+      .dropdown-content, .help-dropdown-content { min-width: 300px; }
+    }
+  </style>
 </head>
-<body class="login-body">
-  <div class="login-container">
-    <div class="login-card">
-      <div class="login-header">
-        <div class="login-logo">⬡</div>
-        <h1 class="login-title">HRCore ERP</h1>
-        <p class="login-subtitle">Enterprise HR Management Platform</p>
+<body>
+  <div class="login-page-wrapper">
+    <!-- Bold Blue Pentagon Area - Only Buttons -->
+    <div class="pentagon-features-area">
+      <!-- Corner Buttons Only -->
+      <div class="corner-buttons">
+        <div class="dropdown-container">
+          <button class="corner-btn get-started">
+            <i class="fas fa-rocket"></i> Get Started
+          </button>
+          <div class="dropdown-content">
+            <div class="dropdown-header">
+              <i class="fas fa-book-open"></i> How to Use WorkZen HR
+            </div>
+            <div class="dropdown-body">
+              <ol>
+                <li><strong>Select your company</strong> from the dropdown menu</li>
+                <li><strong>Enter your username</strong> provided by your administrator</li>
+                <li><strong>Enter your password</strong> and click Sign In</li>
+                <li><strong>Navigate modules</strong> using the sidebar: Employees, Attendance, Leave, Payroll, Analytics, Performance, AI Predictions</li>
+                <li><strong>Check your dashboard</strong> for insights, notifications, and quick actions</li>
+                <li><strong>Contact support</strong> if you need help - click the Need Help button</li>
+              </ol>
+            </div>
+          </div>
+        </div>
+        
+        <div class="help-dropdown-container">
+          <button class="corner-btn help-btn">
+            <i class="fas fa-question-circle"></i> Need Help
+          </button>
+          <div class="help-dropdown-content">
+            <div class="help-dropdown-header">
+              <i class="fas fa-life-ring"></i> Support Team
+            </div>
+            <div class="help-dropdown-body">
+              <p>Having issues? We're here to help!</p>
+              <p>Email us anytime:</p>
+              <a href="mailto:tinashemataruse226@gmail.com" class="help-email">
+                <i class="fas fa-envelope"></i> tinashemataruse226@gmail.com
+              </a>
+              <p style="font-size: 0.8rem; color: #888; margin-top: 15px;">We typically respond within 24 hours</p>
+            </div>
+          </div>
+        </div>
       </div>
+      
+      <!-- No features row here -->
+    </div>
 
-      {% with messages = get_flashed_messages(with_categories=true) %}
-        {% for category, message in messages %}
-          <div class="alert alert-{{ category }} mb-2">{{ message }}</div>
-        {% endfor %}
-      {% endwith %}
+    <!-- Features Following Diagonal Clip-Path Edge (now outside pentagon, not behind form) -->
+    <div class="features-diagonal-row" style="z-index:20; position:relative; margin-bottom:0; margin-top:-30px;">
+      <div class="diagonal-feature">
+        <span class="icon">👥</span>
+        <span class="label">Employee</span>
+      </div>
+      <div class="diagonal-feature">
+        <span class="icon">📅</span>
+        <span class="label">Attendance</span>
+      </div>
+      <div class="diagonal-feature">
+        <span class="icon">🏖️</span>
+        <span class="label">Leave</span>
+      </div>
+      <div class="diagonal-feature">
+        <span class="icon">💰</span>
+        <span class="label">Payroll</span>
+      </div>
+      <div class="diagonal-feature">
+        <span class="icon">📊</span>
+        <span class="label">Analytics</span>
+      </div>
+      <div class="diagonal-feature">
+        <span class="icon">⭐</span>
+        <span class="label">Performance</span>
+      </div>
+      <div class="diagonal-feature">
+        <span class="icon">🤖</span>
+        <span class="label">AI Predictions</span>
+      </div>
+    </div>
 
-      <form method="POST" action="{{ url_for('auth.login') }}" class="login-form">
-        <div class="form-group">
-          <label class="form-label">Company</label>
-          <select name="company" class="form-control" required autofocus>
-            <option value="">Select company</option>
-            {% for comp in companies %}
-              <option value="{{ comp.name }}">{{ comp.name }}</option>
-            {% endfor %}
-          </select>
+    <!-- Login Card Centered -->
+    <div class="login-center-area">
+      <div class="login-card-wrapper">
+        <div class="login-card-header">
+          <div class="login-card-logo">⬡</div>
+          <h1 class="login-card-title">WorkZen HR</h1>
+          <p class="login-card-subtitle">Sign in to continue</p>
         </div>
-        <div class="form-group">
-          <label class="form-label">Username</label>
-          <input type="text" name="username" class="form-control"
-                 placeholder="Enter your username" required />
+        
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% for category, message in messages %}
+            <div class="alert alert-{{ category }} mb-3" style="padding: 12px; border-radius: 8px;">{{ message }}</div>
+          {% endfor %}
+        {% endwith %}
+        
+        <form method="POST" action="{{ url_for('auth.login') }}" class="login-form">
+          <div class="form-group">
+            <label class="form-label">Company</label>
+            <select name="company" class="form-control" required autofocus>
+              <option value="">Select company</option>
+              {% for comp in companies %}
+                <option value="{{ comp.name }}">{{ comp.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Username</label>
+            <input type="text" name="username" class="form-control"
+                   placeholder="Enter your username" required />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Password</label>
+            <div class="password-wrapper">
+              <input type="password" name="password" class="form-control"
+                     placeholder="Enter your password" required id="passwordField" />
+              <button type="button" class="password-toggle" onclick="togglePassword()">
+                👁️
+              </button>
+            </div>
+          </div>
+          <button type="submit" class="btn-signin">
+            Sign In
+          </button>
+        </form>
+        
+        <div class="login-links">
+          <p>New? <a href="{{ url_for('auth.register_company') }}">Register your company</a></p>
+          <p><a href="{{ url_for('auth.reset_password') }}">Forgot password?</a></p>
         </div>
-        <div class="form-group">
-          <label class="form-label">Password</label>
-          <input type="password" name="password" class="form-control"
-                 placeholder="Enter your password" required />
+      </div>
+      
+      <!-- Social Links at Bottom -->
+      <div class="social-links-row">
+        <div class="social-links">
+          <a href="https://youtube.com" target="_blank" class="social-link" title="YouTube">
+            <i class="fab fa-youtube"></i>
+          </a>
+          <a href="https://linkedin.com" target="_blank" class="social-link" title="LinkedIn">
+            <i class="fab fa-linkedin-in"></i>
+          </a>
+          <a href="https://twitter.com" target="_blank" class="social-link" title="Twitter">
+            <i class="fab fa-twitter"></i>
+          </a>
+          <a href="https://facebook.com" target="_blank" class="social-link" title="Facebook">
+            <i class="fab fa-facebook-f"></i>
+          </a>
+          <a href="https://instagram.com" target="_blank" class="social-link" title="Instagram">
+            <i class="fab fa-instagram"></i>
+          </a>
         </div>
-        <button type="submit" class="btn btn-primary btn-full">
-          Sign In
-        </button>
-      </form>
-      <p class="mt-2">New? <a href="{{ url_for('auth.register_company') }}">Register your company</a></p>
-      <p class="mt-1"><a href="{{ url_for('auth.reset_password') }}">Forgot password?</a></p>
-
-      <div class="login-demo">
-        <p class="demo-hint">Developed by:tinashemataruse226@gmail.com</p>
-        <code>Help in business plans! </code> &nbsp;·&nbsp;
-        <code>Try it for free now</code>
+      </div>
+      
+      <!-- YouTube Area -->
+      <div class="youtube-row">
+        <a href="https://www.youtube.com/watch?v=dQw4w9WgXcQ" target="_blank" class="youtube-link">
+          <i class="fab fa-youtube youtube-icon"></i> 
+          <span class="youtube-label">Watch App Overview</span>
+        </a>
       </div>
     </div>
   </div>
+  
+  <script>
+    function togglePassword() {
+      const passwordField = document.getElementById('passwordField');
+      if (passwordField.type === 'password') {
+        passwordField.type = 'text';
+      } else {
+        passwordField.type = 'password';
+      }
+    }
+  </script>
 </body>
 </html>

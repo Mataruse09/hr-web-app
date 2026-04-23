@@ -17,14 +17,14 @@ forecasting_bp = Blueprint('forecasting', __name__)
 
 @forecasting_bp.route('/forecasting')
 @login_required
-@roles_required('Admin', 'HR', 'CHRO')
+@roles_required('Admin', 'HR', 'CHRO', 'Manager')
 def list_forecasts():
     """List all labour forecasts."""
     company_id = session['company_id']
     
     try:
         forecasts = query(
-            """SELECT lf.*, d.department_name 
+            """SELECT lf.*, d.name as department_name 
                FROM labour_forecasts lf
                LEFT JOIN departments d ON lf.department_id = d.id
                WHERE lf.company_id = %s
@@ -43,7 +43,7 @@ def list_forecasts():
 
 @forecasting_bp.route('/forecasting/create', methods=['GET', 'POST'])
 @login_required
-@roles_required('Admin', 'HR', 'CHRO')
+@roles_required('Admin', 'HR', 'CHRO', 'Manager')
 def create_forecast():
     """Create new labour forecast."""
     company_id = session['company_id']

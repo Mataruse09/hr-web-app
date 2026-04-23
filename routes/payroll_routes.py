@@ -18,6 +18,7 @@ payroll_bp = Blueprint('payroll', __name__)
 @login_required
 @roles_required('Admin', 'HR', 'CHRO')
 def list_payroll():
+    """List payroll runs. CHRO can view only, HR/Admin can view and edit."""
     company_id = session.get('company_id')
 
     if not company_id:
@@ -25,19 +26,23 @@ def list_payroll():
         return redirect(url_for('auth.login'))
 
     period = (request.args.get('period') or date.today().strftime('%Y-%m')).strip()
-
     runs = payroll_model.get_runs(company_id, period)
+
+    # Add read-only flag for CHRO
+    user_role = session.get('role', 'Employee').strip().lower()
+    is_readonly = user_role == 'chro'
 
     return render_template(
         'payroll/list.html',
         runs=runs,
-        period=period
+        period=period,
+        is_readonly=is_readonly
     )
 
 
 @payroll_bp.route('/process', methods=['GET', 'POST'])
 @login_required
-@roles_required('Admin', 'HR', 'CHRO')
+@roles_required('Admin', 'HR')  # CHRO cannot process/approve payroll, only view
 def process():
     company_id = session.get('company_id')
     user_id = session.get('user_id')
@@ -125,7 +130,7 @@ def process():
 
 @payroll_bp.route('/compensation/<int:emp_id>', methods=['GET', 'POST'])
 @login_required
-@roles_required('Admin', 'HR')
+@roles_required('Admin', 'HR')  # CHRO cannot edit compensation
 def compensation(emp_id):
     company_id = session.get('company_id')
 

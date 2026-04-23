@@ -24,11 +24,12 @@ def get_by_id(emp_id: int, company_id: int):
 
 
 def get_by_user_id(user_id: int, company_id: int):
-    return query(
-        "SELECT * FROM employees_core WHERE user_id = %s AND company_id = %s",
-        (user_id, company_id),
-        one=True
-    )
+    return query("""
+        SELECT e.*, d.name AS department_name
+        FROM   employees_core e
+        LEFT JOIN departments d ON d.id = e.department_id
+        WHERE  e.user_id = %s AND e.company_id = %s
+    """, (user_id, company_id), one=True)
 
 
 def get_active_count(company_id: int) -> int:

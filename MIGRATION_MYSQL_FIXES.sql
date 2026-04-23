@@ -31,6 +31,10 @@ ALTER TABLE leave_requests
 ADD FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE IF NOT EXISTS,
 ADD FOREIGN KEY (employee_id) REFERENCES employees_core(id) ON DELETE CASCADE IF NOT EXISTS;
 
+-- Step 4: Add comments column to performance_reviews table
+ALTER TABLE performance_reviews 
+ADD COLUMN comments LONGTEXT NULL AFTER overall_rating;
+
 -- ============================================================
 -- VERIFICATION QUERIES
 -- ============================================================

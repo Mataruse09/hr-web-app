@@ -28,10 +28,10 @@ def leaderboard():
                       gp.points, gp.level, gp.badges
                FROM gamification_points gp
                LEFT JOIN employees_core ec ON gp.employee_id = ec.id
-               WHERE ec.company_id = %s
+               WHERE gp.company_id = %s AND ec.company_id = %s
                ORDER BY gp.points DESC, gp.level DESC
                LIMIT 100""",
-            (company_id,)
+            (company_id, company_id)
         )
         
         return render_template('gamification/leaderboard.html', leaderboard=leaderboard_data or [])
@@ -62,17 +62,17 @@ def my_profile():
         
         # Get gamification data
         gamification = query(
-            "SELECT * FROM gamification_points WHERE employee_id = %s",
-            (employee['id'],), one=True
+            "SELECT * FROM gamification_points WHERE company_id = %s AND employee_id = %s",
+            (company_id, employee['id']), one=True
         )
         
         if not gamification:
             # Initialize if doesn't exist
             mutate(
                 """INSERT INTO gamification_points 
-                   (employee_id, points, level, badges, achievements) 
-                   VALUES (%s, %s, %s, %s, %s)""",
-                (employee['id'], 0, 1, '[]', '[]')
+                   (company_id, employee_id, points, level, badges, achievements) 
+                   VALUES (%s, %s, %s, %s, %s, %s)""",
+                (company_id, employee['id'], 0, 1, '[]', '[]')
             )
             gamification = {'points': 0, 'level': 1, 'badges': '[]', 'achievements': '[]'}
         
@@ -111,22 +111,22 @@ def award_points():
         
         # Get or create gamification record
         gamification = query(
-            "SELECT * FROM gamification_points WHERE employee_id = %s",
-            (employee_id,), one=True
+            "SELECT * FROM gamification_points WHERE company_id = %s AND employee_id = %s",
+            (company_id, employee_id), one=True
         )
         
         if gamification:
             new_points = gamification['points'] + points
             mutate(
-                "UPDATE gamification_points SET points = %s WHERE employee_id = %s",
-                (new_points, employee_id)
+                "UPDATE gamification_points SET points = %s WHERE company_id = %s AND employee_id = %s",
+                (new_points, company_id, employee_id)
             )
         else:
             mutate(
                 """INSERT INTO gamification_points 
-                   (employee_id, points, level, badges, achievements) 
-                   VALUES (%s, %s, %s, %s, %s)""",
-                (employee_id, points, 1, '[]', '[]')
+                   (company_id, employee_id, points, level, badges, achievements) 
+                   VALUES (%s, %s, %s, %s, %s, %s)""",
+                (company_id, employee_id, points, 1, '[]', '[]')
             )
         
         # Log activity

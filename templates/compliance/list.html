@@ -5,12 +5,15 @@
 {% block content %}
 <div class="container-fluid mt-4">
     <div class="row mb-4">
-        <div class="col-md-10">
+        <div class="col-md-8">
             <h1 class="display-5">✅ Compliance Tracking</h1>
             <p class="text-muted">Policy compliance and training records</p>
         </div>
-        <div class="col-md-2">
-            <a href="{{ url_for('compliance.compliance_dashboard') }}" class="btn btn-primary w-100">Dashboard</a>
+        <div class="col-md-4 text-end">
+            <a href="{{ url_for('compliance.compliance_dashboard') }}" class="btn btn-outline">📊 Dashboard</a>
+            {% if session.role in ['Admin', 'HR', 'CHRO'] %}
+            <a href="{{ url_for('employees.list_employees') }}" class="btn btn-success">➕ Assign Compliance</a>
+            {% endif %}
         </div>
     </div>
 

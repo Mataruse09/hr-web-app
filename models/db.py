@@ -91,9 +91,48 @@ def init_pool(app):
             **conn_args
         )
         logger.info("✅ Connected to MySQL database (Railway)")
+        
+        # Run schema migrations if needed
+        _run_migrations(pool)
+        
     except Error as e:
         logger.error("❌ Failed to connect to MySQL database: %s", e)
         pool = None
+
+
+def _run_migrations(pool):
+    """Run database schema migrations to add missing columns."""
+    try:
+        conn = pool.get_connection()
+        cur = conn.cursor()
+        
+        # Get existing columns in attendance table
+        cur.execute("""
+            SELECT COLUMN_NAME 
+            FROM information_schema.COLUMNS 
+            WHERE TABLE_SCHEMA = DATABASE() 
+            AND TABLE_NAME = 'attendance'
+        """)
+        existing_cols = {row[0] for row in cur.fetchall()}
+        
+        # Columns that should exist in attendance table based on schema
+        required_cols = {
+            'working_hours': "ALTER TABLE attendance ADD COLUMN working_hours DECIMAL(5,2) DEFAULT NULL AFTER status",
+            'notes': "ALTER TABLE attendance ADD COLUMN notes VARCHAR(500) DEFAULT NULL AFTER working_hours",
+            'recorded_by': "ALTER TABLE attendance ADD COLUMN recorded_by INT UNSIGNED DEFAULT NULL AFTER notes"
+        }
+        
+        for col_name, alter_sql in required_cols.items():
+            if col_name not in existing_cols:
+                cur.execute(alter_sql)
+                conn.commit()
+                logger.info(f"✅ Migration: Added {col_name} column to attendance table")
+        
+        cur.close()
+        conn.close()
+        
+    except Error as e:
+        logger.warning(f"Migration check failed (non-critical): {e}")
 
 
 def get_db():

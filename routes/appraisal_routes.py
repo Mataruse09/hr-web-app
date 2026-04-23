@@ -18,7 +18,7 @@ appraisal_bp = Blueprint('appraisals', __name__)
 
 @appraisal_bp.route('/appraisals')
 @login_required
-@roles_required('Admin', 'HR', 'CHRO', 'Manager')
+@roles_required('Admin', 'HR', 'CHRO', 'Manager', 'Employee')
 def list_appraisals():
     """List all appraisals (filtered by role)."""
     company_id = session['company_id']

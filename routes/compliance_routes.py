@@ -27,21 +27,43 @@ COMPLIANCE_POLICIES = [
 
 @compliance_bp.route('/compliance')
 @login_required
-@roles_required('Admin', 'HR', 'CHRO')
+@roles_required('Admin', 'HR', 'CHRO', 'Employee')
 def list_compliance():
     """List all compliance records."""
     company_id = session['company_id']
+    user_role = session.get('role', 'Employee')
+    user_id = session.get('user_id')
     
     try:
-        compliance_records = query(
-            """SELECT cr.*, ec.first_name, ec.last_name, ec.job_title
-               FROM compliance_records cr
-               LEFT JOIN employees_core ec ON cr.employee_id = ec.id
-               WHERE ec.company_id = %s
-               ORDER BY cr.due_date ASC
-               LIMIT 100""",
-            (company_id,)
-        )
+        # Employees can only see their own compliance records
+        if user_role == 'Employee':
+            from models.employee_model import get_by_user_id
+            employee = get_by_user_id(user_id, company_id)
+            if employee:
+                compliance_records = query(
+                    """SELECT cr.*, ec.first_name, ec.last_name, ec.job_title
+                       FROM compliance_records cr
+                       LEFT JOIN employees_core ec ON cr.employee_id = ec.id
+                       WHERE cr.employee_id = %s AND ec.company_id = %s
+                       ORDER BY cr.due_date ASC
+                       LIMIT 100""",
+                    (employee['id'], company_id)
+                )
+            else:
+                compliance_records = []
+        elif user_role in ['Admin', 'HR', 'CHRO']:
+            # Admin, HR, CHRO can see all
+            compliance_records = query(
+                """SELECT cr.*, ec.first_name, ec.last_name, ec.job_title
+                   FROM compliance_records cr
+                   LEFT JOIN employees_core ec ON cr.employee_id = ec.id
+                   WHERE ec.company_id = %s
+                   ORDER BY cr.due_date ASC
+                   LIMIT 100""",
+                (company_id,)
+            )
+        else:
+            compliance_records = []
         
         return render_template('compliance/list.html', compliance_records=compliance_records or [])
     
@@ -83,9 +105,9 @@ def assign_compliance(employee_id):
             try:
                 mutate(
                     """INSERT INTO compliance_records 
-                       (employee_id, policy_name, compliance_type, status, due_date, created_at)
-                       VALUES (%s, %s, %s, %s, %s, %s)""",
-                    (employee_id, policy_name, compliance_type, status, due_date, datetime.utcnow())
+                       (company_id, employee_id, policy_name, compliance_type, status, due_date, created_at)
+                       VALUES (%s, %s, %s, %s, %s, %s, %s)""",
+                    (company_id, employee_id, policy_name, compliance_type, status, due_date, datetime.utcnow())
                 )
                 
                 log_activity(
@@ -111,7 +133,7 @@ def assign_compliance(employee_id):
 
 @compliance_bp.route('/compliance/<int:compliance_id>/mark-complete', methods=['POST'])
 @login_required
-@roles_required('Admin', 'HR', 'CHRO', 'Employee')
+@roles_required('Admin', 'HR', 'CHRO')
 def mark_complete(compliance_id):
     """Mark compliance as completed."""
     company_id = session['company_id']
@@ -189,8 +211,8 @@ def compliance_dashboard():
         stats = query(
             """SELECT 
                  COUNT(*) as total,
-                 SUM(CASE WHEN status = 'Completed' THEN 1 ELSE 0 END) as completed,
-                 SUM(CASE WHEN status = 'Pending' THEN 1 ELSE 0 END) as pending
+                 SUM(CASE WHEN cr.status = 'Completed' THEN 1 ELSE 0 END) as completed,
+                 SUM(CASE WHEN cr.status = 'Pending' THEN 1 ELSE 0 END) as pending
                FROM compliance_records cr
                LEFT JOIN employees_core ec ON cr.employee_id = ec.id
                WHERE ec.company_id = %s""",

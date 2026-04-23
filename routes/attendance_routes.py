@@ -11,9 +11,12 @@ attendance_bp = Blueprint('attendance', __name__)
 
 @attendance_bp.route('/')
 @login_required
-@roles_required('Admin', 'HR', 'CHRO', 'Manager')
+@roles_required('Admin', 'HR', 'CHRO', 'Manager', 'Employee')
 def logs():
     company_id = session.get('company_id')
+    user_id = session.get('user_id')
+    user_role = session.get('role', 'Employee')
+
     if not company_id:
         flash("Session expired. Please login again.", "danger")
         return redirect(url_for('auth.login'))
@@ -31,6 +34,24 @@ def logs():
 
     emp_id = request.args.get('emp_id', default=None, type=int)
 
+    # Data access control: Employee can only view their own attendance
+    if user_role == 'Employee':
+        from models import employee_model as em
+        employee = em.get_by_user_id(user_id, company_id)
+        if not employee:
+            flash('Employee record not found.', 'danger')
+            return redirect(url_for('dashboard.index'))
+        emp_id = employee['id']  # Override with own ID
+
+    # Manager can only see their department's attendance
+    if user_role == 'Manager':
+        from services.rbac_service import get_accessible_employees
+        accessible = get_accessible_employees(user_id, user_role, company_id)
+        accessible_ids = [e['id'] for e in accessible] if accessible else []
+        if emp_id and emp_id not in accessible_ids:
+            flash('Access denied — you can only view your team\'s attendance.', 'danger')
+            return redirect(url_for('attendance.logs'))
+
     employees = employee_model.get_all(company_id)
     records = attendance_model.get_logs(
         company_id,
@@ -45,7 +66,8 @@ def logs():
         employees=employees,
         from_date=from_date,
         to_date=to_date,
-        selected_emp=emp_id
+        selected_emp=emp_id,
+        is_readonly=(user_role == 'Employee')
     )
 
 

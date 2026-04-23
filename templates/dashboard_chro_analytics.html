@@ -5,13 +5,101 @@
 <div class="section-card">
   <h3>Enterprise Analytics</h3>
   <div class="kpi-grid">
-    <div class="kpi-card kpi-blue"><div class="kpi-icon">📊</div><div class="kpi-body"><div class="kpi-value">{{ employees }}</div><div class="kpi-label">Employees</div></div></div>
-    <div class="kpi-card kpi-dark"><div class="kpi-icon">📉</div><div class="kpi-body"><div class="kpi-value">{{ attrition }}%</div><div class="kpi-label">Attrition Rate</div></div></div>
-    <div class="kpi-card kpi-teal"><div class="kpi-icon">📈</div><div class="kpi-body"><div class="kpi-value">{{ kpis.attendance_rate }}%</div><div class="kpi-label">Attendance Rate</div></div></div>
+    <div class="kpi-card kpi-blue">
+      <div class="kpi-icon">📊</div>
+      <div class="kpi-body">
+        <div class="kpi-value">{{ employees }}</div>
+        <div class="kpi-label">Employees</div>
+      </div>
+      <div class="kpi-sub">total workforce</div>
+    </div>
+    <div class="kpi-card kpi-dark">
+      <div class="kpi-icon">📉</div>
+      <div class="kpi-body">
+        <div class="kpi-value">{{ attrition }}%</div>
+        <div class="kpi-label">Attrition Rate</div>
+      </div>
+      <div class="kpi-sub">this period</div>
+    </div>
+    <div class="kpi-card kpi-teal">
+      <div class="kpi-icon">📈</div>
+      <div class="kpi-body">
+        <div class="kpi-value">{{ kpis.attendance_rate }}%</div>
+        <div class="kpi-label">Attendance Rate</div>
+      </div>
+      <div class="kpi-sub">this month</div>
+    </div>
   </div>
 
   <p class="mt-3">CHRO-specific analysis and reporting (templates, export and trends in next iteration).</p>
 
   <a href="{{ url_for('dashboard.chro_dashboard') }}" class="btn btn-outline">← Back to CHRO Dashboard</a>
+</div>
+
+{# AI Predictions Section - Premium Feature #}
+<div class="section-card mt-4" style="background: linear-gradient(135deg, #1a237e 0%, #283593 100%); color: white;">
+  <div style="display: flex; align-items: center; gap: 1rem;">
+    <div style="font-size: 2.5rem;">🤖</div>
+    <div>
+      <h3 style="color: white; margin: 0;">AI Workforce Predictions</h3>
+      <p style="margin: 0.5rem 0 0; opacity: 0.9;">Predictive analytics for workforce planning, attrition risk, and talent insights.</p>
+    </div>
+  </div>
+  <div style="margin-top: 1.5rem; padding: 1rem; background: rgba(255,255,255,0.1); border-radius: 8px;">
+    <div style="display: flex; align-items: center; gap: 0.5rem; justify-content: center;">
+      <span style="font-size: 1.2rem;">🔒</span>
+      <span style="font-weight: 600;">Premium Feature</span>
+    </div>
+    <p style="text-align: center; margin: 0.5rem 0 0; font-size: 0.9rem; opacity: 0.9;">
+      Subscribe to access AI-powered workforce predictions, attrition forecasting, and talent analytics.
+    </p>
+    <div style="text-align: center; margin-top: 1rem;">
+      <a href="#" class="btn" style="background: #ffc107; color: #1a237e; font-weight: 600; padding: 0.75rem 2rem; border-radius: 25px;">
+        🚀 Subscribe to Premium
+      </a>
+    </div>
+  </div>
+</div>
+
+{# More Analytics Features #}
+<div class="section-card mt-4">
+  <h3 class="section-title">📊 Advanced Analytics</h3>
+  <div class="kpi-grid">
+    <div class="kpi-card" style="border-top: 4px solid #9c27b0;">
+      <div class="kpi-icon">📉</div>
+      <div class="kpi-body">
+        <div class="kpi-value">—</div>
+        <div class="kpi-label">Attrition Forecast</div>
+      </div>
+      <div class="kpi-sub">AI-powered prediction</div>
+    </div>
+    <div class="kpi-card" style="border-top: 4px solid #00acc1;">
+      <div class="kpi-icon">👥</div>
+      <div class="kpi-body">
+        <div class="kpi-value">—</div>
+        <div class="kpi-label">Talent Gap Analysis</div>
+      </div>
+      <div class="kpi-sub">Skill workforce mapping</div>
+    </div>
+    <div class="kpi-card" style="border-top: 4px solid #ff7043;">
+      <div class="kpi-icon">📅</div>
+      <div class="kpi-body">
+        <div class="kpi-value">—</div>
+        <div class="kpi-label">Hiring Forecast</div>
+      </div>
+      <div class="kpi-sub">Predictive hiring needs</div>
+    </div>
+    <div class="kpi-card" style="border-top: 4px solid #66bb6a;">
+      <div class="kpi-icon">💼</div>
+      <div class="kpi-body">
+        <div class="kpi-value">—</div>
+        <div class="kpi-label">Productivity Insights</div>
+      </div>
+      <div class="kpi-sub">Team performance AI</div>
+    </div>
+  </div>
+  <p class="text-muted text-center mt-3">
+    <em>Upgrade to Premium to unlock all AI-powered analytics and predictions.</em>
+  </p>
 </div>
 {% endblock %}

@@ -3,10 +3,11 @@ from datetime import datetime
 
 
 def get_requests(company_id: int, status_filter: str = None):
-    # Note: reviewed_by column doesn't exist in current db, so we skip that join
+    # Note: Calculate days_requested from start and end dates
     base = """
         SELECT lr.id, lr.company_id, lr.employee_id, lr.leave_type, 
-               lr.start_date, lr.end_date, lr.days_requested, lr.reason,
+               lr.start_date, lr.end_date, 
+               DATEDIFF(lr.end_date, lr.start_date) + 1 AS days_requested,
                lr.status, lr.created_at,
                e.first_name, e.last_name, e.employee_code,
                d.name AS dept_name
@@ -32,17 +33,20 @@ def get_by_employee(employee_id: int, company_id: int):
 
 
 def create(company_id: int, data: dict) -> int:
-    """Create a new leave request with reason field."""
+    """Create a new leave request - days_requested will be calculated from dates."""
+    from datetime import datetime as dt
+    
+    start_date = dt.strptime(data['start_date'], '%Y-%m-%d').date() if isinstance(data['start_date'], str) else data['start_date']
+    end_date = dt.strptime(data['end_date'], '%Y-%m-%d').date() if isinstance(data['end_date'], str) else data['end_date']
+    
     return mutate("""
         INSERT INTO leave_requests
-          (company_id,employee_id,leave_type,start_date,end_date,
-           days_requested,reason,status)
-        VALUES(%s,%s,%s,%s,%s,%s,%s,'Pending')
+          (company_id, employee_id, leave_type, start_date, end_date, status)
+        VALUES(%s, %s, %s, %s, %s, 'Pending')
     """, (
         company_id,
         data['employee_id'], data['leave_type'],
         data['start_date'],  data['end_date'],
-        data['days_requested'], data.get('reason', ''),
     ))
 
 
@@ -59,9 +63,12 @@ def update_status(request_id: int, company_id: int,
 
     # Update leave balance if approved
     if status == 'Approved':
-        row = query(
-            "SELECT * FROM leave_requests WHERE id=%s", (request_id,), one=True
-        )
+        row = query("""
+            SELECT company_id, employee_id, start_date, end_date,
+                   DATEDIFF(end_date, start_date) + 1 AS days_requested
+            FROM leave_requests 
+            WHERE id=%s
+        """, (request_id,), one=True)
         if row:
             # All leave types contribute to annual_used (unified tracking per schema)
             yr = row['start_date'].year

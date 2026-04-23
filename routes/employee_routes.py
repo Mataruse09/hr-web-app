@@ -8,7 +8,8 @@ import secrets
 from datetime import datetime, timedelta, date
 
 from utils import login_required, roles_required, send_email
-from models import employee_model, user_model
+from models import employee_model, user_model, company_model
+from services.email_service import send_employee_added_email
 
 logger = logging.getLogger(__name__)
 
@@ -45,9 +46,9 @@ def list_employees():
         # Employees only see themselves
         employees = [e for e in (all_employees or []) if e.get('user_id') == user_id]
     elif user_role == 'Manager':
-        # TODO: Managers see only their department (requires department_id in session or lookup)
-        # For now, showing all (should filter by manager's department)
-        employees = all_employees
+        # Managers see only their department's employees
+        from services.rbac_service import get_accessible_employees
+        employees = get_accessible_employees(user_id, user_role, company_id)
 
     return render_template(
         'employees/list.html',
@@ -142,15 +143,14 @@ def add_employee():
                     f"/auth/reset-password?token={reset_token}&company_id={company_id}"
                 )
 
-                email_body = (
-                    f"Hello {first_name},\n\n"
-                    f"Your employee account has been created.\n"
-                    f"Username: {username}\n"
-                    f"Temporary password: {default_password}\n\n"
-                    f"Set password (valid 30 min):\n{reset_link}\n\n"
-                )
+                # Get company name for email
+                company = company_model.get_by_id(company_id)
+                company_name = company[1] if company else "Your Company"
 
-                send_email(email, 'Your new HRCore account', email_body)
+                # Use enhanced email service
+                send_employee_added_email(
+                    first_name, email, company_name, username, default_password
+                )
 
             except Exception as email_error:
                 logger.warning('SMTP failed: %s', email_error)
@@ -222,11 +222,54 @@ def profile(emp_id):
         flash('You do not have permission to view this profile.', 'danger')
         return redirect(url_for('employees.list_employees'))
 
-    from models import payroll_model, leave_model
+    from models import payroll_model, leave_model, attendance_model
 
     comp = payroll_model.get_compensation(emp_id, company_id)
     balance = leave_model.get_balance(emp_id, company_id, date.today().year)
     rating = employee_model.get_average_rating(company_id, emp_id)
+
+    # Personal attendance data for the employee
+    today = date.today().strftime('%Y-%m-%d')
+    current_year = date.today().year
+    
+    # Get attendance summary for the current year
+    from datetime import datetime, timedelta
+    year_start = f"{current_year}-01-01"
+    year_end = f"{current_year}-12-31"
+    
+    # Get attendance logs for the year
+    personal_attendance = attendance_model.get_logs(company_id, year_start, year_end, emp_id)
+    
+    # Calculate attendance statistics
+    present_days = 0
+    absent_days = 0
+    late_days = 0
+    wfh_days = 0
+    half_day = 0
+    total_hours = 0.0
+    
+    if personal_attendance:
+        for att in personal_attendance:
+            status = att.get('status', '')
+            if status in ['Present']:
+                present_days += 1
+            elif status in ['Absent']:
+                absent_days += 1
+            elif status in ['Late']:
+                late_days += 1
+            elif status in ['Work From Home']:
+                wfh_days += 1
+            elif status in ['Half-Day']:
+                half_day += 1
+            if att.get('working_hours'):
+                total_hours += float(att.get('working_hours', 0))
+    
+    # Get recent leave requests for this employee
+    personal_leaves = leave_model.get_by_employee(emp_id, company_id)
+    
+    # Get last 30 days attendance for quick view
+    thirty_days_ago = (date.today() - timedelta(days=30)).strftime('%Y-%m-%d')
+    recent_attendance = attendance_model.get_logs(company_id, thirty_days_ago, today, emp_id)
 
     # Determine if sensitive data should be shown
     show_sensitive_data = (
@@ -240,7 +283,17 @@ def profile(emp_id):
         comp=comp,
         balance=balance,
         rating=rating,
-        show_sensitive_data=show_sensitive_data
+        show_sensitive_data=show_sensitive_data,
+        # Personal data
+        present_days=present_days,
+        absent_days=absent_days,
+        late_days=late_days,
+        wfh_days=wfh_days,
+        half_day=half_day,
+        total_hours=round(total_hours, 1),
+        personal_attendance=personal_attendance[:10] if personal_attendance else [],
+        personal_leaves=personal_leaves[:5] if personal_leaves else [],
+        recent_attendance=recent_attendance[:7] if recent_attendance else []
     )
 
 

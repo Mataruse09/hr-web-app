@@ -245,3 +245,57 @@ def delete_user(user_id):
         logger.exception(e)
         flash('Error deleting user.', 'danger')
         return redirect(url_for('admin.users'))
+
+
+# ─────────────────────────────────────────────────────────────
+# DEPARTMENT MANAGEMENT
+# ─────────────────────────────────────────────────────────────
+@admin_bp.route('/departments')
+@login_required
+@roles_required('Admin', 'company_admin', 'HR')
+def departments():
+    """List and manage departments."""
+    company_id = session['company_id']
+    departments = employee_model.get_departments(company_id)
+    return render_template('admin/departments.html', departments=departments)
+
+
+@admin_bp.route('/departments/add', methods=['POST'])
+@login_required
+@roles_required('Admin', 'company_admin', 'HR')
+def add_department():
+    """Add a new department."""
+    company_id = session['company_id']
+    name = request.form.get('name', '').strip()
+    description = request.form.get('description', '').strip()
+    
+    if not name:
+        flash('Department name is required.', 'danger')
+        return redirect(url_for('admin.departments'))
+    
+    try:
+        employee_model.create_department(company_id, name, description)
+        flash(f'Department "{name}" added successfully.', 'success')
+    except Exception as e:
+        logger.exception(e)
+        flash('Error adding department.', 'danger')
+    
+    return redirect(url_for('admin.departments'))
+
+
+@admin_bp.route('/departments/<int:dept_id>/delete', methods=['POST'])
+@login_required
+@roles_required('Admin')
+def delete_department(dept_id):
+    """Delete a department."""
+    company_id = session['company_id']
+    
+    try:
+        from models.db import mutate
+        mutate("DELETE FROM departments WHERE id=%s AND company_id=%s", (dept_id, company_id))
+        flash('Department deleted successfully.', 'success')
+    except Exception as e:
+        logger.exception(e)
+        flash('Error deleting department. It may have employees assigned.', 'danger')
+    
+    return redirect(url_for('admin.departments'))

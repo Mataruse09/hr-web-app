@@ -18,60 +18,7 @@
       <span class="brand-name">{{ session.company_name or 'HRCore' }}</span>
     </div>
 
-    <nav class="sidebar-nav">
-      <a href="{{ url_for('dashboard.index') }}"
-         class="nav-item {% if request.endpoint == 'dashboard.index' %}active{% endif %}">
-        <span class="nav-icon">◈</span><span class="nav-label">Dashboard</span>
-      </a>
-
-      <div class="nav-group-label">WORKFORCE</div>
-
-      <a href="{{ url_for('employees.list_employees') }}"
-         class="nav-item {% if 'employees' in request.endpoint %}active{% endif %}">
-        <span class="nav-icon">👥</span><span class="nav-label">Employees</span>
-      </a>
-
-      {% if session.role in ['Admin','company_admin'] %}
-      <a href="{{ url_for('admin.users') }}"
-         class="nav-item {% if 'admin.users' in request.endpoint %}active{% endif %}">
-        <span class="nav-icon">🔐</span><span class="nav-label">User Management</span>
-      </a>
-      <a href="{{ url_for('admin.activity_logs') }}"
-         class="nav-item {% if 'admin.activity_logs' in request.endpoint %}active{% endif %}">
-        <span class="nav-icon">📋</span><span class="nav-label">Activity Logs</span>
-      </a>
-      <a href="{{ url_for('admin.system_settings') }}"
-         class="nav-item {% if 'admin.system_settings' in request.endpoint %}active{% endif %}">
-        <span class="nav-icon">⚙️</span><span class="nav-label">System Settings</span>
-      </a>
-      {% endif %}
-      <a href="{{ url_for('attendance.mark') }}"
-         class="nav-item {% if 'attendance' in request.endpoint %}active{% endif %}">
-        <span class="nav-icon">📅</span><span class="nav-label">Attendance</span>
-      </a>
-      <a href="{{ url_for('attendance.logs') }}"
-         class="nav-item {% if request.endpoint == 'attendance.logs' %}active{% endif %}">
-        <span class="nav-icon">📋</span><span class="nav-label">Att. Logs</span>
-      </a>
-
-      <div class="nav-group-label">COMPENSATION</div>
-
-      <a href="{{ url_for('payroll.list_payroll') }}"
-         class="nav-item {% if 'payroll' in request.endpoint %}active{% endif %}">
-        <span class="nav-icon">💰</span><span class="nav-label">Payroll</span>
-      </a>
-
-      <div class="nav-group-label">TIME OFF</div>
-
-      <a href="{{ url_for('leave.apply') }}"
-         class="nav-item {% if request.endpoint == 'leave.apply' %}active{% endif %}">
-        <span class="nav-icon">✈️</span><span class="nav-label">Apply Leave</span>
-      </a>
-      <a href="{{ url_for('leave.manage') }}"
-         class="nav-item {% if request.endpoint == 'leave.manage' %}active{% endif %}">
-        <span class="nav-icon">🗂️</span><span class="nav-label">Leave Requests</span>
-      </a>
-    </nav>
+    {% include 'components/navigation.html' %}
 
     <div class="sidebar-footer">
       <div class="user-badge">

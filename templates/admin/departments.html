@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block title %}Departments{% endblock %}
+{% block page_title %}Department Management{% endblock %}
+
+{% block content %}
+<div class="section-card">
+  <h3 class="section-title">All Departments</h3>
+  
+  {% if departments %}
+  <table class="table table-striped">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Name</th>
+        <th>Description</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for dept in departments %}
+      <tr>
+        <td>{{ dept.id }}</td>
+        <td><strong>{{ dept.name }}</strong></td>
+        <td>{{ dept.description or '—' }}</td>
+        <td>
+          {% if role in ['Admin'] %}
+          <form method="POST" action="{{ url_for('admin.delete_department', dept_id=dept.id) }}" style="display:inline;">
+            <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Delete this department?')">Delete</button>
+          </form>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="text-muted">No departments found. Add your first department below.</p>
+  {% endif %}
+</div>
+
+<!-- Add Department Form -->
+<div class="section-card mt-4">
+  <h3 class="section-title">➕ Add New Department</h3>
+  <form method="POST" action="{{ url_for('admin.add_department') }}">
+    <div class="row">
+      <div class="col-md-5">
+        <label class="form-label">Department Name</label>
+        <input type="text" name="name" class="form-control" placeholder="e.g., Engineering, Sales, HR" required>
+      </div>
+      <div class="col-md-5">
+        <label class="form-label">Description (optional)</label>
+        <input type="text" name="description" class="form-control" placeholder="Brief description">
+      </div>
+      <div class="col-md-2 d-flex align-items-end">
+        <button type="submit" class="btn btn-success w-100">Add</button>
+      </div>
+    </div>
+  </form>
+</div>
+
+<!-- Back to Admin -->
+<div class="mt-4">
+  <a href="{{ url_for('dashboard.index') }}" class="btn btn-outline">← Back to Dashboard</a>
+</div>
+{% endblock %}

@@ -48,6 +48,23 @@ document.addEventListener('click', function (e) {
   });
 })();
 
+// ── Password Toggle (Show/Hide) ──────────────────────────────────
+function togglePassword(button) {
+  event.preventDefault();
+  const wrapper = button.closest('.password-wrapper');
+  const input = wrapper.querySelector('.password-input');
+  const eyeIcon = button.querySelector('.eye-icon');
+  
+  if (input.type === 'password') {
+    input.type = 'text';
+    eyeIcon.textContent = '👁️‍🗨️';
+  } else {
+    input.type = 'password';
+    eyeIcon.textContent = '👁️';
+  }
+}
+
+
 // ── Confirm deletes ───────────────────────────────────────────────
 document.querySelectorAll('[data-confirm]').forEach(function (el) {
   el.addEventListener('click', function (e) {

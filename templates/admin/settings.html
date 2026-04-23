@@ -71,15 +71,15 @@
                             </div>
 
                             <!-- Theme Preview -->
-                            <div class="alert alert-light border" style="border-color: {{ settings.get('theme_primary_color', '#2c3e50') }} !important;">
-                                <h6 style="color: {{ settings.get('theme_primary_color', '#2c3e50') }};">
+                            <div id="themePreview" class="alert alert-light border" style="border-color: {{ settings.get('theme_primary_color', '#2c3e50') }} !important;">
+                                <h6 id="previewTitle" style="color: {{ settings.get('theme_primary_color', '#2c3e50') }};">
                                     🎨 Theme Preview
                                 </h6>
-                                <p style="background-color: {{ settings.get('theme_background_color', '#ecf0f1') }}; padding: 10px; border-radius: 4px;">
+                                <p id="previewText" style="background-color: {{ settings.get('theme_background_color', '#ecf0f1') }}; padding: 10px; border-radius: 4px;">
                                     Sample text with your background color
                                 </p>
-                                <button type="button" class="btn" style="background-color: {{ settings.get('theme_secondary_color', '#3498db') }}; color: white; border: none;">
-                                    Sample Button
+                                <button type="button" id="applyPreviewBtn" class="btn" style="background-color: {{ settings.get('theme_secondary_color', '#3498db') }}; color: white; border: none;">
+                                    Apply Colors
                                 </button>
                             </div>
                         </fieldset>
@@ -173,7 +173,7 @@
 </div>
 
 <script>
-    // Update color preview text
+    // Update color preview text when color input changes
     document.querySelectorAll('input[type="color"]').forEach(input => {
         input.addEventListener('change', function() {
             const nextSpan = this.parentElement.querySelector('.input-group-text');
@@ -181,6 +181,51 @@
                 nextSpan.textContent = this.value.toUpperCase();
             }
         });
+    });
+
+    // Real-time color preview update
+    function updateThemePreview() {
+        const primaryColor = document.getElementById('theme_primary_color').value;
+        const secondaryColor = document.getElementById('theme_secondary_color').value;
+        const backgroundColor = document.getElementById('theme_background_color').value;
+        
+        const themePreview = document.getElementById('themePreview');
+        const previewTitle = document.getElementById('previewTitle');
+        const previewText = document.getElementById('previewText');
+        const applyBtn = document.getElementById('applyPreviewBtn');
+        
+        // Update preview box border color
+        themePreview.style.borderColor = primaryColor + ' !important';
+        
+        // Update preview title color
+        previewTitle.style.color = primaryColor;
+        
+        // Update preview text background color
+        previewText.style.backgroundColor = backgroundColor;
+        
+        // Update apply button color
+        applyBtn.style.backgroundColor = secondaryColor;
+    }
+
+    // Add event listeners to color inputs for real-time preview
+    document.getElementById('theme_primary_color').addEventListener('input', updateThemePreview);
+    document.getElementById('theme_secondary_color').addEventListener('input', updateThemePreview);
+    document.getElementById('theme_background_color').addEventListener('input', updateThemePreview);
+
+    // Apply button click handler
+    document.getElementById('applyPreviewBtn').addEventListener('click', function(e) {
+        e.preventDefault();
+        updateThemePreview();
+        
+        // Show feedback
+        const originalText = this.textContent;
+        this.textContent = '✓ Colors Applied!';
+        this.style.opacity = '0.8';
+        
+        setTimeout(() => {
+            this.textContent = originalText;
+            this.style.opacity = '1';
+        }, 2000);
     });
 
     // Form validation

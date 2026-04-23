@@ -17,7 +17,7 @@ attrition_bp = Blueprint('attrition', __name__)
 
 @attrition_bp.route('/attrition')
 @login_required
-@roles_required('Admin', 'HR', 'CHRO')
+@roles_required('Admin', 'HR', 'CHRO', 'Manager')
 def list_attrition():
     """List all employee exits and attrition records."""
     company_id = session['company_id']
