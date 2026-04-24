@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="HRCore - Comprehensive HR Management System for modern enterprises. Manage employees, attendance, leave, payroll, and more.">
+    <meta name="robots" content="index, follow">
+    <title>HRCore - HR Management System</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --secondary: #7c3aed;
+            --accent: #06b6d4;
+        }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .hero {
+            padding: 80px 20px;
+            text-align: center;
+            color: white;
+        }
+        .hero h1 {
+            font-size: 4rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            background: linear-gradient(to right, #fff, #e0e7ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .hero .subtitle {
+            font-size: 1.5rem;
+            opacity: 0.95;
+            margin-bottom: 50px;
+            max-width: 700px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .features {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 30px;
+            margin-top: 60px;
+            max-width: 1200px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .feature {
+            background: rgba(255,255,255,0.12);
+            padding: 35px;
+            border-radius: 20px;
+            width: 260px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        .feature:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+        }
+        .feature h3 {
+            margin-top: 0;
+            font-size: 1.3rem;
+            margin-bottom: 15px;
+        }
+        .feature p {
+            margin: 0;
+            opacity: 0.9;
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+        .feature-icon {
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+        }
+        .cta {
+            margin-top: 60px;
+        }
+        .btn {
+            display: inline-block;
+            padding: 18px 45px;
+            background: white;
+            color: #667eea;
+            text-decoration: none;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            margin: 10px;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        .btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+        }
+        .btn-secondary {
+            background: transparent;
+            border: 2px solid white;
+            color: white;
+        }
+        .btn-secondary:hover {
+            background: white;
+            color: #667eea;
+        }
+        .stats {
+            display: flex;
+            justify-content: center;
+            gap: 60px;
+            margin-top: 80px;
+            flex-wrap: wrap;
+        }
+        .stat {
+            text-align: center;
+        }
+        .stat-number {
+            font-size: 3rem;
+            font-weight: 700;
+        }
+        .stat-label {
+            font-size: 1rem;
+            opacity: 0.8;
+        }
+        footer {
+            text-align: center;
+            padding: 40px 20px;
+            color: white;
+            opacity: 0.7;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="hero">
+        <h1>HRCore</h1>
+        <p class="subtitle">Comprehensive HR Management System for Modern Enterprises. Streamline your HR operations with powerful tools for employee management, attendance, leave, payroll, and more.</p>
+        
+        <div class="stats">
+            <div class="stat">
+                <div class="stat-number">1000+</div>
+                <div class="stat-label">Active Users</div>
+            </div>
+            <div class="stat">
+                <div class="stat-number">50+</div>
+                <div class="stat-label">Companies</div>
+            </div>
+            <div class="stat">
+                <div class="stat-number">99.9%</div>
+                <div class="stat-label">Uptime</div>
+            </div>
+        </div>
+        
+        <div class="features">
+            <div class="feature">
+                <div class="feature-icon">👥</div>
+                <h3>Employee Management</h3>
+                <p>Complete employee lifecycle management from onboarding to offboarding. Track profiles, documents, and performance.</p>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">⏰</div>
+                <h3>Attendance Tracking</h3>
+                <p>Real-time attendance monitoring with advanced reporting, clock-in/out features, and overtime calculations.</p>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">🏖️</div>
+                <h3>Leave Management</h3>
+                <p>Streamlined leave requests and approval workflows. Manage vacation, sick leave, and other time-off types.</p>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">💰</div>
+                <h3>Payroll Processing</h3>
+                <p>Automated payroll calculations and processing. Handle salaries, bonuses, deductions, and compliance.</p>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">📊</div>
+                <h3>Analytics & Reports</h3>
+                <p>Powerful analytics and reporting tools. Get insights into workforce metrics, attendance patterns, and more.</p>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">🔒</div>
+                <h3>Role-Based Access</h3>
+                <p>Secure role-based access control. Manage permissions for admins, HR, managers, and employees.</p>
+            </div>
+        </div>
+        
+        <div class="cta">
+            <a href="/auth/login" class="btn">Login</a>
+            <a href="/auth/register-company" class="btn btn-secondary">Get Started</a>
+        </div>
+    </div>
+    
+    <footer>
+        <p>&copy; 2026 HRCore. All rights reserved.</p>
+    </footer>
+</body>
+</html>

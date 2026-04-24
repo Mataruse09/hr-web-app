@@ -105,11 +105,47 @@ import os
 app = create_app()
 
 # ── Google Site Verification Route ─────────────
-from flask import send_from_directory
+from flask import send_from_directory, Response
 
 @app.route('/googledabc1683b170bb18.html')
 def google_verification():
     return send_from_directory('.', 'googledabc1683b170bb18.html')
+
+# ── Robots.txt Route ─────────────
+@app.route('/robots.txt')
+def robots_txt():
+    return Response("User-agent: *\nAllow: /\n\nSitemap: https://hr-web-app-5.onrender.com/sitemap.xml", mimetype='text/plain')
+
+# ── Sitemap.xml Route ─────────────
+@app.route('/sitemap.xml')
+def sitemap_xml():
+    return Response('''<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://hr-web-app-5.onrender.com/</loc>
+    <lastmod>2026-04-24</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>https://hr-web-app-5.onrender.com/landing</loc>
+    <lastmod>2026-04-24</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://hr-web-app-5.onrender.com/auth/login</loc>
+    <lastmod>2026-04-24</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://hr-web-app-5.onrender.com/auth/register-company</loc>
+    <lastmod>2026-04-24</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+</urlset>''', mimetype='application/xml')
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=int(os.environ.get("PORT", 5000)))

@@ -19,9 +19,19 @@ def render_dashboard(role, company_id):
 
 
 @dashboard_bp.route('/')
+def index():
+    """Public landing page - accessible without login for Google indexing"""
+    # If user is logged in, redirect to their dashboard
+    if session.get('user_id'):
+        return redirect(url_for('dashboard.index_authenticated'))
+    
+    # Public landing page for unauthenticated users (Google indexing)
+    return render_template('landing.html')
+
+
 @dashboard_bp.route('/dashboard')
 @login_required
-def index():
+def index_authenticated():
     import logging
     logger = logging.getLogger(__name__)
     

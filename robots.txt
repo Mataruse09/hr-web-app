@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://hr-web-app-5.onrender.com/sitemap.xml
