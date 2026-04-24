@@ -185,6 +185,75 @@
   </div>
 </div>
 
+<!-- Interactive Charts Section -->
+{% if not is_personal %}
+<section class="section-card mt-4">
+  <h3 class="section-title">📊 Workforce Analytics</h3>
+  <div class="row g-4">
+    <div class="col-md-6">
+      <div class="chart-container" style="background: #fff; border-radius: 12px; padding: 1.5rem; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+        <h5 class="text-center mb-3">Attendance Overview</h5>
+        <canvas id="attendanceChart"></canvas>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="chart-container" style="background: #fff; border-radius: 12px; padding: 1.5rem; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+        <h5 class="text-center mb-3">Department Distribution</h5>
+        <canvas id="departmentChart"></canvas>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Attendance Doughnut Chart
+  const attendanceCtx = document.getElementById('attendanceChart');
+  if (attendanceCtx) {
+    new Chart(attendanceCtx.getContext('2d'), {
+      type: 'doughnut',
+      data: {
+        labels: ['Present', 'Absent', 'On Leave', 'Late'],
+        datasets: [{
+          data: [{{ kpis.present_today }}, {{ kpis.absent_today }}, {{ kpis.on_leave_today }}, {{ kpis.late_today or 0 }}],
+          backgroundColor: ['#28a745', '#dc3545', '#ffc107', '#fd7e14'],
+          borderWidth: 0
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { position: 'bottom' }
+        }
+      }
+    });
+  }
+
+  // Department Bar Chart
+  const deptCtx = document.getElementById('departmentChart');
+  if (deptCtx) {
+    new Chart(deptCtx.getContext('2d'), {
+      type: 'bar',
+      data: {
+        labels: [{% for d in departments %}'{{ d.name }}'{% if not loop.last %}, {% endif %}{% endfor %}],
+        datasets: [{
+          label: 'Employees',
+          data: [{% for d in departments %}{{ d.employee_count or 0 }}{% if not loop.last %}, {% endif %}{% endfor %}],
+          backgroundColor: ['#667eea', '#764ba2', '#11998e', '#38ef7d', '#f093fb', '#f5576c'],
+          borderRadius: 6
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+      }
+    });
+  }
+});
+</script>
+{% endif %}
+
 <!-- Role-specific message -->
 <section class="section-card mt-4">
   <h3 class="section-title">Your Role: {{ role or 'Employee' }}</h3>

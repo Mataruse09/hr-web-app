@@ -77,7 +77,7 @@ CREATE TABLE IF NOT EXISTS departments (
 CREATE TABLE IF NOT EXISTS employees_core (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     company_id INT UNSIGNED NOT NULL,
-    user_id INT UNSINED,
+    user_id INT UNSIGNED,
     employee_code VARCHAR(50) NOT NULL,
     first_name VARCHAR(100),
     last_name VARCHAR(100),

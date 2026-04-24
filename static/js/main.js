@@ -96,3 +96,63 @@ document.querySelectorAll('.data-table tbody tr').forEach(function (row) {
     });
   }
 });
+
+// ── Smooth scroll for anchor links ────────────────────────────────
+document.querySelectorAll('a[href^="#"]').forEach(function (anchor) {
+  anchor.addEventListener('click', function (e) {
+    const targetId = this.getAttribute('href');
+    if (targetId === '#') return;
+    const target = document.querySelector(targetId);
+    if (target) {
+      e.preventDefault();
+      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  });
+});
+
+// ── Add loading state to buttons ─────────────────────────────────
+document.querySelectorAll('form').forEach(function (form) {
+  form.addEventListener('submit', function (e) {
+    const submitBtn = form.querySelector('button[type="submit"]');
+    if (submitBtn && !submitBtn.disabled) {
+      submitBtn.disabled = true;
+      submitBtn.dataset.originalText = submitBtn.innerHTML;
+      submitBtn.innerHTML = '⏳ Processing...';
+      setTimeout(function () {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = submitBtn.dataset.originalText;
+      }, 3000);
+    }
+  });
+});
+
+// ── Number counter animation for KPI values ─────────────────────
+function animateValue(element, start, end, duration) {
+  if (!element) return;
+  let startTimestamp = null;
+  const step = function (timestamp) {
+    if (!startTimestamp) startTimestamp = timestamp;
+    const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+    const value = Math.floor(progress * (end - start) + start);
+    element.textContent = value;
+    if (progress < 1) {
+      window.requestAnimationFrame(step);
+    }
+  };
+  window.requestAnimationFrame(step);
+}
+
+// Animate KPI values on page load
+document.addEventListener('DOMContentLoaded', function () {
+  document.querySelectorAll('.kpi-value').forEach(function (el) {
+    const text = el.textContent.trim();
+    const match = text.match(/^(\d+)/);
+    if (match) {
+      const num = parseInt(match[1]);
+      if (num > 0) {
+        el.textContent = '0';
+        animateValue(el, 0, num, 1500);
+      }
+    }
+  });
+});

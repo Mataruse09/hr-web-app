@@ -1,6 +1,6 @@
 # PERMISSIONS MATRIX - HR Management System
 
-Last Updated: 2026-04-22
+Last Updated: 2026-04-24
 
 ## Overview
 This document defines the complete permission structure for the HR Management System. Each role has specific access levels to features and data.

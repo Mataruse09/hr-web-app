@@ -1,10 +1,11 @@
 {# Professional Navigation Component #}
 {# Include this in base.html sidebar to show role-appropriate menu #}
+{% set current_endpoint = request.endpoint or '' %}
 
 <nav class="sidebar-nav">
   {# DASHBOARD - All Roles #}
   <a href="{{ url_for('dashboard.index') }}"
-     class="nav-item {% if request.endpoint == 'dashboard.index' or request.endpoint == 'dashboard.admin_dashboard' or request.endpoint == 'dashboard.hr_dashboard' or request.endpoint == 'dashboard.manager_dashboard' or request.endpoint == 'dashboard.chro_dashboard' %}active{% endif %}">
+     class="nav-item {% if current_endpoint in ['dashboard.index', 'dashboard.admin_dashboard', 'dashboard.hr_dashboard', 'dashboard.manager_dashboard', 'dashboard.chro_dashboard', 'dashboard.employee_dashboard'] %}active{% endif %}">
     <span class="nav-icon">📊</span><span class="nav-label">Dashboard</span>
   </a>
 
@@ -14,7 +15,7 @@
   {# Employees - Admin, HR, CHRO, Manager can manage; Employee can view own profile #}
   {% if session.role in ['Admin', 'company_admin', 'HR', 'CHRO', 'Manager'] %}
   <a href="{{ url_for('employees.list_employees') }}"
-     class="nav-item {% if 'employees' in request.endpoint %}active{% endif %}">
+     class="nav-item {% if 'employees' in current_endpoint %}active{% endif %}">
     <span class="nav-icon">👥</span><span class="nav-label">Employees</span>
   </a>
   {% endif %}
@@ -22,45 +23,45 @@
   {# Employee can view their own profile #}
   {% if session.role == 'Employee' %}
   <a href="{{ url_for('employees.my_profile') }}"
-     class="nav-item {% if 'employees' in request.endpoint %}active{% endif %}">
+     class="nav-item {% if 'employees' in current_endpoint %}active{% endif %}">
     <span class="nav-icon">👤</span><span class="nav-label">My Profile</span>
   </a>
   {% endif %}
 
   {# Attendance - All roles can mark attendance #}
   <a href="{{ url_for('attendance.mark') }}"
-     class="nav-item {% if 'attendance.mark' in request.endpoint %}active{% endif %}">
+     class="nav-item {% if 'attendance.mark' in current_endpoint %}active{% endif %}">
     <span class="nav-icon">📅</span><span class="nav-label">Mark Attendance</span>
   </a>
 
   {# Attendance Logs - Admin, HR, CHRO, Manager can view all; Employee can view own #}
   {% if session.role in ['Admin', 'HR', 'CHRO', 'Manager'] %}
   <a href="{{ url_for('attendance.logs') }}"
-     class="nav-item {% if request.endpoint == 'attendance.logs' %}active{% endif %}">
+     class="nav-item {% if current_endpoint == 'attendance.logs' %}active{% endif %}">
     <span class="nav-icon">📋</span><span class="nav-label">Attendance Logs</span>
   </a>
   {% elif session.role == 'Employee' %}
   <a href="{{ url_for('attendance.logs') }}"
-     class="nav-item {% if request.endpoint == 'attendance.logs' %}active{% endif %}">
+     class="nav-item {% if current_endpoint == 'attendance.logs' %}active{% endif %}">
     <span class="nav-icon">📋</span><span class="nav-label">My Attendance</span>
   </a>
   {% endif %}
 
   {# Leave - All roles can apply #}
   <a href="{{ url_for('leave.apply') }}"
-     class="nav-item {% if request.endpoint == 'leave.apply' %}active{% endif %}">
+     class="nav-item {% if current_endpoint == 'leave.apply' %}active{% endif %}">
     <span class="nav-icon">✈️</span><span class="nav-label">Apply Leave</span>
   </a>
 
   {# Leave Management - Admin, HR, CHRO, Manager can manage; Employee can view own #}
   {% if session.role in ['Admin', 'HR', 'CHRO', 'Manager'] %}
   <a href="{{ url_for('leave.manage') }}"
-     class="nav-item {% if request.endpoint == 'leave.manage' %}active{% endif %}">
+     class="nav-item {% if current_endpoint == 'leave.manage' %}active{% endif %}">
     <span class="nav-icon">🗂️</span><span class="nav-label">Leave Requests</span>
   </a>
   {% elif session.role == 'Employee' %}
   <a href="{{ url_for('leave.manage') }}"
-     class="nav-item {% if request.endpoint == 'leave.manage' %}active{% endif %}">
+     class="nav-item {% if current_endpoint == 'leave.manage' %}active{% endif %}">
     <span class="nav-icon">🗂️</span><span class="nav-label">My Leaves</span>
   </a>
   {% endif %}
@@ -68,7 +69,7 @@
   {# Payroll - Admin, HR, CHRO only #}
   {% if session.role in ['Admin', 'HR', 'CHRO'] %}
   <a href="{{ url_for('payroll.list_payroll') }}"
-     class="nav-item {% if 'payroll' in request.endpoint %}active{% endif %}">
+     class="nav-item {% if 'payroll' in current_endpoint %}active{% endif %}">
     <span class="nav-icon">💰</span><span class="nav-label">Payroll</span>
   </a>
   {% endif %}
@@ -78,25 +79,25 @@
 
   {# Appraisals - All roles can view #}
   <a href="{{ url_for('appraisals.list_appraisals') }}"
-     class="nav-item {% if 'appraisals' in request.endpoint %}active{% endif %}">
+     class="nav-item {% if 'appraisals' in current_endpoint %}active{% endif %}">
     <span class="nav-icon">⭐</span><span class="nav-label">Appraisals</span>
   </a>
 
   {# Gamification - All roles can view #}
   <a href="{{ url_for('gamification.leaderboard') }}"
-     class="nav-item {% if 'gamification' in request.endpoint %}active{% endif %}">
+     class="nav-item {% if 'gamification' in current_endpoint %}active{% endif %}">
     <span class="nav-icon">🎖️</span><span class="nav-label">Gamification</span>
   </a>
 
   {# Compliance - Admin, HR, CHRO can manage; Employee can view own #}
   {% if session.role in ['Admin', 'HR', 'CHRO'] %}
   <a href="{{ url_for('compliance.list_compliance') }}"
-     class="nav-item {% if 'compliance' in request.endpoint %}active{% endif %}">
+     class="nav-item {% if 'compliance' in current_endpoint %}active{% endif %}">
     <span class="nav-icon">📋</span><span class="nav-label">Compliance</span>
   </a>
   {% elif session.role == 'Employee' %}
   <a href="{{ url_for('compliance.list_compliance') }}"
-     class="nav-item {% if 'compliance' in request.endpoint %}active{% endif %}">
+     class="nav-item {% if 'compliance' in current_endpoint %}active{% endif %}">
     <span class="nav-icon">📋</span><span class="nav-label">My Compliance</span>
   </a>
   {% endif %}
@@ -107,20 +108,20 @@
 
   {# Attrition Analytics #}
   <a href="{{ url_for('attrition.list_attrition') }}"
-     class="nav-item {% if 'attrition' in request.endpoint %}active{% endif %}">
+     class="nav-item {% if 'attrition' in current_endpoint %}active{% endif %}">
     <span class="nav-icon">📉</span><span class="nav-label">Attrition</span>
   </a>
 
   {# Labour Forecasting #}
   <a href="{{ url_for('forecasting.list_forecasts') }}"
-     class="nav-item {% if 'forecasting' in request.endpoint %}active{% endif %}">
+     class="nav-item {% if 'forecasting' in current_endpoint %}active{% endif %}">
     <span class="nav-icon">📊</span><span class="nav-label">Forecasting</span>
   </a>
 
   {# CHRO Analytics - CHRO & Admin only #}
   {% if session.role in ['CHRO', 'Admin'] %}
   <a href="{{ url_for('dashboard.chro_analytics') }}"
-     class="nav-item {% if request.endpoint == 'dashboard.chro_analytics' %}active{% endif %}">
+     class="nav-item {% if current_endpoint == 'dashboard.chro_analytics' %}active{% endif %}">
     <span class="nav-icon">📈</span><span class="nav-label">Analytics</span>
   </a>
   {% endif %}
@@ -132,25 +133,25 @@
 
   {# User Management - Admin only #}
   <a href="{{ url_for('admin.users') }}"
-     class="nav-item {% if 'admin.users' in request.endpoint %}active{% endif %}">
+     class="nav-item {% if 'admin.users' in current_endpoint %}active{% endif %}">
     <span class="nav-icon">🔐</span><span class="nav-label">User Management</span>
   </a>
 
   {# Departments - Admin, HR #}
   <a href="{{ url_for('admin.departments') }}"
-     class="nav-item {% if 'admin.departments' in request.endpoint %}active{% endif %}">
+     class="nav-item {% if 'admin.departments' in current_endpoint %}active{% endif %}">
     <span class="nav-icon">🏢</span><span class="nav-label">Departments</span>
   </a>
 
   {# Activity Logs - Admin only #}
   <a href="{{ url_for('admin.activity_logs') }}"
-     class="nav-item {% if 'admin.activity_logs' in request.endpoint %}active{% endif %}">
+     class="nav-item {% if 'admin.activity_logs' in current_endpoint %}active{% endif %}">
     <span class="nav-icon">🔍</span><span class="nav-label">Activity Logs</span>
   </a>
 
   {# System Settings - Admin only (CHRO explicitly denied) #}
   <a href="{{ url_for('admin.system_settings') }}"
-     class="nav-item {% if 'admin.system_settings' in request.endpoint %}active{% endif %}">
+     class="nav-item {% if 'admin.system_settings' in current_endpoint %}active{% endif %}">
     <span class="nav-icon">⚙️</span><span class="nav-label">System Settings</span>
   </a>
   {% endif %}
@@ -159,7 +160,7 @@
   {% if session.role == 'Employee' %}
   <div class="nav-group-label">MY PROFILE</div>
   <a href="{{ url_for('gamification.my_profile') }}"
-     class="nav-item {% if request.endpoint == 'gamification.my_profile' %}active{% endif %}">
+     class="nav-item {% if current_endpoint == 'gamification.my_profile' %}active{% endif %}">
     <span class="nav-icon">🏆</span><span class="nav-label">My Achievements</span>
   </a>
   {% endif %}

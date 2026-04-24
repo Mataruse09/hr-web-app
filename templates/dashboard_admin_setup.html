@@ -2,26 +2,94 @@
 {% block title %}Admin Setup{% endblock %}
 {% block page_title %}Company Setup & Subscription{% endblock %}
 {% block content %}
-<div class="section-card">
-  <h3>Welcome, {{ company.name }}</h3>
-  <p>Configure your company settings and subscription status from here.</p>
-  <dl class="detail-list">
-    <dt>Industry</dt><dd>{{ company.industry or 'Not set' }}</dd>
-    <dt>Address</dt><dd>{{ company.address or 'Not set' }}</dd>
-    <dt>Phone</dt><dd>{{ company.phone or 'Not set' }}</dd>
-    <dt>Email</dt><dd>{{ company.email or 'Not set' }}</dd>
-    <dt>Website</dt><dd>{{ company.website or 'Not set' }}</dd>
-  </dl>
-  <div class="quick-actions mt-2">
-    <a href="{{ url_for('employees.add_employee') }}" class="action-btn action-blue">➕ Add first employee</a>
-    <a href="{{ url_for('dashboard.admin_setup') }}" class="action-btn action-green">💳 Manage subscription (demo)</a>
-    <a href="{{ url_for('admin.users') }}" class="action-btn action-orange">👥 Manage users</a>
+<div class="section-card" style="background: linear-gradient(135deg, #1a237e 0%, #283593 100%); color: white; margin-bottom: 1.5rem; padding: 1.5rem; border-radius: 12px;">
+  <div style="display: flex; align-items: center; gap: 1.5rem; flex-wrap: wrap;">
+    <div style="width: 70px; height: 70px; border-radius: 50%; background: rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; font-size: 2rem;">
+      🏢
+    </div>
+    <div style="flex: 1; min-width: 200px;">
+      <h2 style="margin: 0; color: white; font-size: 1.5rem;">{{ company.name }}</h2>
+      <p style="margin: 0.5rem 0 0; opacity: 0.9;">Company Administration & Settings</p>
+    </div>
+    <div style="background: rgba(255,255,255,0.15); padding: 0.75rem 1.5rem; border-radius: 10px; text-align: center; border: 1px solid rgba(255,255,255,0.2);">
+      <div style="font-size: 1.5rem; font-weight: 700;">Pro</div>
+      <div style="font-size: 0.8rem; opacity: 0.85;">Plan</div>
+    </div>
   </div>
+</div>
 
-  <div class="section-card mt-4">
-    <h3>Subscription status</h3>
-    <p>Active plan: <strong>Pro</strong> (demo data)</p>
-    <p>Expiry date: <strong>{{ company.expiry_at if company and company.expiry_at else 'N/A' }}</strong></p>
+<div class="row g-4">
+  <div class="col-md-6">
+    <div class="section-card">
+      <h3>🏢 Company Information</h3>
+      <dl class="detail-list">
+        <dt>Industry</dt><dd>{{ company.industry or 'Not set' }}</dd>
+        <dt>Address</dt><dd>{{ company.address or 'Not set' }}</dd>
+        <dt>Phone</dt><dd>{{ company.phone or 'Not set' }}</dd>
+        <dt>Email</dt><dd>{{ company.email or 'Not set' }}</dd>
+        <dt>Website</dt><dd>{% if company.website %}<a href="{{ company.website }}" target="_blank">{{ company.website }}</a>{% else %}Not set{% endif %}</dd>
+      </dl>
+      <button class="btn btn-outline mt-2" onclick="alert('Edit company info coming soon!')">✏️ Edit Details</button>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="section-card">
+      <h3>💳 Subscription Status</h3>
+      <div class="kpi-grid">
+        <div class="kpi-card kpi-green">
+          <div class="kpi-icon">✅</div>
+          <div class="kpi-body">
+            <div class="kpi-value">Active</div>
+            <div class="kpi-label">Status</div>
+          </div>
+        </div>
+        <div class="kpi-card kpi-blue">
+          <div class="kpi-icon">📅</div>
+          <div class="kpi-body">
+            <div class="kpi-value" style="font-size: 1rem;">{{ company.expiry_at if company and company.expiry_at else 'N/A' }}</div>
+            <div class="kpi-label">Expires</div>
+          </div>
+        </div>
+      </div>
+      <div class="quick-actions mt-3">
+        <a href="#" class="action-btn action-purple" onclick="alert('Payment portal coming soon!')">💳 Manage Billing</a>
+        <a href="#" class="action-btn action-orange" onclick="alert('Upgrade options coming soon!')">⬆️ Upgrade Plan</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section-card mt-4">
+  <h3>⚡ Quick Actions</h3>
+  <div class="quick-actions">
+    <a href="{{ url_for('employees.add_employee') }}" class="action-btn action-blue">➕ Add Employee</a>
+    <a href="{{ url_for('admin.users') }}" class="action-btn action-green">👥 Manage Users</a>
+    <a href="{{ url_for('admin.departments') }}" class="action-btn action-cyan">🏢 Manage Departments</a>
+    <a href="{{ url_for('admin.settings') }}" class="action-btn action-dark">⚙️ System Settings</a>
+  </div>
+</div>
+
+<div class="row g-4 mt-2">
+  <div class="col-md-4">
+    <div class="section-card text-center" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+      <div style="font-size: 2.5rem;">👥</div>
+      <div style="font-size: 2rem; font-weight: 700;">{{ kpis.total_employees if kpis else 0 }}</div>
+      <div>Total Employees</div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="section-card text-center" style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); color: white;">
+      <div style="font-size: 2.5rem;">✅</div>
+      <div style="font-size: 2rem; font-weight: 700;">{{ kpis.active_employees if kpis else 0 }}</div>
+      <div>Active Users</div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="section-card text-center" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white;">
+      <div style="font-size: 2.5rem;">📊</div>
+      <div style="font-size: 2rem; font-weight: 700;">{{ kpis.attendance_rate if kpis else 0 }}%</div>
+      <div>Attendance Rate</div>
+    </div>
   </div>
 </div>
 {% endblock %}

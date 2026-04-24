@@ -4,14 +4,10 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Login — WorkZen HR</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
-  <link rel="stylesheet"
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
   <style>
     /* ── Custom Login Redesign ─────────────────────────────── */
     .login-page-wrapper {
-      min-height: 100vh;
+      min-height: 200vh;
       background: linear-gradient(135deg, #0f1c2e 0%, #1a3a5c 100%);
       padding: 0;
       position: relative;
@@ -22,11 +18,36 @@
     .pentagon-features-area {
       background: linear-gradient(180deg, #0a2540 0%, #1e3a5f 50%, #142850 100%);
       clip-path: polygon(0 0, 100% 0, 100% 70%, 50% 100%, 0 70%);
-      padding: 35px 0 50px 0;
+      padding: 120px 0 90px 0;
       box-shadow: 0 10px 50px rgba(10,37,64,0.6);
       position: relative;
-      z-index: 2;
+      z-index: 3001 !important;
       border-bottom: 3px solid #2a5a8f;
+    }
+    
+    /* Add subtle pattern to pentagon area */
+    .pentagon-features-area::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-image: 
+        radial-gradient(circle at 20% 30%, rgba(255,255,255,0.08) 0%, transparent 50%),
+        radial-gradient(circle at 80% 70%, rgba(255,255,255,0.05) 0%, transparent 40%);
+      pointer-events: none;
+    }
+    
+    /* Add top highlight line */
+    .pentagon-features-area::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, transparent, rgba(255,215,0,0.5), rgba(0,206,209,0.5), transparent);
     }
     
     /* Top Corner Buttons - Get Started & Need Help Only */
@@ -37,7 +58,7 @@
       max-width: 1000px;
       margin: 0 auto;
       position: relative;
-      z-index: 10;
+      z-index: 2000 !important;
     }
     .corner-btn {
       display: flex;
@@ -52,18 +73,49 @@
       box-shadow: 0 6px 25px rgba(0,0,0,0.4);
       cursor: pointer;
       border: none;
+      position: relative;
+      z-index: 3000 !important;
+      text-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    }
+    .corner-btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      border-radius: 40px;
+      background: inherit;
+      filter: blur(15px);
+      opacity: 0.4;
+      z-index: -1;
+    }
+    .corner-btn:hover::before {
+      opacity: 0.7;
     }
     .corner-btn.get-started {
-      background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
-      color: #1a1a2e;
+      background: linear-gradient(135deg, #007A7A 0%, #005050 100%);
+      color: #fff;
+      border: 3px solid #fff;
+      animation: heartbeat 1.5s ease-in-out infinite;
     }
     .corner-btn.get-started:hover {
       transform: scale(1.08);
-      box-shadow: 0 12px 40px rgba(255, 215, 0, 0.6);
+      box-shadow: 0 12px 40px rgba(0, 128, 128, 0.6);
+      animation: none;
+    }
+    @keyframes heartbeat {
+      0% { transform: scale(1); }
+      14% { transform: scale(1.05); }
+      28% { transform: scale(1); }
+      42% { transform: scale(1.05); }
+      70% { transform: scale(1); }
+      100% { transform: scale(1); }
     }
     .corner-btn.help-btn {
       background: linear-gradient(135deg, #00CED1 0%, #20B2AA 100%);
       color: #fff;
+      border: 3px solid #fff;
     }
     .corner-btn.help-btn:hover {
       transform: scale(1.08);
@@ -71,45 +123,60 @@
     }
     .corner-btn i {
       font-size: 1.3rem;
+      filter: drop-shadow(0 1px 2px rgba(0,0,0,0.3));
     }
     
-    /* Dropdown for Get Started */
-    .dropdown-container {
+    /* Dropdown for Get Started - Straight Down */
+    .dropdown-container, .help-dropdown-container {
       position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .dropdown-container {
+      margin-left: 20px;
+    }
+    .help-dropdown-container {
+      margin-right: 20px;
     }
     .dropdown-content {
       display: none;
       position: absolute;
-      top: calc(100% + 18px);
-      left: 0;
+      top: calc(100% + 10px);
+      left: 50%;
+      transform: translateX(-50%);
       background: white;
       border-radius: 20px;
       box-shadow: 0 25px 80px rgba(0,0,0,0.5);
-      min-width: 480px;
-      z-index: 100;
+      min-width: 400px;
+      max-width: 90vw;
+      z-index: 9999 !important;
       overflow: hidden;
-      animation: slideDown 0.35s ease;
+      animation: slideDown 0.3s ease-out;
     }
-    .dropdown-container:hover .dropdown-content {
+    .dropdown-container:hover .dropdown-content,
+    .dropdown-container:focus-within .dropdown-content {
       display: block;
     }
     @keyframes slideDown {
-      from { opacity: 0; transform: translateY(-20px); }
-      to { opacity: 1; transform: translateY(0); }
+      from { opacity: 0; margin-top: -10px; }
+      to { opacity: 1; margin-top: 0; }
     }
     .dropdown-header {
-      background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
-      color: #1a1a2e;
+      background: linear-gradient(135deg, #007A7A 0%, #005050 100%);
+      color: #fff;
       padding: 22px 28px;
       font-weight: 700;
       font-size: 1.15rem;
       display: flex;
       align-items: center;
       gap: 12px;
+      box-shadow: 0 4px 20px rgba(0, 128, 128, 0.4);
     }
     .dropdown-body {
       padding: 28px;
       color: #333;
+      text-shadow: none;
     }
     .dropdown-body ol {
       margin: 0;
@@ -119,26 +186,36 @@
       margin-bottom: 16px;
       line-height: 1.7;
       font-size: 1rem;
+      text-shadow: none;
     }
     .dropdown-body strong {
       color: #0a2540;
+      text-shadow: 0 0 0 transparent;
     }
     
-    /* Help Dropdown */
+    /* Help Dropdown - Straight Down */
     .help-dropdown-content {
       display: none;
       position: absolute;
-      top: calc(100% + 18px);
-      right: 0;
+      top: calc(100% + 10px);
+      left: 50%;
+      transform: translateX(-50%);
       background: white;
       border-radius: 20px;
       box-shadow: 0 25px 80px rgba(0,0,0,0.5);
-      min-width: 360px;
-      z-index: 100;
+      min-width: 320px;
+      max-width: 90vw;
+      z-index: 9999 !important;
       overflow: hidden;
+      animation: slideDownHelp 0.3s ease-out;
     }
-    .help-dropdown-container:hover .help-dropdown-content {
+    .help-dropdown-container:hover .help-dropdown-content,
+    .help-dropdown-container:focus-within .help-dropdown-content {
       display: block;
+    }
+    @keyframes slideDownHelp {
+      from { opacity: 0; margin-top: -10px; }
+      to { opacity: 1; margin-top: 0; }
     }
     .help-dropdown-header {
       background: linear-gradient(135deg, #00CED1 0%, #20B2AA 100%);
@@ -149,15 +226,18 @@
       display: flex;
       align-items: center;
       gap: 12px;
+      box-shadow: 0 4px 20px rgba(0, 206, 209, 0.4);
     }
     .help-dropdown-body {
       padding: 28px;
       color: #333;
       text-align: center;
+      text-shadow: none;
     }
     .help-dropdown-body p {
       margin-bottom: 14px;
       font-size: 1rem;
+      text-shadow: none;
     }
     .help-email {
       display: inline-flex;
@@ -177,17 +257,18 @@
       box-shadow: 0 10px 30px rgba(0, 206, 209, 0.5);
     }
     
-    /* Features Row - Following Diagonal Clip-Path Edge */
-    .features-diagonal-row {
-      position: absolute;
-      bottom: -18px;
-      left: 0;
-      width: 100%;
+    /* Horizontal Actions Row for Login */
+    .login-horizontal-actions {
       display: flex;
-      justify-content: center;
-      gap: 24px;
-      z-index: 15;
-      padding: 0 50px;
+      justify-content: space-between;
+      gap: 32px;
+      margin: 30px 20px 0 20px;
+      position: relative;
+      z-index: 4000 !important;
+      width: calc(100% - 40px);
+      max-width: 1200px;
+      margin-left: auto;
+      margin-right: auto;
     }
     .diagonal-feature {
       display: flex;
@@ -227,7 +308,7 @@
       display: flex;
       justify-content: center;
       gap: 20px;
-      z-index: 15;
+      z-index: 5 !important;
       padding: 0 40px;
     }
     .diagonal-feature-right {
@@ -264,20 +345,26 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      margin-top: -35px;
-      z-index: 5;
-      position: relative;
+      z-index: 900 !important;
+      position: fixed;
+      top: -50px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100%;
       padding: 0 20px;
     }
     
     .login-card-wrapper {
       background: #fff;
-      border-radius: 24px;
-      padding: 42px 36px 34px 36px;
+      /* Remove top border-radius and add V-shaped clip-path */
+      border-radius: 0 0 24px 24px;
+      clip-path: polygon(0 0, 50% 18px, 100% 0, 100% 100%, 0 100%);
+      padding: 28px 30px 24px 30px;
       box-shadow: 0 35px 120px rgba(0,0,0,0.55);
-      min-width: 360px;
-      max-width: 400px;
+      min-width: 340px;
+      max-width: 370px;
       width: 100%;
+      position: relative;
     }
     
     .login-card-header {
@@ -286,9 +373,17 @@
     }
     
     .login-card-logo {
-      font-size: 56px;
-      color: var(--primary);
+      font-size: 110px;
+      color: #142850; /* Match pentagon bottom color */
       line-height: 1;
+      margin-top: -38px;
+      /* Add a subtle shadow for blending */
+      filter: drop-shadow(0 6px 18px rgba(20,40,80,0.25));
+      background: linear-gradient(180deg, #1e3a5f 0%, #142850 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      text-fill-color: transparent;
     }
     
     .login-card-title {
@@ -306,25 +401,49 @@
     }
     
     .login-form .form-group {
-      margin-bottom: 18px;
+      margin-bottom: 22px;
     }
     
     .login-form .form-label {
       display: block;
-      font-size: 0.9rem;
+      font-size: 0.97rem;
       font-weight: 600;
       color: #333;
       margin-bottom: 8px;
+      transition: all 0.3s ease;
+      cursor: default;
+    }
+    .login-form .form-label:hover {
+      background: linear-gradient(270deg, #667eea, #764ba2, #11998e, #38ef7d);
+      background-size: 400% 400%;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      text-fill-color: transparent;
+      animation: label-gradient 4s ease infinite;
+    }
+    @keyframes label-gradient {
+      0% {background-position:0% 50%}
+      50% {background-position:100% 50%}
+      100% {background-position:0% 50%}
     }
     
     .login-form .form-control {
       width: 100%;
-      padding: 15px 18px;
+      padding: 18px 18px 12px 18px;
       border: 2px solid #e0e0e0;
       border-radius: 14px;
       font-size: 1rem;
-      transition: all 0.3s ease;
+      transition: border-color 0.3s, box-shadow 0.3s;
       box-sizing: border-box;
+      background: #f9faff;
+      font-weight: 500;
+      outline: none;
+    }
+    .login-form .form-control:focus {
+      border-color: #667eea;
+      box-shadow: 0 0 0 4px rgba(102,126,234,0.13);
+      background: #fff;
     }
     
     .login-form .form-control:focus {
@@ -352,31 +471,48 @@
     .btn-signin {
       width: 100%;
       padding: 18px;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: linear-gradient(270deg, #667eea, #764ba2, #11998e, #38ef7d);
+      background-size: 400% 400%;
       color: white;
       border: none;
       border-radius: 14px;
       font-size: 1.15rem;
       font-weight: 700;
       cursor: pointer;
-      transition: all 0.3s ease;
       margin-top: 14px;
+      box-shadow: 0 8px 28px rgba(102,126,234,0.18);
+      transition: transform 0.2s, box-shadow 0.2s;
+      animation: lively-gradient 6s ease infinite;
     }
-    
+    @keyframes lively-gradient {
+      0% {background-position:0% 50%}
+      50% {background-position:100% 50%}
+      100% {background-position:0% 50%}
+    }
     .btn-signin:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 12px 35px rgba(102,126,234,0.55);
+      transform: translateY(-4px) scale(1.03);
+      box-shadow: 0 16px 40px rgba(102,126,234,0.25);
+      filter: brightness(1.08);
     }
     
     .login-links {
       text-align: center;
-      margin-top: 20px;
+      margin-top: 22px;
+      font-size: 1.02rem;
+      opacity: 0.93;
+      letter-spacing: 0.01em;
     }
     
     .login-links a {
       color: #667eea;
       text-decoration: none;
-      font-size: 0.95rem;
+      font-size: 0.98rem;
+      font-weight: 600;
+      transition: color 0.2s;
+    }
+    .login-links a:hover {
+      color: #11998e;
+      text-decoration: underline;
     }
     
     .login-links a:hover { 
@@ -471,86 +607,91 @@
       .dropdown-content, .help-dropdown-content { min-width: 300px; }
     }
   </style>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+  <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
 </head>
 <body>
   <div class="login-page-wrapper">
     <!-- Bold Blue Pentagon Area - Only Buttons -->
     <div class="pentagon-features-area">
-      <!-- Corner Buttons Only -->
+      <!-- Role Buttons on Top -->
       <div class="corner-buttons">
-        <div class="dropdown-container">
-          <button class="corner-btn get-started">
-            <i class="fas fa-rocket"></i> Get Started
-          </button>
-          <div class="dropdown-content">
-            <div class="dropdown-header">
-              <i class="fas fa-book-open"></i> How to Use WorkZen HR
-            </div>
-            <div class="dropdown-body">
-              <ol>
-                <li><strong>Select your company</strong> from the dropdown menu</li>
-                <li><strong>Enter your username</strong> provided by your administrator</li>
-                <li><strong>Enter your password</strong> and click Sign In</li>
-                <li><strong>Navigate modules</strong> using the sidebar: Employees, Attendance, Leave, Payroll, Analytics, Performance, AI Predictions</li>
-                <li><strong>Check your dashboard</strong> for insights, notifications, and quick actions</li>
-                <li><strong>Contact support</strong> if you need help - click the Need Help button</li>
-              </ol>
-            </div>
-          </div>
+        <div class="diagonal-feature" style="background: linear-gradient(270deg, #667eea, #764ba2, #11998e, #38ef7d); background-size: 400% 400%; animation: lively-gradient 6s ease infinite;">
+          <span class="icon">👥</span>
+          <span class="label">Employee</span>
         </div>
-        
-        <div class="help-dropdown-container">
-          <button class="corner-btn help-btn">
-            <i class="fas fa-question-circle"></i> Need Help
-          </button>
-          <div class="help-dropdown-content">
-            <div class="help-dropdown-header">
-              <i class="fas fa-life-ring"></i> Support Team
-            </div>
-            <div class="help-dropdown-body">
-              <p>Having issues? We're here to help!</p>
-              <p>Email us anytime:</p>
-              <a href="mailto:tinashemataruse226@gmail.com" class="help-email">
-                <i class="fas fa-envelope"></i> tinashemataruse226@gmail.com
-              </a>
-              <p style="font-size: 0.8rem; color: #888; margin-top: 15px;">We typically respond within 24 hours</p>
-            </div>
-          </div>
+        <div class="diagonal-feature" style="background: linear-gradient(270deg, #667eea, #764ba2, #11998e, #38ef7d); background-size: 400% 400%; animation: lively-gradient 6s ease infinite;">
+          <span class="icon">📅</span>
+          <span class="label">Attendance</span>
+        </div>
+        <div class="diagonal-feature" style="background: linear-gradient(270deg, #667eea, #764ba2, #11998e, #38ef7d); background-size: 400% 400%; animation: lively-gradient 6s ease infinite;">
+          <span class="icon">🏖️</span>
+          <span class="label">Leave</span>
+        </div>
+        <div class="diagonal-feature" style="background: linear-gradient(270deg, #667eea, #764ba2, #11998e, #38ef7d); background-size: 400% 400%; animation: lively-gradient 6s ease infinite;">
+          <span class="icon">💰</span>
+          <span class="label">Payroll</span>
+        </div>
+        <div class="diagonal-feature" style="background: linear-gradient(270deg, #667eea, #764ba2, #11998e, #38ef7d); background-size: 400% 400%; animation: lively-gradient 6s ease infinite;">
+          <span class="icon">📊</span>
+          <span class="label">Analytics</span>
+        </div>
+        <div class="diagonal-feature" style="background: linear-gradient(270deg, #667eea, #764ba2, #11998e, #38ef7d); background-size: 400% 400%; animation: lively-gradient 6s ease infinite;">
+          <span class="icon">⭐</span>
+          <span class="label">Performance</span>
+        </div>
+        <div class="diagonal-feature" style="background: linear-gradient(270deg, #667eea, #764ba2, #11998e, #38ef7d); background-size: 400% 400%; animation: lively-gradient 6s ease infinite;">
+          <span class="icon">🤖</span>
+          <span class="label">AI Predictions</span>
         </div>
       </div>
       
       <!-- No features row here -->
     </div>
 
-    <!-- Features Following Diagonal Clip-Path Edge (now outside pentagon, not behind form) -->
-    <div class="features-diagonal-row" style="z-index:20; position:relative; margin-bottom:0; margin-top:-30px;">
-      <div class="diagonal-feature">
-        <span class="icon">👥</span>
-        <span class="label">Employee</span>
+    <!-- Get Started & Need Help - Horizontal Row -->
+    <div class="login-horizontal-actions">
+      <div class="dropdown-container">
+        <button class="corner-btn get-started">
+          <i class="fas fa-rocket"></i> Get Started
+        </button>
+        <div class="dropdown-content">
+          <div class="dropdown-header">
+            <i class="fas fa-book-open"></i> How to Use WorkZen HR
+          </div>
+          <div class="dropdown-body">
+            <p style="margin-bottom: 15px; font-size: 1rem;"><strong>Important:</strong> If your company is not registered yet, please click "Register your company" below the login form first!</p>
+            <ol>
+              <li><strong>Select your company</strong> from the dropdown menu (must be registered first)</li>
+              <li><strong>Register if needed:</strong> Click "Register your company" link below the login form</li>
+              <li><strong>Enter your username</strong> provided by your administrator</li>
+              <li><strong>Enter your password</strong> and click Sign In</li>
+              <li><strong>Navigate modules</strong> using the sidebar: Employees, Attendance, Leave, Payroll, Analytics, Performance, AI Predictions</li>
+              <li><strong>Check your dashboard</strong> for insights, notifications, and quick actions</li>
+              <li><strong>Contact support</strong> if you need help - click the Need Help button</li>
+            </ol>
+          </div>
+        </div>
       </div>
-      <div class="diagonal-feature">
-        <span class="icon">📅</span>
-        <span class="label">Attendance</span>
-      </div>
-      <div class="diagonal-feature">
-        <span class="icon">🏖️</span>
-        <span class="label">Leave</span>
-      </div>
-      <div class="diagonal-feature">
-        <span class="icon">💰</span>
-        <span class="label">Payroll</span>
-      </div>
-      <div class="diagonal-feature">
-        <span class="icon">📊</span>
-        <span class="label">Analytics</span>
-      </div>
-      <div class="diagonal-feature">
-        <span class="icon">⭐</span>
-        <span class="label">Performance</span>
-      </div>
-      <div class="diagonal-feature">
-        <span class="icon">🤖</span>
-        <span class="label">AI Predictions</span>
+      <div class="help-dropdown-container">
+        <button class="corner-btn help-btn">
+          <i class="fas fa-question-circle"></i> Need Help
+        </button>
+        <div class="help-dropdown-content">
+          <div class="help-dropdown-header">
+            <i class="fas fa-life-ring"></i> Support Team
+          </div>
+          <div class="help-dropdown-body">
+            <p>Having issues? We're here to help!</p>
+            <p>Email us anytime:</p>
+            <a href="mailto:tinashemataruse226@gmail.com" class="help-email">
+              <i class="fas fa-envelope"></i> tinashemataruse226@gmail.com
+            </a>
+            <p style="font-size: 0.8rem; color: #888; margin-top: 15px;">We typically respond within 24 hours</p>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -571,8 +712,8 @@
         
         <form method="POST" action="{{ url_for('auth.login') }}" class="login-form">
           <div class="form-group">
-            <label class="form-label">Company</label>
-            <select name="company" class="form-control" required autofocus>
+            <label class="form-label" for="companyField">Company</label>
+            <select name="company" class="form-control" id="companyField" required autofocus>
               <option value="">Select company</option>
               {% for comp in companies %}
                 <option value="{{ comp.name }}">{{ comp.name }}</option>
@@ -580,15 +721,15 @@
             </select>
           </div>
           <div class="form-group">
-            <label class="form-label">Username</label>
-            <input type="text" name="username" class="form-control"
-                   placeholder="Enter your username" required />
+            <label class="form-label" for="usernameField">Username</label>
+            <input type="text" name="username" class="form-control" id="usernameField"
+                   placeholder="Enter your username" required autocomplete="username" />
           </div>
           <div class="form-group">
-            <label class="form-label">Password</label>
+            <label class="form-label" for="passwordField">Password</label>
             <div class="password-wrapper">
               <input type="password" name="password" class="form-control"
-                     placeholder="Enter your password" required id="passwordField" />
+                     placeholder="Enter your password" required id="passwordField" autocomplete="current-password" />
               <button type="button" class="password-toggle" onclick="togglePassword()">
                 👁️
               </button>
@@ -608,7 +749,7 @@
       <!-- Social Links at Bottom -->
       <div class="social-links-row">
         <div class="social-links">
-          <a href="https://youtube.com" target="_blank" class="social-link" title="YouTube">
+          <a href="https://www.youtube.com/@TinasheMataruse09" target="_blank" class="social-link" title="YouTube">
             <i class="fab fa-youtube"></i>
           </a>
           <a href="https://linkedin.com" target="_blank" class="social-link" title="LinkedIn">
@@ -628,7 +769,7 @@
       
       <!-- YouTube Area -->
       <div class="youtube-row">
-        <a href="https://www.youtube.com/watch?v=dQw4w9WgXcQ" target="_blank" class="youtube-link">
+        <a href="https://www.youtube.com/@TinasheMataruse09" target="_blank" class="youtube-link">
           <i class="fab fa-youtube youtube-icon"></i> 
           <span class="youtube-label">Watch App Overview</span>
         </a>

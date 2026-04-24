@@ -152,6 +152,26 @@
   }
   .features-diagonal-row .diagonal-feature {
     transform: skew(18deg,0deg);
+  .diagonal-feature {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: linear-gradient(270deg, #667eea, #764ba2, #11998e, #38ef7d);
+    background-size: 400% 400%;
+    animation: lively-gradient 6s ease infinite;
+    border-radius: 14px;
+    padding: 12px 18px;
+    color: #fff;
+    box-shadow: 0 6px 20px rgba(10,37,64,0.6);
+    border: 1px solid rgba(255,255,255,0.2);
+    transition: all 0.3s ease;
+    min-width: 80px;
+  }
+
+  @keyframes lively-gradient {
+    0% {background-position:0% 50%}
+    50% {background-position:100% 50%}
+    100% {background-position:0% 50%}
   }
 }
 /* ================================================================
@@ -357,6 +377,16 @@ a:hover { text-decoration: underline; }
   border: 1px solid var(--border);
   padding: 24px;
   box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+  transition: all 0.3s ease;
+  animation: fadeInUp 0.5s ease-out;
+}
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.section-card:hover {
+  box-shadow: 0 8px 35px rgba(0,0,0,0.12);
+  transform: translateY(-2px);
 }
 .section-title {
   font-size: 18px;
@@ -414,19 +444,27 @@ a:hover { text-decoration: underline; }
   cursor: pointer; transition: all 0.3s ease;
   text-decoration: none;
   box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  background-size: 400% 400%;
+  animation: lively-gradient 6s ease infinite;
+}
+@keyframes lively-gradient {
+  0% {background-position:0% 50%}
+  50% {background-position:100% 50%}
+  100% {background-position:0% 50%}
 }
 .action-btn:hover { 
   opacity: 1; 
   text-decoration: none; 
   transform: translateY(-2px);
   box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+  filter: brightness(1.08);
 }
-.action-blue   { background: linear-gradient(135deg, #1e88e5 0%, #1565c0 100%); color: #fff; }
-.action-green  { background: linear-gradient(135deg, #43a047 0%, #2e7d32 100%); color: #fff; }
-.action-orange { background: linear-gradient(135deg, #fb8c00 0%, #e65100 100%); color: #fff; }
-.action-purple { background: linear-gradient(135deg, #8e24aa 0%, #6a1b9a 100%); color: #fff; }
-.action-cyan   { background: linear-gradient(135deg, #00acc1 0%, #00838f 100%); color: #fff; }
-.action-dark   { background: linear-gradient(135deg, #546e7a 0%, #37474f 100%); color: #fff; }
+.action-blue   { background: linear-gradient(270deg, #1e88e5, #1565c0, #0d47a1, #42a5f5); color: #fff; }
+.action-green  { background: linear-gradient(270deg, #43a047, #2e7d32, #1b5e20, #66bb6a); color: #fff; }
+.action-orange { background: linear-gradient(270deg, #fb8c00, #e65100, #bf360c, #ffa726); color: #fff; }
+.action-purple { background: linear-gradient(270deg, #8e24aa, #6a1b9a, #4a148c, #ab47bc); color: #fff; }
+.action-cyan   { background: linear-gradient(270deg, #00acc1, #00838f, #006064, #26c6da); color: #fff; }
+.action-dark   { background: linear-gradient(270deg, #546e7a, #37474f, #263238, #78909c); color: #fff; }
 
 /* ── Buttons ──────────────────────────────────────────────────── */
 .btn {

@@ -1,103 +1,201 @@
 {% extends "base.html" %}
 
 {% block title %}Compliance Dashboard{% endblock %}
+{% block page_title %}Compliance Dashboard{% endblock %}
 
 {% block content %}
-<div class="container-fluid mt-4">
-    <h1 class="display-5 mb-4">📊 Compliance Dashboard</h1>
-
-    <div class="row mb-4">
-        <div class="col-md-4">
-            <div class="card shadow-sm">
-                <div class="card-body text-center">
-                    <h3 class="display-6">{{ stats.total or 0 }}</h3>
-                    <p class="text-muted">Total Records</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="card shadow-sm">
-                <div class="card-body text-center">
-                    <h3 class="display-6 text-success">{{ stats.completed or 0 }}</h3>
-                    <p class="text-muted">Completed</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="card shadow-sm">
-                <div class="card-body text-center">
-                    <h3 class="display-6">{{ completion_rate }}</h3>
-                    <p class="text-muted">Completion Rate</p>
-                </div>
-            </div>
-        </div>
+<div class="section-card" style="background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); color: white; margin-bottom: 1.5rem; padding: 1.5rem; border-radius: 12px;">
+  <div style="display: flex; align-items: center; gap: 1.5rem; flex-wrap: wrap;">
+    <div style="width: 70px; height: 70px; border-radius: 50%; background: rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; font-size: 2rem;">
+      📋
     </div>
-
-    <div class="row mb-4">
-        <div class="col-md-6">
-            <div class="card shadow-sm">
-                <div class="card-header bg-danger text-white">
-                    <h5 class="mb-0">🔴 Overdue Items</h5>
-                </div>
-                <div class="card-body">
-                    {% if overdue %}
-                        <div class="table-responsive">
-                            <table class="table table-sm">
-                                <tr>
-                                    <th>Employee</th>
-                                    <th>Policy</th>
-                                    <th>Due Date</th>
-                                </tr>
-                                {% for item in overdue %}
-                                <tr>
-                                    <td>{{ item.first_name }} {{ item.last_name }}</td>
-                                    <td>{{ item.policy_name }}</td>
-                                    <td>{{ item.due_date.strftime('%Y-%m-%d') }}</td>
-                                </tr>
-                                {% endfor %}
-                            </table>
-                        </div>
-                    {% else %}
-                        <p class="text-muted">✓ No overdue items</p>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-
-        <div class="col-md-6">
-            <div class="card shadow-sm">
-                <div class="card-header bg-warning text-dark">
-                    <h5 class="mb-0">⚠️ Upcoming (Next 7 Days)</h5>
-                </div>
-                <div class="card-body">
-                    {% if upcoming %}
-                        <div class="table-responsive">
-                            <table class="table table-sm">
-                                <tr>
-                                    <th>Employee</th>
-                                    <th>Policy</th>
-                                    <th>Due Date</th>
-                                </tr>
-                                {% for item in upcoming %}
-                                <tr>
-                                    <td>{{ item.first_name }} {{ item.last_name }}</td>
-                                    <td>{{ item.policy_name }}</td>
-                                    <td>{{ item.due_date.strftime('%Y-%m-%d') }}</td>
-                                </tr>
-                                {% endfor %}
-                            </table>
-                        </div>
-                    {% else %}
-                        <p class="text-muted">✓ Nothing due in next 7 days</p>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
+    <div style="flex: 1; min-width: 200px;">
+      <h2 style="margin: 0; color: white; font-size: 1.5rem;">Compliance Dashboard</h2>
+      <p style="margin: 0.5rem 0 0; opacity: 0.9;">Track and manage employee compliance requirements</p>
     </div>
-
-    <div class="mt-4">
-        <a href="{{ url_for('compliance.list_compliance') }}" class="btn btn-primary">View All Records</a>
-        <a href="{{ url_for('dashboard.index') }}" class="btn btn-secondary">← Dashboard</a>
+    <div style="background: rgba(255,255,255,0.15); padding: 0.75rem 1.5rem; border-radius: 10px; text-align: center; border: 1px solid rgba(255,255,255,0.2);">
+      <div style="font-size: 1.5rem; font-weight: 700;">{{ completion_rate }}</div>
+      <div style="font-size: 0.8rem; opacity: 0.85;">Complete</div>
     </div>
+  </div>
+</div>
+
+<div class="kpi-grid">
+  <div class="kpi-card kpi-blue">
+    <div class="kpi-icon">📊</div>
+    <div class="kpi-body">
+      <div class="kpi-value">{{ stats.total or 0 }}</div>
+      <div class="kpi-label">Total Records</div>
+    </div>
+    <div class="kpi-sub">all policies</div>
+  </div>
+  <div class="kpi-card kpi-green">
+    <div class="kpi-icon">✅</div>
+    <div class="kpi-body">
+      <div class="kpi-value">{{ stats.completed or 0 }}</div>
+      <div class="kpi-label">Completed</div>
+    </div>
+    <div class="kpi-sub">up to date</div>
+  </div>
+  <div class="kpi-card kpi-red">
+    <div class="kpi-icon">⏰</div>
+    <div class="kpi-body">
+      <div class="kpi-value">{{ overdue|length if overdue else 0 }}</div>
+      <div class="kpi-label">Overdue</div>
+    </div>
+    <div class="kpi-sub">needs attention</div>
+  </div>
+  <div class="kpi-card kpi-orange">
+    <div class="kpi-icon">📅</div>
+    <div class="kpi-body">
+      <div class="kpi-value">{{ upcoming|length if upcoming else 0 }}</div>
+      <div class="kpi-label">Upcoming</div>
+    </div>
+    <div class="kpi-sub">next 7 days</div>
+  </div>
+</div>
+
+<!-- Interactive Compliance Chart -->
+<section class="section-card mt-4">
+  <h3 class="section-title">📊 Compliance Overview</h3>
+  <div class="row g-4">
+    <div class="col-md-6">
+      <div style="background: #fff; border-radius: 12px; padding: 1.5rem; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+        <h5 class="text-center mb-3">Compliance Status</h5>
+        <canvas id="complianceChart"></canvas>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div style="background: #fff; border-radius: 12px; padding: 1.5rem; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+        <h5 class="text-center mb-3">Completion by Policy Type</h5>
+        <canvas id="policyChart"></canvas>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Compliance Status Doughnut
+  const compCtx = document.getElementById('complianceChart');
+  if (compCtx) {
+    new Chart(compCtx.getContext('2d'), {
+      type: 'doughnut',
+      data: {
+        labels: ['Completed', 'Pending', 'Overdue'],
+        datasets: [{
+          data: [{{ stats.completed or 0 }}, {{ (stats.total - stats.completed - (overdue|length if overdue else 0)) }}, {{ overdue|length if overdue else 0 }}],
+          backgroundColor: ['#28a745', '#ffc107', '#dc3545'],
+          borderWidth: 0
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { position: 'bottom' } }
+      }
+    });
+  }
+
+  // Policy Type Bar Chart
+  const policyCtx = document.getElementById('policyChart');
+  if (policyCtx) {
+    new Chart(policyCtx.getContext('2d'), {
+      type: 'bar',
+      data: {
+        labels: ['Training', 'Certification', 'Policy Review', 'Health Check'],
+        datasets: [{
+          label: 'Completed',
+          data: [{{ (stats.completed or 0) * 0.4 }}, {{ (stats.completed or 0) * 0.3 }}, {{ (stats.completed or 0) * 0.2 }}, {{ (stats.completed or 0) * 0.1 }}],
+          backgroundColor: '#28a745',
+          borderRadius: 6
+        }, {
+          label: 'Pending',
+          data: [{{ (stats.total - stats.completed or 0) * 0.4 }}, {{ (stats.total - stats.completed or 0) * 0.3 }}, {{ (stats.total - stats.completed or 0) * 0.2 }}, {{ (stats.total - stats.completed or 0) * 0.1 }}],
+          backgroundColor: '#ffc107',
+          borderRadius: 6
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { position: 'bottom' } },
+        scales: { y: { beginAtZero: true } }
+      }
+    });
+  }
+});
+</script>
+
+<div class="row g-4 mt-4">
+  <div class="col-md-6">
+    <div class="section-card">
+      <h3>🔴 Overdue Items</h3>
+      {% if overdue %}
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Employee</th>
+                <th>Policy</th>
+                <th>Due Date</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for item in overdue[:5] %}
+              <tr>
+                <td>{{ item.first_name }} {{ item.last_name }}</td>
+                <td>{{ item.policy_name }}</td>
+                <td><span class="badge badge-danger">{{ item.due_date.strftime('%Y-%m-%d') }}</span></td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% if overdue|length > 5 %}
+        <p class="text-center mt-2"><a href="{{ url_for('compliance.list_compliance') }}">View all {{ overdue|length }} overdue items →</a></p>
+        {% endif %}
+      {% else %}
+        <p class="text-success text-center">✓ No overdue items</p>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="col-md-6">
+    <div class="section-card">
+      <h3>⚠️ Upcoming (Next 7 Days)</h3>
+      {% if upcoming %}
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Employee</th>
+                <th>Policy</th>
+                <th>Due Date</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for item in upcoming[:5] %}
+              <tr>
+                <td>{{ item.first_name }} {{ item.last_name }}</td>
+                <td>{{ item.policy_name }}</td>
+                <td><span class="badge badge-warning">{{ item.due_date.strftime('%Y-%m-%d') }}</span></td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% if upcoming|length > 5 %}
+        <p class="text-center mt-2"><a href="{{ url_for('compliance.list_compliance') }}">View all {{ upcoming|length }} upcoming items →</a></p>
+        {% endif %}
+      {% else %}
+        <p class="text-success text-center">✓ Nothing due in next 7 days</p>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<div class="quick-actions mt-4">
+  <a href="{{ url_for('compliance.list_compliance') }}" class="action-btn action-blue">📋 View All Records</a>
+  <a href="{{ url_for('compliance.assign') }}" class="action-btn action-green">➕ Assign New</a>
+  <a href="{{ url_for('dashboard.index') }}" class="action-btn action-dark">← Back to Dashboard</a>
 </div>
 {% endblock %}

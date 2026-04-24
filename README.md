@@ -1,6 +1,6 @@
 # 🧑‍💼 WorkZen HR — HR Management System
 
-A modern, web-based HR Management System built with Flask and PostgreSQL (Supabase).
+A modern, web-based HR Management System built with Flask and MySQL.
 WorkZen HR helps organizations manage employees, attendance, payroll, and leave processes efficiently in one centralized platform.
 
 ---
@@ -8,6 +8,15 @@ WorkZen HR helps organizations manage employees, attendance, payroll, and leave 
 ## 🌐 Live Demo
 
 HUMAN RESOURCES WEB APP: *(https://hr-web-app-5.onrender.com/dashboard)*
+
+---
+
+## 📺 YouTube Channel
+
+[![Watch on YouTube](https://img.shields.io/badge/Watch%20on-YouTube-red?style=for-the-badge&logo=youtube)](https://www.youtube.com/@TinasheMataruse09)
+
+For tutorials and updates, check out our YouTube channel: [Tinashe Mataruse](https://www.youtube.com/@TinasheMataruse09)
+
 ---
 
 ## 📌 Overview
@@ -62,7 +71,7 @@ WorkZen HR is designed to simplify HR operations by providing a clean interface 
 | Layer           | Technology                     |
 | --------------- | ------------------------------ |
 | Backend         | Python (Flask)                 |
-| Database        | PostgreSQL (Supabase)          |
+| Database        | MySQL                         |
 | Frontend        | HTML, CSS, JavaScript          |
 | Version Control | Git & GitHub                   |
 
@@ -122,28 +131,22 @@ pip install -r requirements.txt
 
 ### 4️⃣ Setup Database
 
-* Create a Supabase project and PostgreSQL database.
-* Set your environment variables from Supabase or your PostgreSQL provider.
+* Create a MySQL database.
+* Set your environment variables for MySQL.
 
 ```bash
-export DB_HOST=your_host
-export DB_PORT=your_port
-export DB_USER=your_user
-export DB_PASSWORD=your_password
-export DB_NAME=your_database
-export DATABASE_URL=postgresql://user:password@host:port/dbname
+set DB_HOST=your_host
+set DB_PORT=3306
+set DB_USER=your_user
+set DB_PASSWORD=your_password
+set DB_NAME=your_database
+set DATABASE_URL=mysql+pymysql://user:password@host:port/dbname
 ```
 
 * Create database schema from `schema.sql`:
 
 ```bash
-psql "${DATABASE_URL}" -f schema.sql
-```
-
-Or with explicit connection parameters:
-
-```bash
-psql -h $DB_HOST -p $DB_PORT -U $DB_USER -d $DB_NAME -f schema.sql
+mysql -h %DB_HOST% -P %DB_PORT% -u %DB_USER% -p%DB_PASSWORD% %DB_NAME% < schema.sql
 ```
 
 ---
@@ -174,8 +177,8 @@ http://127.0.0.1:5000
 
 | Role       | Username   | Password  |
 | ---------- | ---------- | --------- |
-| HR Manager | hr_manager | HR@123456 |
-| CHRO       | chro       | CHRO@1234 |
+| HR Manager | hr_manager | [Set your own password] |
+| CHRO       | chro       | [Set your own password] |
 
 ---
 
@@ -185,11 +188,11 @@ Create environment variables:
 
 ```
 DB_HOST=your_host
-DB_PORT=5432
+DB_PORT=3306
 DB_USER=your_user
 DB_PASSWORD=your_password
 DB_NAME=your_database
-DATABASE_URL=postgresql://user:password@host:port/dbname
+DATABASE_URL=mysql+pymysql://user:password@host:port/dbname
 SECRET_KEY=your_secret_key
 ```
 
@@ -199,9 +202,11 @@ SECRET_KEY=your_secret_key
 
 This app can be deployed using:
 
-* Render (recommended)
-* Supabase (PostgreSQL)
-* Any cloud platform supporting Flask
+* Docker
+* Heroku
+* AWS Elastic Beanstalk
+
+Refer to the deployment guide for detailed steps.
 
 ---
 
@@ -249,6 +254,49 @@ xxxxx xxxxx xxxxx xxxxx xxxxx xxxxx xxxxx
 
 Developed by *Mataruse T*
 *((https://hr-web-app-5.onrender.com/dashboard))*
+
+---
+
+## 📸 Application Screenshots
+
+Below are some screenshots showcasing the features and user interface of WorkZen HR.
+
+### 1️⃣ Login Page
+![Login Page](docs/149709d2-ea6f-4b03-93fb-33d163758275.png)
+- **Arrow 1**: Use the "Get Started" button to begin the login process.
+- **Arrow 2**: Select your company from the dropdown menu.
+- **Arrow 3**: Enter your username and password to log in.
+
+### 2️⃣ Company Setup & Subscription
+![Company Setup & Subscription](docs/image-1777013543787.png)
+- **Arrow 1**: Add your first employee to the system.
+- **Arrow 2**: Manage your subscription and user access.
+- **Arrow 3**: View your subscription status and expiry date.
+
+### 3️⃣ CHRO Workforce Analytics
+![CHRO Workforce Analytics](docs/image-1777013800528.png)
+- **Arrow 1**: View enterprise analytics, including employee count, attrition rate, and attendance rate.
+- **Arrow 2**: Access premium features like AI Workforce Predictions.
+
+### 4️⃣ Advanced Analytics
+![Advanced Analytics](docs/image-1777013936163.png)
+- **Arrow 1**: Explore advanced analytics such as attrition forecast, talent gap analysis, hiring forecast, and productivity insights.
+- **Arrow 2**: Upgrade to premium to unlock all AI-powered analytics.
+
+### 5️⃣ Employee Leaderboard
+![Employee Leaderboard](docs/image-1777013965154.png)
+- **Arrow 1**: View top performers by points, level, and achievements.
+- **Arrow 2**: Access your profile and achievements.
+
+### 6️⃣ Gamification Dashboard
+![Gamification Dashboard](docs/image-1777013994858.png)
+- **Arrow 1**: Learn how to earn achievements.
+- **Arrow 2**: View rare achievements and their descriptions.
+
+### 7️⃣ Dashboard Overview
+![Dashboard Overview](docs/image-1777014194544.png)
+- **Arrow 1**: Navigate through the core HR functionalities like Employees, Attendance, Leave, and Payroll.
+- **Arrow 2**: Access performance and development features like Appraisals and Gamification.
 
 ---
 
