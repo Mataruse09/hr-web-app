@@ -13,7 +13,8 @@ def render_dashboard(role, company_id):
         'dashboard.html',
         role=role,
         kpis=kpis,
-        departments=departments
+        departments=departments,
+        is_personal=False
     )
 
 
@@ -123,7 +124,8 @@ def admin_dashboard():
         'dashboard.html',
         kpis=kpis,
         departments=departments,
-        role='Admin'
+        role='Admin',
+        is_personal=False
     )
 
 
@@ -138,11 +140,14 @@ def hr_dashboard():
         return redirect(url_for('auth.login'))
 
     kpis = get_dashboard_kpis(company_id)
+    departments = employee_model.get_departments(company_id)
 
     return render_template(
         'dashboard.html',
         kpis=kpis,
-        role='HR'
+        departments=departments,
+        role='HR',
+        is_personal=False
     )
 
 
@@ -157,11 +162,14 @@ def manager_dashboard():
         return redirect(url_for('auth.login'))
 
     kpis = get_dashboard_kpis(company_id)
+    departments = employee_model.get_departments(company_id)
 
     return render_template(
         'dashboard.html',
         kpis=kpis,
-        role='Manager'
+        departments=departments,
+        role='Manager',
+        is_personal=False
     )
 
 

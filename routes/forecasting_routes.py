@@ -52,7 +52,7 @@ def create_forecast():
     try:
         # Get departments
         departments = query(
-            "SELECT id, department_name FROM departments WHERE company_id = %s",
+            "SELECT id, name AS department_name FROM departments WHERE company_id = %s",
             (company_id,)
         ) or []
         
@@ -109,7 +109,7 @@ def view_forecast(forecast_id):
     
     try:
         forecast = query(
-            """SELECT lf.*, d.department_name FROM labour_forecasts lf
+            """SELECT lf.*, d.name as department_name FROM labour_forecasts lf
                LEFT JOIN departments d ON lf.department_id = d.id
                WHERE lf.id = %s AND lf.company_id = %s""",
             (forecast_id, company_id), one=True

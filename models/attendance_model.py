@@ -97,14 +97,15 @@ def upsert(company_id: int, employee_id: int, work_date: str,
 def today_summary(company_id: int, today: str):
     row = query("""
         SELECT
-          SUM(CASE WHEN status IN ('Present','Late','Work From Home','Half-Day') THEN 1 ELSE 0 END) AS present,
+          SUM(CASE WHEN status IN ('Present','Work From Home','Half-Day') THEN 1 ELSE 0 END) AS present,
           SUM(CASE WHEN status = 'Absent' THEN 1 ELSE 0 END) AS absent,
+          SUM(CASE WHEN status = 'Late' THEN 1 ELSE 0 END) AS late,
           COUNT(*) AS total
         FROM attendance
         WHERE company_id=%s AND work_date=%s
     """, (company_id, today), one=True)
 
-    return row or {'present': 0, 'absent': 0, 'total': 0}
+    return row or {'present': 0, 'absent': 0, 'late': 0, 'total': 0}
 
 
 def monthly_present_days(company_id: int, employee_id: int,

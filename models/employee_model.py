@@ -133,10 +133,15 @@ def delete(emp_id: int, company_id: int):
 # ── Departments ─────────────────────────────────────────────────────────────
 
 def get_departments(company_id: int):
-    return query(
-        "SELECT * FROM departments WHERE company_id=%s ORDER BY name",
-        (company_id,)
-    )
+    return query("""
+        SELECT d.*, 
+               COUNT(e.id) AS employee_count
+        FROM departments d
+        LEFT JOIN employees_core e ON e.department_id = d.id AND e.status = 'Active'
+        WHERE d.company_id=%s
+        GROUP BY d.id
+        ORDER BY d.name
+    """, (company_id,))
 
 
 def create_department(company_id: int, name: str, description: str = '') -> int:

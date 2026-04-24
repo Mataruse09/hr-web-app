@@ -8,6 +8,10 @@ class Config:
     # ── Security ────────────────────────────────────────────
     SECRET_KEY = os.getenv('SECRET_KEY', 'change-me-in-production-use-long-random-string')
 
+    # ── Template Caching ─────────────────────────────────────
+    # Disable template caching in development
+    TEMPLATES_AUTO_RELOAD = True
+
     # ── MySQL (Railway) ─────────────────────────────────────
     DB_HOST     = os.getenv('DB_HOST', 'mysql.railway.internal')
     DB_USER     = os.getenv('DB_USER', 'root')

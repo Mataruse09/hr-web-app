@@ -246,6 +246,7 @@ def get_dashboard_kpis(company_id: int) -> dict:
         'active_employees': active,
         'present_today':    today_att['present'] or 0,
         'absent_today':     today_att['absent']  or 0,
+        'late_today':       today_att.get('late', 0) or 0,
         'on_leave_today':   on_leave,
         'pending_payroll':  pending_pay,
         'average_salary':   round(avg_sal, 2),
