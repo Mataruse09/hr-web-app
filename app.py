@@ -104,5 +104,12 @@ import os
 
 app = create_app()
 
+# ── Google Site Verification Route ─────────────
+from flask import send_from_directory
+
+@app.route('/googledabc1683b170bb18.html')
+def google_verification():
+    return send_from_directory('.', 'googledabc1683b170bb18.html')
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=int(os.environ.get("PORT", 5000)))
