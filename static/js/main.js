@@ -1,3 +1,10 @@
+// Sidebar toggle for mobile
+function toggleSidebar() {
+  var sidebar = document.getElementById('sidebar');
+  if (sidebar) {
+    sidebar.classList.toggle('open');
+  }
+}
 /* ================================================================
    HRCore ERP — Main JavaScript
    ================================================================ */
