@@ -1,35 +1,47 @@
 from models.db import query, mutate
 from datetime import datetime
+import logging
+import traceback
+
+logger = logging.getLogger(__name__)
 
 
 def get_requests(company_id: int, status_filter: str = None):
-    # Note: Calculate days_requested from start and end dates
-    base = """
-        SELECT lr.id, lr.company_id, lr.employee_id, lr.leave_type, 
-               lr.start_date, lr.end_date, 
-               DATEDIFF(lr.end_date, lr.start_date) + 1 AS days_requested,
-               lr.status, lr.created_at,
-               e.first_name, e.last_name, e.employee_code,
-               d.name AS dept_name
-        FROM   leave_requests lr
-        JOIN   employees_core  e ON e.id  = lr.employee_id
-        LEFT JOIN departments  d ON d.id  = e.department_id
-        WHERE  lr.company_id=%s
-    """
-    params = [company_id]
-    if status_filter and status_filter != 'All':
-        base += " AND lr.status=%s"
-        params.append(status_filter)
-    base += " ORDER BY lr.created_at DESC"
-    return query(base, tuple(params))
+    try:
+        # Note: Calculate days_requested from start and end dates
+        base = """
+            SELECT lr.id, lr.company_id, lr.employee_id, lr.leave_type, 
+                   lr.start_date, lr.end_date, 
+                   DATEDIFF(lr.end_date, lr.start_date) + 1 AS days_requested,
+                   lr.status, lr.created_at,
+                   e.first_name, e.last_name, e.employee_code,
+                   d.name AS dept_name
+            FROM   leave_requests lr
+            JOIN   employees_core  e ON e.id  = lr.employee_id
+            LEFT JOIN departments  d ON d.id  = e.department_id
+            WHERE  lr.company_id=%s
+        """
+        params = [company_id]
+        if status_filter and status_filter != 'All':
+            base += " AND lr.status=%s"
+            params.append(status_filter)
+        base += " ORDER BY lr.created_at DESC"
+        return query(base, tuple(params))
+    except Exception as e:
+        logger.error(f"Error getting leave requests for company {company_id}: {e}")
+        return []
 
 
 def get_by_employee(employee_id: int, company_id: int):
-    return query("""
-        SELECT * FROM leave_requests
-        WHERE employee_id=%s AND company_id=%s
-        ORDER BY created_at DESC
-    """, (employee_id, company_id))
+    try:
+        return query("""
+            SELECT * FROM leave_requests
+            WHERE employee_id=%s AND company_id=%s
+            ORDER BY created_at DESC
+        """, (employee_id, company_id))
+    except Exception as e:
+        logger.error(f"Error getting leave requests for employee {employee_id}: {e}")
+        return []
 
 
 def create(company_id: int, data: dict) -> int:

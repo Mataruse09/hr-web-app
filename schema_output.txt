@@ -1,0 +1,9 @@
+id
+company_id
+employee_id
+pay_period
+net_salary
+status
+created_at
+overtime_hours
+overtime_amount

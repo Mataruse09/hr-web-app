@@ -1,0 +1,9 @@
+Current columns: {'id', 'net_salary', 'transport_allowance', 'overtime_amount', 'pay_period', 'performance_bonus', 'meal_allowance', 'created_at', 'overtime_hours', 'status', 'prorated_salary', 'employee_id', 'company_id', 'housing_allowance'}
+Column overtime_hours already exists
+Column overtime_amount already exists
+Column prorated_salary already exists
+Column housing_allowance already exists
+Column transport_allowance already exists
+Column meal_allowance already exists
+Column performance_bonus already exists
+Migration complete!

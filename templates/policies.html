@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Policies & Guidelines - MatinexHR</title>
+    <link rel="icon" type="image/png" sizes="64x64" href="/static/img/branding/favicon-64x64.png">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --secondary: #7c3aed;
+            --accent: #06b6d4;
+        }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+        }
+        .policies-container {
+            max-width: 900px;
+            margin: 40px auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .policies-header {
+            background: linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+        .policies-header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+        .policies-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            padding: 40px;
+        }
+        .policy-card {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 30px;
+            text-align: center;
+            transition: all 0.3s;
+            text-decoration: none;
+            color: inherit;
+            border: 2px solid transparent;
+        }
+        .policy-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            border-color: var(--primary);
+        }
+        .policy-card i {
+            font-size: 3rem;
+            color: var(--primary);
+            margin-bottom: 15px;
+        }
+        .policy-card h3 {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #333;
+        }
+        .policy-card p {
+            color: #666;
+            font-size: 0.95rem;
+            margin-bottom: 0;
+        }
+        .quick-links {
+            padding: 0 40px 40px;
+        }
+        .quick-links h2 {
+            color: var(--primary);
+            font-size: 1.4rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+        .link-list {
+            list-style: none;
+            padding: 0;
+        }
+        .link-list li {
+            padding: 10px 0;
+            border-bottom: 1px solid #e9ecef;
+        }
+        .link-list a {
+            color: #555;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+        }
+        .link-list a:hover {
+            color: var(--primary);
+        }
+        .link-list a i {
+            margin-right: 10px;
+            color: var(--accent);
+        }
+        .last-updated {
+            text-align: center;
+            color: #666;
+            font-size: 0.9rem;
+            padding: 20px;
+            background: #f8f9fa;
+            border-top: 1px solid #e9ecef;
+        }
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 500;
+            margin: 20px 40px;
+        }
+        .back-btn:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="policies-container">
+        <div class="policies-header">
+            <h1><i class="fas fa-balance-scale me-2"></i>Policies & Guidelines</h1>
+            <p>MatinexHR - Legal Documents & Community Standards</p>
+        </div>
+        
+        <a href="/" class="back-btn"><i class="fas fa-arrow-left me-2"></i>Back to Home</a>
+        
+        <div class="policies-grid">
+            <a href="/terms" class="policy-card">
+                <i class="fas fa-file-contract"></i>
+                <h3>Terms & Conditions</h3>
+                <p>Our terms of service, user agreements, and legal obligations</p>
+            </a>
+            
+            <a href="/privacy" class="policy-card">
+                <i class="fas fa-shield-alt"></i>
+                <h3>Privacy Policy</h3>
+                <p>How we collect, use, and protect your personal data</p>
+            </a>
+            
+            <a href="#acceptable-use" class="policy-card" onclick="document.getElementById('acceptable-use').scrollIntoView({behavior: 'smooth'}); return false;">
+                <i class="fas fa-gavel"></i>
+                <h3>Acceptable Use Policy</h3>
+                <p>Rules and guidelines for using our platform responsibly</p>
+            </a>
+            
+            <a href="#refund" class="policy-card" onclick="document.getElementById('refund').scrollIntoView({behavior: 'smooth'}); return false;">
+                <i class="fas fa-money-bill-wave"></i>
+                <h3>Refund Policy</h3>
+                <p>Our billing, refund, and cancellation terms</p>
+            </a>
+            
+            <a href="#security" class="policy-card" onclick="document.getElementById('security').scrollIntoView({behavior: 'smooth'}); return false;">
+                <i class="fas fa-lock"></i>
+                <h3>Security Policy</h3>
+                <p>How we protect your data and ensure platform security</p>
+            </a>
+            
+            <a href="#support" class="policy-card" onclick="document.getElementById('support').scrollIntoView({behavior: 'smooth'}); return false;">
+                <i class="fas fa-headset"></i>
+                <h3>Support Policy</h3>
+                <p>Our customer support commitments and response times</p>
+            </a>
+        </div>
+        
+        <div class="quick-links">
+            <h2><i class="fas fa-link me-2"></i>Quick Access</h2>
+            <ul class="link-list">
+                <li><a href="/terms"><i class="fas fa-chevron-right"></i>Terms & Conditions</a></li>
+                <li><a href="/privacy"><i class="fas fa-chevron-right"></i>Privacy Policy</a></li>
+                <li><a href="#acceptable-use" onclick="document.getElementById('acceptable-use').scrollIntoView({behavior: 'smooth'}); return false;"><i class="fas fa-chevron-right"></i>Acceptable Use Policy</a></li>
+                <li><a href="#refund" onclick="document.getElementById('refund').scrollIntoView({behavior: 'smooth'}); return false;"><i class="fas fa-chevron-right"></i>Refund Policy</a></li>
+            </ul>
+        </div>
+        
+        <!-- In-line Policy Content -->
+        <div class="policy-content" style="padding: 0 40px 40px;">
+            <div id="acceptable-use" class="policy-section" style="margin-top: 40px;">
+                <h2><i class="fas fa-gavel me-2"></i>Acceptable Use Policy</h2>
+                <p>By using MatinexHR, you agree to the following guidelines:</p>
+                <ul>
+                    <li><strong>Legal Use:</strong> Use the platform only for lawful HR management purposes</li>
+                    <li><strong>No Abuse:</strong> Do not harass, threaten, or abuse other users</li>
+                    <li><strong>No Spam:</strong> Do not send unsolicited communications through our platform</li>
+                    <li><strong>Data Integrity:</strong> Do not attempt to hack or compromise our systems</li>
+                    <li><strong>Content Standards:</strong> Do not upload illegal, harmful, or offensive content</li>
+                </ul>
+                <div class="warning-box" style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 15px 20px; margin: 15px 0; border-radius: 0 8px 8px 0;">
+                    <strong><i class="fas fa-exclamation-triangle me-2"></i>Violation Consequences</strong>
+                    <p class="mb-0">Violations may result in warning, suspension, or permanent ban depending on severity.</p>
+                </div>
+            </div>
+            
+            <div id="refund" class="policy-section" style="margin-top: 40px;">
+                <h2><i class="fas fa-money-bill-wave me-2"></i>Refund Policy</h2>
+                <ul>
+                    <li><strong>No Refunds:</strong> Subscription fees are non-refundable</li>
+                    <li><strong>Trial Period:</strong> New users can use the free tier to evaluate the service</li>
+                    <li><strong>Cancellation:</strong> You may cancel at any time, access continues until end of billing period</li>
+                    <li><strong>Service Credits:</strong> In case of service downtime, we may provide credits at our discretion</li>
+                </ul>
+            </div>
+            
+            <div id="security" class="policy-section" style="margin-top: 40px;">
+                <h2><i class="fas fa-lock me-2"></i>Security Policy</h2>
+                <ul>
+                    <li><strong>Data Encryption:</strong> All data is encrypted in transit and at rest</li>
+                    <li><strong>Access Controls:</strong> Role-based access control for all users</li>
+                    <li><strong>Regular Audits:</strong> We conduct regular security audits and penetration testing</li>
+                    <li><strong>Incident Response:</strong> We have procedures for handling security incidents</li>
+                    <li><strong>Data Backup:</strong> Regular backups to prevent data loss</li>
+                </ul>
+            </div>
+            
+            <div id="support" class="policy-section" style="margin-top: 40px;">
+                <h2><i class="fas fa-headset me-2"></i>Support Policy</h2>
+                <ul>
+                    <li><strong>Response Time:</strong> We aim to respond to all support requests within 24 hours</li>
+                    <li><strong>Support Channels:</strong> Email support and in-app ticketing system</li>
+                    <li><strong>Knowledge Base:</strong> Self-service help articles and documentation</li>
+                    <li><strong>Priority Support:</strong> Enterprise customers receive priority support</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="last-updated">
+            <p><strong>Last Updated:</strong> April 26, 2026 | <strong>Version:</strong> 1.0</p>
+            <p>&copy; 2026 MatinexHR. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>

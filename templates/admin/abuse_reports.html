@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Abuse Reports - MatinexHR Admin</title>
+    {% include 'admin/settings.html' %}
+    <style>
+        .report-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        .severity-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        .severity-low { background: #d4edda; color: #155724; }
+        .severity-medium { background: #fff3cd; color: #856404; }
+        .severity-high { background: #f8d7da; color: #721c24; }
+        .severity-critical { background: #dc3545; color: white; }
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        .status-pending { background: #e2e3e5; color: #383d41; }
+        .status-investigating { background: #cce5ff; color: #004085; }
+        .status-resolved { background: #d4edda; color: #155724; }
+        .status-dismissed { background: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+    {% extends 'base.html' %}
+    
+    {% block content %}
+    <div class="container-fluid py-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1><i class="fas fa-exclamation-triangle me-2"></i>Abuse Reports</h1>
+            <a href="/admin/companies" class="btn btn-primary">
+                <i class="fas fa-building me-2"></i>Back to Companies
+            </a>
+        </div>
+        
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ 'danger' if category == 'danger' else 'success' if category == 'success' else 'warning' if category == 'warning' else 'info' }} alert-dismissible fade show">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        
+        <!-- Filter -->
+        <div class="mb-4">
+            <form method="GET" class="row g-3">
+                <div class="col-md-3">
+                    <select name="status" class="form-select">
+                        <option value="">All Statuses</option>
+                        <option value="pending" {% if request.args.get('status') == 'pending' %}selected{% endif %}>Pending</option>
+                        <option value="investigating" {% if request.args.get('status') == 'investigating' %}selected{% endif %}>Investigating</option>
+                        <option value="resolved" {% if request.args.get('status') == 'resolved' %}selected{% endif %}>Resolved</option>
+                        <option value="dismissed" {% if request.args.get('status') == 'dismissed' %}selected{% endif %}>Dismissed</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary">Filter</button>
+                </div>
+            </form>
+        </div>
+        
+        <!-- Reports List -->
+        {% for report in reports %}
+        <div class="report-card">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <div>
+                    <h5 class="mb-1">Report #{{ report.id }}</h5>
+                    <p class="text-muted mb-0">
+                        <strong>Company:</strong> {{ report.company_name }} | 
+                        <strong>Reporter:</strong> {{ report.reporter_username or 'Anonymous' }}
+                    </p>
+                </div>
+                <div>
+                    <span class="severity-badge severity-{{ report.severity }}">{{ report.severity|upper }}</span>
+                    <span class="status-badge status-{{ report.status }}">{{ report.status|upper }}</span>
+                </div>
+            </div>
+            
+            <div class="mb-3">
+                <p><strong>Type:</strong> {{ report.report_type }}</p>
+                <p><strong>Description:</strong> {{ report.description }}</p>
+                {% if report.evidence %}
+                <p><strong>Evidence:</strong> {{ report.evidence }}</p>
+                {% endif %}
+                <p class="text-muted small">
+                    <strong>Created:</strong> {{ report.created_at.strftime('%Y-%m-%d %H:%M') if report.created_at else 'N/A' }}
+                </p>
+            </div>
+            
+            {% if report.status in ['pending', 'investigating'] %}
+            <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#resolveModal{{ report.id }}">
+                <i class="fas fa-check me-1"></i>Resolve
+            </button>
+            
+            <!-- Resolve Modal -->
+            <div class="modal fade" id="resolveModal{{ report.id }}" tabindex="-1">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Resolve Report #{{ report.id }}</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <form method="POST" action="{{ url_for('admin.resolve_abuse_report', report_id=report.id) }}">
+                            <div class="modal-body">
+                                <div class="mb-3">
+                                    <label class="form-label">Status</label>
+                                    <select name="status" class="form-select">
+                                        <option value="resolved">Resolved</option>
+                                        <option value="dismissed">Dismissed</option>
+                                        <option value="investigating">Investigating</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Resolution Notes</label>
+                                    <textarea name="resolution_notes" class="form-control" rows="3" placeholder="Provide details about the resolution..."></textarea>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                <button type="submit" class="btn btn-success">Submit Resolution</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            
+            {% if report.resolved_at %}
+            <div class="alert alert-success mt-3 mb-0">
+                <strong>Resolved:</strong> {{ report.resolution_notes }}
+                <br><small class="text-muted">{{ report.resolved_at.strftime('%Y-%m-%d %H:%M') }}</small>
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+        
+        {% if not reports %}
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle me-2"></i>No abuse reports found.
+        </div>
+        {% endif %}
+    </div>
+    {% endblock %}
+</body>
+</html>

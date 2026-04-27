@@ -1,0 +1,202 @@
+{% extends "base.html" %}
+
+{% block title %}Attrition Risk Prediction{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h1 class="display-5">🎯 AI Attrition Risk Prediction</h1>
+            <p class="text-muted">Machine learning-powered employee retention insights</p>
+        </div>
+    </div>
+
+    <!-- Risk Summary Cards -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm" style="border-left: 4px solid #dc3545;">
+                <div class="card-body text-center">
+                    <div class="display-4 text-danger">{{ risks|selectattr('risk_level', 'equalto', 'High')|list|length }}</div>
+                    <h5>High Risk</h5>
+                    <p class="text-muted mb-0">Immediate action needed</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm" style="border-left: 4px solid #ffc107;">
+                <div class="card-body text-center">
+                    <div class="display-4 text-warning">{{ risks|selectattr('risk_level', 'equalto', 'Medium')|list|length }}</div>
+                    <h5>Medium Risk</h5>
+                    <p class="text-muted mb-0">Monitor closely</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm" style="border-left: 4px solid #28a745;">
+                <div class="card-body text-center">
+                    <div class="display-4 text-success">{{ risks|selectattr('risk_level', 'equalto', 'Low')|list|length }}</div>
+                    <h5>Low Risk</h5>
+                    <p class="text-muted mb-0">Stable workforce</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Risk Details Table -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white border-0">
+            <h5 class="mb-0">Employee Risk Analysis</h5>
+        </div>
+        <div class="card-body">
+            {% if risks %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Employee</th>
+                            <th>Job Title</th>
+                            <th>Risk Score</th>
+                            <th>Risk Level</th>
+                            <th>Key Factors</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for risk in risks %}
+                        <tr>
+                            <td>
+                                {% if risk.employee_name %}
+                                    {{ risk.employee_name }}
+                                {% else %}
+                                    Employee #{{ risk.employee_id }}
+                                {% endif %}
+                            </td>
+                            <td>{{ risk.job_title or 'N/A' }}</td>
+                            <td>
+                                <div class="progress" style="height: 20px; width: 100px;">
+                                    <div class="progress-bar 
+                                        {% if risk.risk_level == 'High' %}bg-danger
+                                        {% elif risk.risk_level == 'Medium' %}bg-warning
+                                        {% else %}bg-success{% endif %}" 
+                                        style="width: {{ risk.risk_score }}%">
+                                        {{ risk.risk_score|int }}%
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                {% if risk.risk_level == 'High' %}
+                                    <span class="badge bg-danger">High</span>
+                                {% elif risk.risk_level == 'Medium' %}
+                                    <span class="badge bg-warning">Medium</span>
+                                {% else %}
+                                    <span class="badge bg-success">Low</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if risk.factors %}
+                                    {% for factor in risk.factors[:3] %}
+                                        <span class="badge bg-secondary me-1">{{ factor }}</span>
+                                    {% endfor %}
+                                {% else %}
+                                    <span class="text-muted">No specific factors</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" 
+                                        data-bs-target="#riskModal{{ risk.employee_id }}">
+                                    View Details
+                                </button>
+                            </td>
+                        </tr>
+                        
+                        <!-- Modal for detailed view -->
+                        <div class="modal fade" id="riskModal{{ risk.employee_id }}" tabindex="-1">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title">
+                                            {% if risk.employee_name %}{{ risk.employee_name }}{% else %}Employee #{{ risk.employee_id }}{% endif %}
+                                        </h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <h6>Risk Score: {{ risk.risk_score }}% ({{ risk.risk_level }})</h6>
+                                        <hr>
+                                        <h6>Risk Factor Breakdown:</h6>
+                                        <ul class="list-group">
+                                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                Tenure Score
+                                                <span class="badge bg-primary rounded-pill">{{ risk.tenure_score }}%</span>
+                                            </li>
+                                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                Attendance Score
+                                                <span class="badge bg-primary rounded-pill">{{ risk.attendance_score }}%</span>
+                                            </li>
+                                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                Leave Balance Score
+                                                <span class="badge bg-primary rounded-pill">{{ risk.leave_score }}%</span>
+                                            </li>
+                                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                Appraisal Score
+                                                <span class="badge bg-primary rounded-pill">{{ risk.appraisal_score }}%</span>
+                                            </li>
+                                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                Overtime Score
+                                                <span class="badge bg-primary rounded-pill">{{ risk.overtime_score }}%</span>
+                                            </li>
+                                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                Salary Factor
+                                                <span class="badge bg-primary rounded-pill">{{ risk.salary_score }}%</span>
+                                            </li>
+                                        </ul>
+                                        
+                                        {% if risk.factors %}
+                                        <hr>
+                                        <h6>Identified Risk Factors:</h6>
+                                        <ul>
+                                            {% for factor in risk.factors %}
+                                            <li>{{ factor }}</li>
+                                            {% endfor %}
+                                        </ul>
+                                        {% endif %}
+                                        
+                                        <hr>
+                                        <h6>Recommended Actions:</h6>
+                                        <ul>
+                                            <li>Schedule one-on-one meeting to understand concerns</li>
+                                            <li>Review compensation and benefits</li>
+                                            <li>Consider career development opportunities</li>
+                                            <li>Evaluate workload distribution</li>
+                                        </ul>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="alert alert-info">
+                <p class="mb-0">No employee risk data available. The system needs more data to generate predictions.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- API Access Info -->
+    <div class="card border-0 shadow-sm mt-4">
+        <div class="card-header bg-white border-0">
+            <h5 class="mb-0">🔌 API Access</h5>
+        </div>
+        <div class="card-body">
+            <p>Access attrition risk data programmatically:</p>
+            <code class="d-block p-3 bg-light rounded">GET /api/ai/attrition-risk</code>
+            <p class="mt-3 text-muted">Add <code>?employee_id=123</code> to get risk for a specific employee.</p>
+        </div>
+    </div>
+</div>
+{% endblock %}

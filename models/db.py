@@ -86,7 +86,7 @@ def init_pool(app):
         conn_args = _get_connection_args(cfg)
         pool = pooling.MySQLConnectionPool(
             pool_name='hr_system_pool',
-            pool_size=5,
+            pool_size=15,  # Increased from 5 to handle more concurrent requests
             pool_reset_session=True,
             **conn_args
         )
@@ -128,6 +128,32 @@ def _run_migrations(pool):
                 conn.commit()
                 logger.info(f"✅ Migration: Added {col_name} column to attendance table")
         
+        # Get existing columns in payroll_runs table
+        cur.execute("""
+            SELECT COLUMN_NAME 
+            FROM information_schema.COLUMNS 
+            WHERE TABLE_SCHEMA = DATABASE() 
+            AND TABLE_NAME = 'payroll_runs'
+        """)
+        payroll_cols = {row[0] for row in cur.fetchall()}
+        
+        # Columns that should exist in payroll_runs table
+        payroll_required = {
+            'overtime_hours': "ALTER TABLE payroll_runs ADD COLUMN overtime_hours DECIMAL(6,2) DEFAULT 0",
+            'overtime_amount': "ALTER TABLE payroll_runs ADD COLUMN overtime_amount DECIMAL(15,2) DEFAULT 0",
+            'prorated_salary': "ALTER TABLE payroll_runs ADD COLUMN prorated_salary DECIMAL(15,2) DEFAULT 0",
+            'housing_allowance': "ALTER TABLE payroll_runs ADD COLUMN housing_allowance DECIMAL(15,2) DEFAULT 0",
+            'transport_allowance': "ALTER TABLE payroll_runs ADD COLUMN transport_allowance DECIMAL(15,2) DEFAULT 0",
+            'meal_allowance': "ALTER TABLE payroll_runs ADD COLUMN meal_allowance DECIMAL(15,2) DEFAULT 0",
+            'performance_bonus': "ALTER TABLE payroll_runs ADD COLUMN performance_bonus DECIMAL(15,2) DEFAULT 0",
+        }
+        
+        for col_name, alter_sql in payroll_required.items():
+            if col_name not in payroll_cols:
+                cur.execute(alter_sql)
+                conn.commit()
+                logger.info(f"✅ Migration: Added {col_name} column to payroll_runs table")
+        
         cur.close()
         conn.close()
         
@@ -137,10 +163,15 @@ def _run_migrations(pool):
 
 def get_db():
     """Return (or create) a per-request MySQL connection."""
+    # Always try to get a fresh connection if the previous one was None or invalid
+    # Remove any stale connection from g to allow retry
+    if 'db' in g and (g.db is None or not hasattr(g.db, 'cursor') or not _is_connection_valid(g.db)):
+        g.pop('db', None)
+    
     if 'db' not in g:
         cfg = current_app.config
-        max_retries = 2
-        retry_delay = 1  # seconds
+        max_retries = 1  # Reduced from 2 for faster fail
+        retry_delay = 0.5  # Reduced from 1 for faster retry
 
         try:
             if pool:
@@ -161,29 +192,50 @@ def get_db():
                             time.sleep(retry_delay)
                         else:
                             logger.error(f"DB connection error (final attempt): {e}")
-                            raise RuntimeError(
-                                "Database connection failed after retries. "
-                                "Ensure DATABASE_URL or DB_* environment variables are set correctly. "
-                                f"Error: {str(e)[:100]}"
-                            )
-        except RuntimeError:
-            raise
+                            # Set to None instead of raising, so calling code can handle gracefully
+                            g.db = None
         except Exception as e:
             logger.error(f"DB connection error: {e}")
-            raise
+            g.db = None
 
+    # Final safety check - ensure we return a valid connection or None
+    if g.get('db') is None:
+        return None
+    
+    # Verify the connection is actually usable
+    if not _is_connection_valid(g.db):
+        logger.warning("Existing DB connection is not valid, setting to None")
+        g.db = None
+        return None
+    
     return g.db
 
 
+def _is_connection_valid(db):
+    """Check if a database connection is valid and connected."""
+    try:
+        if db is None:
+            return False
+        if not hasattr(db, 'is_connected'):
+            return False
+        return db.is_connected()
+    except:
+        return False
+
+
 def _close_db(exc=None):
-    """Close database connection."""
+    """Close database connection and return it to the pool."""
     db = g.pop('db', None)
 
     if db is not None:
         try:
-            db.close()
+            if db.is_connected():
+                db.close()  # Returns connection to the pool
+            else:
+                # Connection was already closed, create a new one for the pool
+                pass
         except Exception as e:
-            logger.error("Error closing DB connection: %s", e)
+            logger.debug("Error closing DB connection (non-critical): %s", e)
 
 
 def init_db(app):
@@ -192,53 +244,163 @@ def init_db(app):
     app.teardown_appcontext(_close_db)
 
 
-def query(sql: str, params: tuple = (), one: bool = False):
+def query(sql: str, params: tuple = (), one: bool = False, max_retries: int = 3):
     """
     Execute a SELECT query and return results as dictionaries.
+    Uses buffered cursor to prevent "Unread result found" errors.
+    Includes retry logic for transient database errors.
     """
-    db = get_db()
-    cur = db.cursor(dictionary=True)
+    import traceback
+    
+    last_error = None
+    
+    for attempt in range(max_retries):
+        try:
+            # Wrap get_db() in try-except to catch any issues
+            try:
+                db = get_db()
+            except Exception as db_err:
+                logger.error(f"Error getting database connection: {db_err}")
+                # Try again instead of returning empty
+                time.sleep(0.1)
+                continue
+            
+            # Check if db connection is valid (more robust check)
+            if not db or not hasattr(db, 'cursor'):
+                # Try again - connection might be re-established
+                logger.warning("Database connection is None or invalid - retrying")
+                time.sleep(0.1)
+                continue
+            
+            # Use buffered=True to fetch all results immediately and avoid unread result issues
+            cur = db.cursor(dictionary=True, buffered=True)
 
-    try:
-        cur.execute(sql, params)
-        result = cur.fetchone() if one else cur.fetchall()
-        return result
+            try:
+                cur.execute(sql, params)
+                result = cur.fetchone() if one else cur.fetchall()
+                return result
 
-    except Error as exc:
-        logger.error("DB query error: %s | SQL: %s", exc, sql)
-        raise
+            except Error as exc:
+                logger.error("DB query error: %s | SQL: %s", exc, sql)
+                raise
 
-    finally:
-        cur.close()
+            finally:
+                if cur:
+                    cur.close()
+                if db:
+                    db.close()
+                    
+        except Error as e:
+            last_error = e
+            error_msg = str(e).lower()
+            
+            # Check if it's a transient error that warrants a retry
+            transient_errors = [
+                'lost connection',
+                'connection timeout',
+                'connection already closed',
+                'server has gone away',
+                'transaction already in progress',
+                '2006',  # MySQL server has gone away
+            ]
+            
+            is_transient = any(err in error_msg for err in transient_errors)
+            
+            if is_transient and attempt < max_retries - 1:
+                logger.warning(f"Transient DB error (attempt {attempt + 1}/{max_retries}): {e}")
+                time.sleep(0.1 * (attempt + 1))  # Faster backoff
+                continue
+            else:
+                logger.error("DB query error: %s | SQL: %s", e, sql)
+                raise
+    
+    # If we get here, all retries failed
+    logger.error(f"DB query failed after {max_retries} attempts: {last_error}")
+    logger.error(traceback.format_exc())
+    raise last_error
 
 
-def mutate(sql: str, params: tuple = ()):
+def mutate(sql: str, params: tuple = (), max_retries: int = 3):
     """
     Execute INSERT / UPDATE / DELETE
     Returns last inserted ID for INSERT statements, True for UPDATE/DELETE
+    Includes retry logic for transient database errors.
     """
-    db = get_db()
-    cur = db.cursor()
+    import traceback
+    
+    last_error = None
+    
+    for attempt in range(max_retries):
+        try:
+            # Wrap get_db() in try-except to catch any issues
+            try:
+                db = get_db()
+            except Exception as db_err:
+                logger.error(f"Error getting database connection: {db_err}")
+                # Try again instead of returning None
+                time.sleep(0.1)
+                continue
+            
+            # Check if db connection is valid (more robust check)
+            if not db or not hasattr(db, 'cursor'):
+                # Try again - connection might be re-established
+                logger.warning("Database connection is None or invalid - retrying")
+                time.sleep(0.1)
+                continue
+            
+            cur = db.cursor()
 
-    try:
-        cur.execute(sql, params)
-        
-        # For INSERT statements, return the last inserted ID
-        if sql.strip().upper().startswith('INSERT'):
-            last_id = cur.lastrowid
-            db.commit()
-            return last_id
-        else:
-            db.commit()
-            return True
+            try:
+                cur.execute(sql, params)
+                
+                # For INSERT statements, return the last inserted ID
+                if sql.strip().upper().startswith('INSERT'):
+                    last_id = cur.lastrowid
+                    db.commit()
+                    return last_id
+                else:
+                    db.commit()
+                    return True
 
-    except Error as exc:
-        db.rollback()
-        logger.error("DB mutate error: %s | SQL: %s", exc, sql)
-        raise
+            except Error as exc:
+                if db:
+                    db.rollback()
+                logger.error("DB mutate error: %s | SQL: %s", exc, sql)
+                raise
 
-    finally:
-        cur.close()
+            finally:
+                if cur:
+                    cur.close()
+                if db:
+                    db.close()
+                    
+        except Error as e:
+            last_error = e
+            error_msg = str(e).lower()
+            
+            # Check if it's a transient error that warrants a retry
+            transient_errors = [
+                'lost connection',
+                'connection timeout',
+                'connection already closed',
+                'server has gone away',
+                'transaction already in progress',
+                '2006',
+            ]
+            
+            is_transient = any(err in error_msg for err in transient_errors)
+            
+            if is_transient and attempt < max_retries - 1:
+                logger.warning(f"Transient DB error (attempt {attempt + 1}/{max_retries}): {e}")
+                time.sleep(0.1 * (attempt + 1))
+                continue
+            else:
+                logger.error("DB mutate error: %s | SQL: %s", e, sql)
+                raise
+    
+    logger.error(f"DB mutate failed after {max_retries} attempts: {last_error}")
+    logger.error(traceback.format_exc())
+    raise last_error
 
 
 def begin_transaction():

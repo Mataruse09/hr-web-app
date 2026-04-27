@@ -51,6 +51,22 @@ def login_required(f):
         if 'user_id' not in session:
             flash('Session expired. Please log in.', 'warning')
             return redirect(url_for('auth.login'))
+        
+        # Check if company is still active (in case it was banned after login)
+        company_id = session.get('company_id')
+        if company_id:
+            from models import company_model
+            company = company_model.get_by_id_any_status(company_id)
+            if company and not company.get('is_active', True):
+                # Company has been deactivated/banned - log out all users
+                session.clear()
+                flash('Your company account has been suspended. Please contact support.', 'danger')
+                return redirect(url_for('auth.login'))
+            if company and company.get('ban_reason'):
+                session.clear()
+                flash(f'Access denied: {company.get("ban_reason")}. Please contact support.', 'danger')
+                return redirect(url_for('auth.login'))
+        
         return f(*args, **kwargs)
     return wrapper
 
@@ -62,7 +78,11 @@ def roles_required(*allowed_roles):
         @wraps(f)
         def wrapper(*args, **kwargs):
             if 'user_id' not in session:
-                session.clear()  # ✅ FIX (keep session consistent)
+                # Only clear user-specific session data, preserve owner session
+                user_keys = ['user_id', 'company_id', 'role', 'username', 'full_name', 'email']
+                for key in user_keys:
+                    session.pop(key, None)
+                flash('Session expired. Please log in.', 'warning')
                 return redirect(url_for('auth.login'))
             user_role = session.get('role', '').strip().lower()
             if user_role not in normalized:

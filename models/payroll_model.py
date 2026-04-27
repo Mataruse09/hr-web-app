@@ -1,41 +1,54 @@
 from models.db import query, mutate
 from datetime import datetime
+import logging
+import traceback
+
+logger = logging.getLogger(__name__)
 
 
 def get_compensation(employee_id: int, company_id: int):
-    """Get employee base compensation (basic salary)"""
-    return query("""
-        SELECT id, employee_id, company_id, basic_salary, currency, created_at
-        FROM compensation
-        WHERE employee_id=%s AND company_id=%s
-        ORDER BY created_at DESC LIMIT 1
-    """, (employee_id, company_id), one=True)
+    """Get employee full compensation details"""
+    try:
+        # Only select columns that exist in the compensation table
+        return query("""
+            SELECT id, employee_id, company_id, basic_salary, currency, created_at
+            FROM compensation
+            WHERE employee_id=%s AND company_id=%s
+            ORDER BY created_at DESC LIMIT 1
+        """, (employee_id, company_id), one=True)
+    except Exception as e:
+        logger.error(f"Error getting compensation for employee {employee_id}: {e}")
+        return None
 
 
 def save_compensation(company_id: int, employee_id: int, data: dict):
-    """Save employee base compensation (basic salary only)"""
-    existing = get_compensation(employee_id, company_id)
-    if existing:
-        mutate("""
-            UPDATE compensation SET
-              basic_salary=%s, currency=%s
-            WHERE id=%s
-        """, (
-            data.get('basic_salary', 0),
-            data.get('currency', 'USD'),
-            existing['id'],
-        ))
-    else:
-        mutate("""
-            INSERT INTO compensation
-              (company_id, employee_id, basic_salary, currency)
-            VALUES(%s, %s, %s, %s)
-        """, (
-            company_id,
-            employee_id,
-            data.get('basic_salary', 0),
-            data.get('currency', 'USD'),
-        ))
+    """Save employee full compensation details"""
+    try:
+        existing = get_compensation(employee_id, company_id)
+        if existing:
+            mutate("""
+                UPDATE compensation SET
+                  basic_salary=%s, currency=%s
+                WHERE id=%s
+            """, (
+                data.get('basic_salary', 0),
+                data.get('currency', 'USD'),
+                existing['id'],
+            ))
+        else:
+            mutate("""
+                INSERT INTO compensation
+                  (company_id, employee_id, basic_salary, currency)
+                VALUES(%s, %s, %s, %s)
+            """, (
+                company_id,
+                employee_id,
+                data.get('basic_salary', 0),
+                data.get('currency', 'USD'),
+            ))
+    except Exception as e:
+        logger.error(f"Error saving compensation for employee {employee_id}: {e}")
+        logger.error(traceback.format_exc())
 
 
 def get_runs(company_id: int, pay_period: str = None):

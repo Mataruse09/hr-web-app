@@ -4,33 +4,84 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <meta name="google-site-verification" content="bUOaXdJVqd7ORv5ooeZDfNpK8q1WfMyas7sujEHXbM0" />
-  <title>{% block title %}HRCore ERP{% endblock %} — HRCore</title>
+  <link rel="canonical" href="{{ request.url }}" />
+  <title>{% block title %}MatinexHR ERP{% endblock %} — MatinexHR</title>
+  <link rel="icon" type="image/png" sizes="64x64" href="/static/img/branding/favicon-64x64.png">
+  <link rel="icon" type="image/png" sizes="128x128" href="/static/img/branding/favicon-128x128.png">
+  <link rel="apple-touch-icon" sizes="128x128" href="/static/img/branding/favicon-128x128.png">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+  <!-- Fallback fonts - system fonts as backup -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="stylesheet"
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" />
-  <!-- Bootstrap CSS for responsive grid -->
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    /* Fallback if Google Fonts is blocked */
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif !important; }
+  </style>
+  <!-- Bootstrap CSS - with fallback -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
-  <!-- Chart.js for interactive charts -->
+  <style>
+    /* Minimal Bootstrap fallback if CDN fails */
+    .container { width: 100%; max-width: 1200px; margin: 0 auto; padding: 0 15px; }
+    .row { display: flex; flex-wrap: wrap; margin: 0 -15px; }
+    .col, .col-1, .col-2, .col-3, .col-4, .col-5, .col-6, .col-7, .col-8, .col-9, .col-10, .col-11, .col-12 { padding: 0 15px; box-sizing: border-box; }
+    .col-12 { flex: 0 0 100%; max-width: 100%; }
+    .col-6 { flex: 0 0 50%; max-width: 50%; }
+    .col-4 { flex: 0 0 33.333%; max-width: 33.333%; }
+    .col-3 { flex: 0 0 25%; max-width: 25%; }
+    @media (max-width: 768px) { .col-6, .col-4, .col-3 { flex: 0 0 100%; max-width: 100%; } }
+  </style>
+  <!-- Dynamic Theme CSS Variables -->
+  <style>
+    :root {
+      {% if g.theme %}
+      --theme-primary: {{ g.theme.primary }};
+      --theme-secondary: {{ g.theme.secondary }};
+      --theme-background: {{ g.theme.background }};
+      --theme-accent: {{ g.theme.accent }};
+      {% else %}
+      --theme-primary: #1a2b4a;
+      --theme-secondary: #3498db;
+      --theme-background: #ecf0f1;
+      --theme-accent: #e74c3c;
+      {% endif %}
+    }
+  </style>
+  <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script>
+    // Fallback if Chart.js fails to load
+    window.Chart = window.Chart || { isFallback: true };
+  </script>
 </head>
 <body class="app-layout">
 
   <!-- ── Sidebar ─────────────────────────────────────────── -->
+  <button class="sidebar-toggle" id="sidebarToggle" onclick="toggleSidebar()">☰</button>
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-brand">
-      <span class="brand-icon">⬡</span>
-      <span class="brand-name">{{ session.company_name or 'HRCore' }}</span>
+      <a href="/" class="sidebar-logo-link">
+        {% if g.company_logo and g.company_logo != '' %}
+        <img src="{{ g.company_logo }}" alt="Logo" style="height:72px;width:auto;display:inline;vertical-align:middle;" 
+             onerror="this.onerror=null;this.style.display='none';this.nextElementSibling.style.display='inline';" />
+        <img src="/static/img/branding/logomat.png" alt="Logo" style="height:72px;width:auto;display:none;vertical-align:middle;" />
+        {% else %}
+        <img src="/static/img/branding/logomat.png" alt="Logo" style="height:72px;width:auto;display:inline;vertical-align:middle;" />
+        {% endif %}
+        <span class="brand-name" style="margin-left:8px;vertical-align:middle;font-weight:700;font-size:1.3rem;">
+          <span style="color:#e0e7ff;">{% if g.company_branding %}{{ g.company_branding }}{% elif g.company and g.company.name %}{{ g.company.name }}{% elif session.company_name %}{{ session.company_name }}{% else %}Company{% endif %}</span>
+        </span>
+      </a>
     </div>
 
     {% include 'components/navigation.html' %}
 
     <div class="sidebar-footer">
       <div class="user-badge">
-        <div class="user-avatar">{{ session.full_name[0] | upper }}</div>
+        <div class="user-avatar">{{ (session.full_name or 'U')[0] | upper }}</div>
         <div class="user-info">
-          <div class="user-name">{{ session.full_name }}</div>
-          <div class="user-role badge-{{ session.role | lower }}">{{ session.role }}</div>
+          <div class="user-name">{{ session.full_name or 'User' }}</div>
+          <div class="user-role badge-{{ (session.role or 'guest') | lower }}">{{ session.role or 'Guest' }}</div>
         </div>
       </div>
     </div>
@@ -41,14 +92,15 @@
 
     <!-- Topbar -->
     <header class="topbar">
-      <button class="sidebar-toggle" onclick="toggleSidebar()">☰</button>
+      <!-- Mobile sidebar toggle is now above -->
       <div class="topbar-left">
         <h2 class="page-title">{% block page_title %}Dashboard{% endblock %}</h2>
       </div>
       <div class="topbar-right">
         <span class="topbar-clock" id="clock"></span>
-        <a href="{{ url_for('auth.logout') }}" class="btn btn-outline-sm">
-          ⏻ Logout
+        <a href="{{ url_for('auth.logout') }}" class="btn btn-outline-sm" title="Logout">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          <span style="margin-left:4px;">Logout</span>
         </a>
       </div>
     </header>
@@ -71,6 +123,91 @@
     </main>
   </div>
 
+  <script>
+    // Sidebar toggle for mobile
+    function toggleSidebar() {
+      var sidebar = document.getElementById('sidebar');
+      sidebar.classList.toggle('open');
+    }
+    // Close sidebar when clicking outside (mobile)
+    document.addEventListener('click', function(e) {
+      var sidebar = document.getElementById('sidebar');
+      var toggle = document.getElementById('sidebarToggle');
+      if (!sidebar.contains(e.target) && !toggle.contains(e.target)) {
+        sidebar.classList.remove('open');
+      }
+    });
+    
+    // Feature upgrade message handler
+    function showUpgradeMessage(feature, event) {
+      event.preventDefault();
+      
+      // Feature display names and required plans (corrected)
+      var featureInfo = {
+        'ai_analytics': { name: 'AI Analytics', plan: 'Professional' },
+        'forecasting': { name: 'Labour Forecasting', plan: 'Professional' },
+        'gamification': { name: 'Gamification', plan: 'Enterprise' },
+        'compliance': { name: 'Compliance', plan: 'Enterprise' },
+        'payroll': { name: 'Payroll', plan: 'Starter' },
+        'appraisals': { name: 'Appraisals', plan: 'Starter' },
+        'attrition': { name: 'Attrition Analysis', plan: 'Professional' },
+        'advanced_forecasting': { name: 'Advanced Forecasting', plan: 'Enterprise' }
+      };
+      
+      var info = featureInfo[feature] || { name: feature, plan: 'Professional' };
+      
+      // Create modal dynamically with improved styling
+      var modalHtml = `
+        <div class="modal fade show" id="upgradeModal" tabindex="-1" style="display: block; background: rgba(0,0,0,0.5); z-index: 9999;">
+          <div class="modal-dialog modal-dialog-centered modal-sm">
+            <div class="modal-content border-0 shadow-lg">
+              <div class="modal-header" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; border-radius: 0;">
+                <h5 class="modal-title fw-bold">
+                  <i class="fas fa-lock me-2"></i>Upgrade Required
+                </h5>
+                <button type="button" class="btn-close btn-close-white" onclick="closeUpgradeModal()"></button>
+              </div>
+              <div class="modal-body text-center py-4 px-4">
+                <div style="font-size: 3.5rem; margin-bottom: 0.75rem;">🔒</div>
+                <h5 class="fw-bold text-dark mb-2">${info.name}</h5>
+                <p class="text-muted small mb-3">This feature requires a <span class="badge bg-warning text-dark">${info.plan}</span> subscription plan.</p>
+                <div class="alert alert-light border mb-3 py-2">
+                  <small><strong>Current Plan:</strong> {{ g.subscription.plan_display_name if g.subscription else 'Free' }}</small>
+                </div>
+                <p class="text-muted small mb-0">Upgrade your plan to unlock this feature and many more!</p>
+              </div>
+              <div class="modal-footer justify-content-center border-top py-3">
+                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="closeUpgradeModal()">Maybe Later</button>
+                <a href="{{ url_for('subscription.manage_subscription') }}" class="btn btn-warning btn-sm fw-bold">Upgrade Now</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+      
+      // Remove existing modal if any
+      var existingModal = document.getElementById('upgradeModal');
+      if (existingModal) {
+        existingModal.remove();
+      }
+      
+      // Add modal to body
+      document.body.insertAdjacentHTML('beforeend', modalHtml);
+      
+      // Show backdrop
+      var backdrop = document.createElement('div');
+      backdrop.className = 'modal-backdrop fade show';
+      backdrop.id = 'upgradeBackdrop';
+      document.body.appendChild(backdrop);
+    }
+    
+    function closeUpgradeModal() {
+      var modal = document.getElementById('upgradeModal');
+      var backdrop = document.getElementById('upgradeBackdrop');
+      if (modal) modal.remove();
+      if (backdrop) backdrop.remove();
+    }
+  </script>
   <script src="{{ url_for('static', filename='js/main.js') }}"></script>  <!-- Bootstrap JS for mobile functionality -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script></body>
 </html>

@@ -1,0 +1,235 @@
+{% extends "base.html" %}
+
+{% block title %}Select Payment Method - {{ company_name }}{% endblock %}
+
+{% block content %}
+<div class="section-card">
+    <h2>Complete Your Subscription</h2>
+    <p class="text-muted">Select a payment method to activate your {{ plan_name }} plan</p>
+    
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+    
+    <!-- Plan Summary -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card border-primary">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="fas fa-box"></i> Selected Plan</h5>
+                    <div class="row align-items-center">
+                        <div class="col-md-6">
+                            <h3 class="text-primary">{{ plan_name }}</h3>
+                            <p class="text-muted mb-0">{{ plan_description }}</p>
+                        </div>
+                        <div class="col-md-6 text-end">
+                            <h2 class="mb-0">${{ plan_price }}<small class="text-muted">/month</small></h2>
+                            <p class="text-muted">Billed {{ billing_cycle }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Payment Method Selection -->
+    <div class="row">
+        <div class="col-md-12">
+            <h4>Select Payment Method</h4>
+            <div class="row">
+                <!-- Credit Card Option -->
+                <div class="col-md-6 mb-3">
+                    <div class="card h-100 border-primary" id="card-payment">
+                        <div class="card-body">
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="payment_method" id="method_card" value="card" checked>
+                                <label class="form-check-label" for="method_card">
+                                    <h5><i class="fas fa-credit-card"></i> Credit / Debit Card</h5>
+                                </label>
+                            </div>
+                            <p class="text-muted">Pay securely with your credit or debit card</p>
+                            
+                            <div id="card-details" class="mt-3">
+                                <div class="mb-3">
+                                    <label class="form-label">Card Number</label>
+                                    <input type="text" class="form-control" placeholder="1234 5678 9012 3456" maxlength="19" id="card_number">
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Expiry Date</label>
+                                        <input type="text" class="form-control" placeholder="MM/YY" maxlength="5" id="card_expiry">
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">CVV</label>
+                                        <input type="text" class="form-control" placeholder="123" maxlength="4" id="card_cvv">
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Cardholder Name</label>
+                                    <input type="text" class="form-control" placeholder="John Doe" id="card_name">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Bank Transfer Option -->
+                <div class="col-md-6 mb-3">
+                    <div class="card h-100" id="bank-payment">
+                        <div class="card-body">
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="payment_method" id="method_bank" value="bank">
+                                <label class="form-check-label" for="method_bank">
+                                    <h5><i class="fas fa-university"></i> Bank Transfer</h5>
+                                </label>
+                            </div>
+                            <p class="text-muted">Pay directly from your bank account</p>
+                            
+                            <div id="bank-details" class="mt-3" style="display: none;">
+                                <div class="alert alert-info">
+                                    <h6><i class="fas fa-info-circle"></i> Bank Transfer Details</h6>
+                                    <p class="mb-1"><strong>Bank Name:</strong> Example Bank</p>
+                                    <p class="mb-1"><strong>Account Number:</strong> 1234567890</p>
+                                    <p class="mb-1"><strong>Routing Number:</strong> 021000021</p>
+                                    <p class="mb-0"><strong>Reference:</strong> HR-{{ company_id }}-{{ plan_id }}</p>
+                                </div>
+                                <p class="text-muted small">After making the transfer, please allow 1-2 business days for processing.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Billing Information -->
+    <div class="row mt-4">
+        <div class="col-md-12">
+            <h4>Billing Information</h4>
+            <div class="card">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Company Name</label>
+                            <input type="text" class="form-control" value="{{ company_name }}" readonly>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Email</label>
+                            <input type="email" class="form-control" value="{{ admin_email }}" readonly>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Billing Address</label>
+                        <input type="text" class="form-control" placeholder="Street address" id="billing_address">
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <input type="text" class="form-control" placeholder="City" id="billing_city">
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <input type="text" class="form-control" placeholder="State" id="billing_state">
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <input type="text" class="form-control" placeholder="ZIP Code" id="billing_zip">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Terms and Submit -->
+    <div class="row mt-4">
+        <div class="col-md-12">
+            <div class="form-check mb-3">
+                <input class="form-check-input" type="checkbox" id="agree_terms" required>
+                <label class="form-check-label" for="agree_terms">
+                    I agree to the <a href="{{ url_for('terms') }}" target="_blank">Terms and Conditions</a> and <a href="{{ url_for('privacy') }}" target="_blank">Privacy Policy</a>
+                </label>
+            </div>
+            <div class="form-check mb-3">
+                <input class="form-check-input" type="checkbox" id="agree_auto_renew">
+                <label class="form-check-label" for="agree_auto_renew">
+                    I understand that my subscription will automatically renew each month until cancelled
+                </label>
+            </div>
+            
+            <form action="{{ url_for('subscription.process_payment') }}" method="POST" id="payment-form">
+                <input type="hidden" name="plan_id" value="{{ plan_id }}">
+                <input type="hidden" name="payment_method" value="card" id="selected_payment_method">
+                
+                <div class="d-flex gap-3">
+                    <a href="{{ url_for('subscription.manage_subscription') }}" class="btn btn-outline">
+                        ← Back to Plans
+                    </a>
+                    <button type="submit" class="btn btn-primary btn-lg">
+                        <i class="fas fa-lock"></i> Pay ${{ plan_price }} Now
+                    </button>
+                </div>
+            </form>
+            
+            <p class="text-muted mt-3 text-center">
+                <i class="fas fa-shield-alt"></i> Your payment information is secure and encrypted
+            </p>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Toggle payment method details
+    const methodCard = document.getElementById('method_card');
+    const methodBank = document.getElementById('method_bank');
+    const cardDetails = document.getElementById('card-details');
+    const bankDetails = document.getElementById('bank-details');
+    const selectedMethod = document.getElementById('selected_payment_method');
+    const cardPayment = document.getElementById('card-payment');
+    const bankPayment = document.getElementById('bank-payment');
+    
+    methodCard.addEventListener('change', function() {
+        if (this.checked) {
+            cardDetails.style.display = 'block';
+            bankDetails.style.display = 'none';
+            selectedMethod.value = 'card';
+            cardPayment.classList.add('border-primary');
+            bankPayment.classList.remove('border-primary');
+        }
+    });
+    
+    methodBank.addEventListener('change', function() {
+        if (this.checked) {
+            cardDetails.style.display = 'none';
+            bankDetails.style.display = 'block';
+            selectedMethod.value = 'bank';
+            bankPayment.classList.add('border-primary');
+            cardPayment.classList.remove('border-primary');
+        }
+    });
+    
+    // Format card number with spaces
+    const cardNumber = document.getElementById('card_number');
+    cardNumber.addEventListener('input', function(e) {
+        let value = e.target.value.replace(/\D/g, '');
+        value = value.replace(/(.{4})/g, '$1 ').trim();
+        e.target.value = value;
+    });
+    
+    // Format expiry date
+    const cardExpiry = document.getElementById('card_expiry');
+    cardExpiry.addEventListener('input', function(e) {
+        let value = e.target.value.replace(/\D/g, '');
+        if (value.length >= 2) {
+            value = value.substring(0, 2) + '/' + value.substring(2, 4);
+        }
+        e.target.value = value;
+    });
+});
+</script>
+{% endblock %}

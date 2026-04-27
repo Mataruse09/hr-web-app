@@ -9,6 +9,12 @@ from datetime import datetime, timedelta
 from utils import login_required, roles_required
 from models.db import query, mutate
 from services.activity_service import log_activity
+from services.ai_ml_service import (
+    forecast_workforce_demand,
+    predict_attrition_risk,
+    get_smart_recommendations,
+)
+from services.subscription_service import forecasting_feature_required
 
 logger = logging.getLogger(__name__)
 
@@ -18,6 +24,7 @@ forecasting_bp = Blueprint('forecasting', __name__)
 @forecasting_bp.route('/forecasting')
 @login_required
 @roles_required('Admin', 'HR', 'CHRO', 'Manager')
+@forecasting_feature_required
 def list_forecasts():
     """List all labour forecasts."""
     company_id = session['company_id']
@@ -33,7 +40,36 @@ def list_forecasts():
             (company_id,)
         )
         
-        return render_template('forecasting/list.html', forecasts=forecasts or [])
+        # Get AI-powered workforce predictions
+        ai_forecast = forecast_workforce_demand(company_id, 6)
+        ai_attrition = predict_attrition_risk(company_id)
+        ai_recommendations = get_smart_recommendations(company_id)
+        
+        # Calculate summary stats from AI
+        high_risk_count = sum(1 for r in ai_attrition if r.get('risk_level') == 'High') if ai_attrition else 0
+        avg_risk = sum(r.get('risk_score', 0) for r in ai_attrition) / len(ai_attrition) if ai_attrition else 0
+        
+        # Get projected hiring needs
+        projected_hiring = 0
+        if ai_forecast and ai_forecast.get('forecasts'):
+            for f in ai_forecast['forecasts']:
+                projected_hiring += f.get('hiring_needed', 0)
+        
+        ai_summary = {
+            'projected_hiring': projected_hiring,
+            'high_risk_employees': high_risk_count,
+            'avg_attrition_risk': round(avg_risk, 1),
+            'recommendations_count': len(ai_recommendations),
+        }
+        
+        return render_template(
+            'forecasting/list.html', 
+            forecasts=forecasts or [],
+            ai_forecast=ai_forecast,
+            ai_attrition=ai_attrition,
+            ai_recommendations=ai_recommendations,
+            ai_summary=ai_summary,
+        )
     
     except Exception as e:
         logger.exception(e)
@@ -44,6 +80,7 @@ def list_forecasts():
 @forecasting_bp.route('/forecasting/create', methods=['GET', 'POST'])
 @login_required
 @roles_required('Admin', 'HR', 'CHRO', 'Manager')
+@forecasting_feature_required
 def create_forecast():
     """Create new labour forecast."""
     company_id = session['company_id']
@@ -70,12 +107,14 @@ def create_forecast():
                 return render_template('forecasting/create.html', departments=departments)
             
             try:
+                # Convert YYYY-MM format to proper date (YYYY-MM-01)
+                forecast_date = f"{forecast_month}-01"
                 mutate(
                     """INSERT INTO labour_forecasts 
                        (company_id, department_id, forecast_month, current_headcount, 
                         projected_headcount, hiring_budget, notes, created_at)
                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)""",
-                    (company_id, department_id, forecast_month, current_headcount,
+                    (company_id, department_id, forecast_date, current_headcount,
                      projected_headcount, hiring_budget, notes, datetime.utcnow())
                 )
                 
@@ -103,6 +142,7 @@ def create_forecast():
 @forecasting_bp.route('/forecasting/<int:forecast_id>')
 @login_required
 @roles_required('Admin', 'HR', 'CHRO')
+@forecasting_feature_required
 def view_forecast(forecast_id):
     """View forecast details and recommendations."""
     company_id = session['company_id']

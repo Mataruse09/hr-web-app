@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+
+{% block title %}Leave Trend Analysis{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h1 class="display-5">🏖️ AI Leave Trend Analysis</h1>
+            <p class="text-muted">Predictive leave management insights</p>
+        </div>
+        <div class="col-md-4">
+            <form method="get" class="d-flex">
+                <select name="year" class="form-select me-2">
+                    {% for y in range(2020, 2027) %}
+                    <option value="{{ y }}" {% if year == y %}selected{% endif %}>{{ y }}</option>
+                    {% endfor %}
+                </select>
+                <button type="submit" class="btn btn-primary">Update</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Statistics -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <div class="display-4 text-primary">{{ analysis.statistics.total_requests }}</div>
+                    <h5>Total Requests</h5>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <div class="display-4 text-success">{{ analysis.statistics.approved }}</div>
+                    <h5>Approved</h5>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <div class="display-4 text-warning">{{ analysis.statistics.pending }}</div>
+                    <h5>Pending</h5>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <div class="display-4">{{ analysis.statistics.total_days }}</div>
+                    <h5>Total Days</h5>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Leave by Type -->
+        <div class="col-md-6 mb-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white border-0">
+                    <h5 class="mb-0">📋 Leave by Type</h5>
+                </div>
+                <div class="card-body">
+                    {% if analysis.by_type %}
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Leave Type</th>
+                                    <th>Requests</th>
+                                    <th>Days</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for lt in analysis.by_type %}
+                                <tr>
+                                    <td>{{ lt.leave_type or 'Unknown' }}</td>
+                                    <td>{{ lt.count }}</td>
+                                    <td>{{ lt.days }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-muted">No leave type data available.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Leave by Department -->
+        <div class="col-md-6 mb-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white border-0">
+                    <h5 class="mb-0">🏢 Leave by Department</h5>
+                </div>
+                <div class="card-body">
+                    {% if analysis.by_department %}
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Department</th>
+                                    <th>Requests</th>
+                                    <th>Days</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for dept in analysis.by_department %}
+                                <tr>
+                                    <td>{{ dept.department or 'Unknown' }}</td>
+                                    <td>{{ dept.requests }}</td>
+                                    <td>{{ dept.days }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-muted">No department data available.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Predictions -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white border-0">
+            <h5 class="mb-0">🔮 Leave Demand Predictions</h5>
+        </div>
+        <div class="card-body">
+            {% if analysis.predictions %}
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="text-center">
+                        <div class="h3 text-primary">{{ analysis.predictions.expected_total_requests }}</div>
+                        <p class="text-muted">Expected Total Requests</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="text-center">
+                        <div class="h3 text-info">{{ analysis.predictions.monthly_average }}</div>
+                        <p class="text-muted">Monthly Average</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="text-center">
+                        <div class="h6 text-muted">Peak Leave Months:</div>
+                        {% for month in analysis.predictions.peak_months %}
+                            <span class="badge bg-warning me-1">{{ month }}</span>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <p class="text-muted">No prediction data available.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

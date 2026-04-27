@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+
+{% block title %}Productivity Insights{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h1 class="display-5">📊 AI Productivity Insights</h1>
+            <p class="text-muted">Performance analytics and workforce productivity analysis</p>
+        </div>
+    </div>
+
+    <!-- Performance Metrics -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm" style="border-left: 4px solid #28a745;">
+                <div class="card-body text-center">
+                    <div class="display-4 text-success">{{ analysis.performance.excellent }}</div>
+                    <h5>Excellent (4-5★)</h5>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm" style="border-left: 4px solid #17a2b8;">
+                <div class="card-body text-center">
+                    <div class="display-4 text-info">{{ analysis.performance.good }}</div>
+                    <h5>Good (3★)</h5>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm" style="border-left: 4px solid #ffc107;">
+                <div class="card-body text-center">
+                    <div class="display-4 text-warning">{{ analysis.performance.needs_improvement }}</div>
+                    <h5>Needs Improvement (1-2★)</h5>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm" style="border-left: 4px solid #6c757d;">
+                <div class="card-body text-center">
+                    <div class="display-4">{{ analysis.performance.average_rating }}</div>
+                    <h5>Average Rating</h5>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Overtime Analysis -->
+        <div class="col-md-6 mb-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white border-0">
+                    <h5 class="mb-0">⏰ Overtime Analysis</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            Total Overtime Hours
+                            <span class="badge bg-primary rounded-pill">{{ analysis.overtime_analysis.total_overtime_hours|int }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            Avg Overtime per Employee
+                            <span class="badge bg-info rounded-pill">{{ analysis.overtime_analysis.average_overtime_per_employee }} hrs</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            Employees with Overtime
+                            <span class="badge bg-warning rounded-pill">{{ analysis.overtime_analysis.employees_with_overtime }}</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Attendance Impact -->
+        <div class="col-md-6 mb-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white border-0">
+                    <h5 class="mb-0">✅ Attendance-Productivity Link</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            High Performers Attendance
+                            <span class="badge bg-success rounded-pill">{{ analysis.attendance_impact.high_performers_attendance }}%</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            Low Performers Attendance
+                            <span class="badge bg-danger rounded-pill">{{ analysis.attendance_impact.low_performers_attendance }}%</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            Correlation
+                            <span class="badge bg-info rounded-pill">{{ analysis.attendance_impact.correlation }}</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Insights -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white border-0">
+            <h5 class="mb-0">💡 AI-Generated Insights</h5>
+        </div>
+        <div class="card-body">
+            {% if analysis.insights %}
+            <div class="list-group">
+                {% for insight in analysis.insights %}
+                <div class="list-group-item list-group-item-{% if insight.type == 'positive' %}success{% elif insight.type == 'warning' %}warning{% else %}info{% endif %}">
+                    <div class="d-flex w-100 justify-content-between">
+                        <h6 class="mb-1">{{ insight.category|title }}</h6>
+                        <small>{{ insight.type }}</small>
+                    </div>
+                    <p class="mb-1">{{ insight.message }}</p>
+                    <small class="text-muted">{{ insight.action }}</small>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="text-muted">No insights available yet. More data needed.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

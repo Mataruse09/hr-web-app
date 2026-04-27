@@ -9,6 +9,7 @@ from services.activity_service import get_activity_logs, log_activity
 from services.settings_service import get_all_settings, set_setting, update_theme, initialize_default_settings
 from services.rbac_service import require_admin
 from services.delete_service import delete_user_permanently
+from services.email_service import send_team_notification_email
 
 logger = logging.getLogger(__name__)
 
@@ -106,6 +107,22 @@ def add_user():
             # ────────────────
             employee_model.link_user(emp_id, created_id, company_id)
 
+            # Send notification email to the new user
+            try:
+                from models.company_model import get_by_id
+                company = get_by_id(company_id)
+                company_name = company['name'] if company else 'Your Company'
+                
+                send_team_notification_email(
+                    full_name,
+                    email,
+                    company_name,
+                    role,
+                    action="added"
+                )
+            except Exception as e:
+                logger.warning(f"Failed to send team notification email: {e}")
+
             flash(f'User {username} created successfully.', 'success')
             return redirect(url_for('admin.users'))
 
@@ -151,13 +168,19 @@ def system_settings():
     if request.method == 'POST':
         try:
             # Theme settings
-            theme_primary = request.form.get('theme_primary_color', '#2c3e50')
+            theme_primary = request.form.get('theme_primary_color', '#1a2b4a')
             theme_secondary = request.form.get('theme_secondary_color', '#3498db')
             theme_background = request.form.get('theme_background_color', '#ecf0f1')
             
             set_setting(company_id, 'theme_primary_color', theme_primary, 'string')
             set_setting(company_id, 'theme_secondary_color', theme_secondary, 'string')
             set_setting(company_id, 'theme_background_color', theme_background, 'string')
+            
+            # Branding settings
+            company_logo = request.form.get('company_logo_url', '').strip()
+            company_branding = request.form.get('company_branding', 'MatinexHR').strip()
+            set_setting(company_id, 'company_logo_url', company_logo, 'string')
+            set_setting(company_id, 'company_branding', company_branding, 'string')
             
             # Notification settings
             email_enabled = request.form.get('notification_email_enabled') == 'on'
@@ -299,3 +322,53 @@ def delete_department(dept_id):
         flash('Error deleting department. It may have employees assigned.', 'danger')
     
     return redirect(url_for('admin.departments'))
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# NOTIFICATIONS (Company Admin Level)
+# ═══════════════════════════════════════════════════════════════════════════
+
+@admin_bp.route('/notifications')
+@login_required
+@roles_required('Admin')
+def admin_notifications():
+    """View admin notifications."""
+    try:
+        from models.company_model import get_unread_admin_notifications
+        
+        user_id = session.get('user_id')
+        notifications = get_unread_admin_notifications(user_id)
+        
+        return render_template('admin/notifications.html', notifications=notifications)
+    except Exception as e:
+        logger.exception(e)
+        flash('Error loading notifications.', 'danger')
+        return redirect(url_for('dashboard.index'))
+
+
+@admin_bp.route('/notifications/<int:notification_id>/read', methods=['POST'])
+@login_required
+@roles_required('Admin')
+def mark_notification_read_route(notification_id):
+    """Mark a notification as read."""
+    try:
+        from models.company_model import mark_notification_read
+        mark_notification_read(notification_id)
+        return jsonify({'success': True})
+    except Exception as e:
+        logger.exception(e)
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@admin_bp.route('/notifications/read-all', methods=['POST'])
+@login_required
+@roles_required('Admin')
+def mark_all_notifications_read_route():
+    """Mark all notifications as read."""
+    try:
+        from models.company_model import mark_all_notifications_read
+        mark_all_notifications_read(session.get('user_id'))
+        return jsonify({'success': True})
+    except Exception as e:
+        logger.exception(e)
+        return jsonify({'success': False, 'error': str(e)}), 500

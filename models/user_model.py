@@ -1,29 +1,45 @@
 from models.db import query, mutate
 from datetime import datetime
+import logging
+import traceback
+
+logger = logging.getLogger(__name__)
 
 
 def get_by_username(username: str, company_id: int):
-    normalized_username = username.strip().lower()
-    return query(
-        "SELECT * FROM users WHERE username = %s AND company_id = %s AND is_active = TRUE",
-        (normalized_username, company_id), one=True
-    )
+    try:
+        normalized_username = username.strip().lower()
+        return query(
+            "SELECT * FROM users WHERE username = %s AND company_id = %s AND is_active = TRUE",
+            (normalized_username, company_id), one=True
+        )
+    except Exception as e:
+        logger.error(f"Error getting user by username {username}: {e}")
+        return None
 
 
 def get_by_username_email(username: str, email: str, company_id: int):
-    return query(
-        "SELECT * FROM users WHERE (username = %s OR email = %s) AND company_id = %s",
-        (username.strip().lower(), email.strip().lower(), company_id),
-        one=True
-    )
+    try:
+        return query(
+            "SELECT * FROM users WHERE (username = %s OR email = %s) AND company_id = %s",
+            (username.strip().lower(), email.strip().lower(), company_id),
+            one=True
+        )
+    except Exception as e:
+        logger.error(f"Error getting user by username/email: {e}")
+        return None
 
 
 def get_by_id(user_id: int, company_id: int):
-    return query(
-        "SELECT id, company_id, username, email, full_name, role "
-        "FROM users WHERE id = %s AND company_id = %s",
-        (user_id, company_id), one=True
-    )
+    try:
+        return query(
+            "SELECT id, company_id, username, email, full_name, role "
+            "FROM users WHERE id = %s AND company_id = %s",
+            (user_id, company_id), one=True
+        )
+    except Exception as e:
+        logger.error(f"Error getting user by id {user_id}: {e}")
+        return None
 
 
 def create_user(company_id: int, username: str, email: str, full_name: str, password_hash: str, role: str = 'HR'):

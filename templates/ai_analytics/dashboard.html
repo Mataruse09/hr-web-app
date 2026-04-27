@@ -1,0 +1,310 @@
+{% extends "base.html" %}
+
+{% block title %}AI Workforce Analytics{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h1 class="display-5">
+                <span style="font-size: 2rem;">🤖</span> AI Workforce Analytics
+            </h1>
+            <p class="text-muted">Machine learning-powered insights and predictions</p>
+        </div>
+        <div class="col-md-4 text-end">
+            <a href="{{ url_for('ai_analytics.full_report', type='comprehensive') }}" class="btn btn-primary">
+                📊 Generate Full Report
+            </a>
+        </div>
+    </div>
+
+    <!-- Quick Stats Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm" style="border-left: 4px solid #dc3545;">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="text-muted mb-0">High Risk Employees</p>
+                            <h2 class="mb-0">{{ summary.high_risk_employees }}</h2>
+                        </div>
+                        <div style="font-size: 2.5rem;">⚠️</div>
+                    </div>
+                    <a href="{{ url_for('ai_analytics.attrition_risk') }}" class="small text-decoration-none">
+                        View Details →
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm" style="border-left: 4px solid #28a745;">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="text-muted mb-0">Avg Attrition Risk</p>
+                            <h2 class="mb-0">{{ "%.0f"|format(summary.avg_attrition_risk) }}%</h2>
+                        </div>
+                        <div style="font-size: 2.5rem;">📉</div>
+                    </div>
+                    <a href="{{ url_for('ai_analytics.attrition_risk') }}" class="small text-decoration-none">
+                        View Details →
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm" style="border-left: 4px solid #007bff;">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="text-muted mb-0">Projected Hiring</p>
+                            <h2 class="mb-0">{{ summary.projected_growth }}</h2>
+                        </div>
+                        <div style="font-size: 2.5rem;">👥</div>
+                    </div>
+                    <a href="{{ url_for('ai_analytics.workforce_forecast') }}" class="small text-decoration-none">
+                        View Details →
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm" style="border-left: 4px solid #17a2b8;">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="text-muted mb-0">Attendance Rate</p>
+                            <h2 class="mb-0">{{ "%.1f"|format(summary.attendance_rate) }}%</h2>
+                        </div>
+                        <div style="font-size: 2.5rem;">✅</div>
+                    </div>
+                    <a href="{{ url_for('ai_analytics.attendance_analysis') }}" class="small text-decoration-none">
+                        View Details →
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Analytics Sections -->
+    <div class="row">
+        <!-- Attrition Risk Analysis -->
+        <div class="col-md-6 mb-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white border-0">
+                    <h5 class="mb-0">🎯 Attrition Risk Prediction</h5>
+                </div>
+                <div class="card-body">
+                    {% if report.attrition_risk %}
+                        {% set high_risk = report.attrition_risk|selectattr('risk_level', 'equalto', 'High')|list %}
+                        {% set medium_risk = report.attrition_risk|selectattr('risk_level', 'equalto', 'Medium')|list %}
+                        
+                        <div class="d-flex justify-content-between mb-3">
+                            <div class="text-center">
+                                <div class="h3 text-danger mb-0">{{ high_risk|length }}</div>
+                                <small class="text-muted">High Risk</small>
+                            </div>
+                            <div class="text-center">
+                                <div class="h3 text-warning mb-0">{{ medium_risk|length }}</div>
+                                <small class="text-muted">Medium Risk</small>
+                            </div>
+                            <div class="text-center">
+                                <div class="h3 text-success mb-0">{{ report.attrition_risk|length - high_risk|length - medium_risk|length }}</div>
+                                <small class="text-muted">Low Risk</small>
+                            </div>
+                        </div>
+                        
+                        {% if high_risk|length > 0 %}
+                            <div class="alert alert-danger">
+                                <strong>⚠️ Action Required:</strong> {{ high_risk|length }} employees at high risk of leaving.
+                            </div>
+                        {% endif %}
+                    {% else %}
+                        <p class="text-muted">No attrition risk data available.</p>
+                    {% endif %}
+                    
+                    <a href="{{ url_for('ai_analytics.attrition_risk') }}" class="btn btn-outline-primary btn-sm">
+                        View All Risk Analysis
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Workforce Forecast -->
+        <div class="col-md-6 mb-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white border-0">
+                    <h5 class="mb-0">📈 Workforce Demand Forecast</h5>
+                </div>
+                <div class="card-body">
+                    {% if report.workforce_forecast and report.workforce_forecast.forecasts %}
+                        {% set forecasts = report.workforce_forecast.forecasts %}
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Month</th>
+                                        <th>Projected</th>
+                                        <th>Hiring Needed</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for f in forecasts[:3] %}
+                                    <tr>
+                                        <td>{{ f.month }}</td>
+                                        <td>{{ f.projected_headcount }}</td>
+                                        <td>
+                                            {% if f.hiring_needed > 0 %}
+                                                <span class="badge bg-success">+{{ f.hiring_needed }}</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">—</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-muted">No forecast data available.</p>
+                    {% endif %}
+                    
+                    <a href="{{ url_for('ai_analytics.workforce_forecast') }}" class="btn btn-outline-primary btn-sm">
+                        View Full Forecast
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Attendance Analysis -->
+        <div class="col-md-6 mb-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white border-0">
+                    <h5 class="mb-0">📅 Attendance Pattern Analysis</h5>
+                </div>
+                <div class="card-body">
+                    {% if report.attendance_analysis and report.attendance_analysis.overall %}
+                        {% set overall = report.attendance_analysis.overall %}
+                        <div class="row text-center">
+                            <div class="col-4">
+                                <div class="h4 text-success mb-0">{{ overall.present }}</div>
+                                <small class="text-muted">Present</small>
+                            </div>
+                            <div class="col-4">
+                                <div class="h4 text-danger mb-0">{{ overall.absent }}</div>
+                                <small class="text-muted">Absent</small>
+                            </div>
+                            <div class="col-4">
+                                <div class="h4 text-warning mb-0">{{ overall.late }}</div>
+                                <small class="text-muted">Late</small>
+                            </div>
+                        </div>
+                        
+                        {% if report.attendance_analysis.anomalies %}
+                            <div class="alert alert-warning mt-3">
+                                <strong>⚠️ Anomalies Detected:</strong> {{ report.attendance_analysis.anomalies|length }} employees with unusual patterns.
+                            </div>
+                        {% endif %}
+                    {% else %}
+                        <p class="text-muted">No attendance data available.</p>
+                    {% endif %}
+                    
+                    <a href="{{ url_for('ai_analytics.attendance_analysis') }}" class="btn btn-outline-primary btn-sm">
+                        View Full Analysis
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Smart Recommendations -->
+        <div class="col-md-6 mb-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white border-0">
+                    <h5 class="mb-0">💡 AI Smart Recommendations</h5>
+                </div>
+                <div class="card-body">
+                    {% if report.recommendations %}
+                        <ul class="list-group list-group-flush">
+                            {% for rec in report.recommendations[:3] %}
+                            <li class="list-group-item px-0">
+                                <div class="d-flex justify-content-between">
+                                    <strong>{{ rec.title }}</strong>
+                                    {% if rec.priority == 'high' %}
+                                        <span class="badge bg-danger">High</span>
+                                    {% elif rec.priority == 'medium' %}
+                                        <span class="badge bg-warning">Medium</span>
+                                    {% else %}
+                                        <span class="badge bg-info">Low</span>
+                                    {% endif %}
+                                </div>
+                                <small class="text-muted">{{ rec.description }}</small>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p class="text-muted">No recommendations available.</p>
+                    {% endif %}
+                    
+                    <a href="{{ url_for('ai_analytics.recommendations') }}" class="btn btn-outline-primary btn-sm">
+                        View All Recommendations
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Additional Analytics Links -->
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-0">
+                    <h5 class="mb-0">🔍 More AI Analytics</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <a href="{{ url_for('ai_analytics.leave_analysis') }}" class="text-decoration-none">
+                                <div class="p-3 border rounded text-center">
+                                    <div style="font-size: 2rem;">🏖️</div>
+                                    <div class="fw-bold">Leave Trends</div>
+                                    <small class="text-muted">Predict leave patterns</small>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <a href="{{ url_for('ai_analytics.productivity_insights') }}" class="text-decoration-none">
+                                <div class="p-3 border rounded text-center">
+                                    <div style="font-size: 2rem;">📊</div>
+                                    <div class="fw-bold">Productivity</div>
+                                    <small class="text-muted">Performance insights</small>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <a href="{{ url_for('ai_analytics.workforce_composition') }}" class="text-decoration-none">
+                                <div class="p-3 border rounded text-center">
+                                    <div style="font-size: 2rem;">👥</div>
+                                    <div class="fw-bold">Composition</div>
+                                    <small class="text-muted">Diversity analysis</small>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <a href="{{ url_for('ai_analytics.full_report', type='comprehensive') }}" class="text-decoration-none">
+                                <div class="p-3 border rounded text-center">
+                                    <div style="font-size: 2rem;">📑</div>
+                                    <div class="fw-bold">Full Report</div>
+                                    <small class="text-muted">Comprehensive analysis</small>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

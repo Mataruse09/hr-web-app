@@ -2,17 +2,143 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <meta name="google-site-verification" content="bUOaXdJVqd7ORv5ooeZDfNpK8q1WfMyas7sujEHXbM0" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Register Company — HRCore ERP</title>
+  <title>Register Company — MatinexHR ERP</title>
+  <link rel="icon" type="image/png" sizes="64x64" href="/static/img/branding/favicon-64x64.png">
+  <link rel="icon" type="image/png" sizes="128x128" href="/static/img/branding/favicon-128x128.png">
+  <link rel="apple-touch-icon" sizes="128x128" href="/static/img/branding/favicon-128x128.png">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+  <style>
+    .register-form-container {
+      max-width: 750px;
+      width: 95%;
+      margin: 0 auto;
+      background: #fff;
+      border-radius: 12px;
+      padding: 32px 36px 32px 36px;
+      box-shadow: 0 20px 60px rgba(0,0,0,.3);
+    }
+    .register-form-container form {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .register-form-container h2 {
+      width: 100%;
+      font-size: 1rem;
+      margin: 16px 0 12px 0;
+      color: #1a1a2e;
+      border-bottom: 1px solid #e0e0e0;
+      padding-bottom: 8px;
+    }
+    .register-form-container .form-group {
+      margin-bottom: 12px;
+      min-width: unset;
+      flex: 1 1 calc(50% - 8px);
+    }
+    .register-form-container .form-group label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 4px;
+    }
+    .register-form-container .form-group input,
+    .register-form-container .form-group textarea {
+      width: 100%;
+      padding: 10px 12px;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      box-sizing: border-box;
+      transition: border-color 0.3s, box-shadow 0.3s;
+    }
+    .register-form-container .form-group input:focus,
+    .register-form-container .form-group textarea:focus {
+      border-color: #667eea;
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(102,126,234,0.15);
+    }
+    .register-form-container textarea {
+      min-height: 60px;
+      resize: vertical;
+      flex: 1 1 100%;
+    }
+    .register-form-container button[type="submit"] {
+      width: 100%;
+      flex: 1 1 100%;
+      padding: 12px;
+      background: linear-gradient(270deg, #667eea, #764ba2, #11998e, #38ef7d);
+      background-size: 400% 400%;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 16px;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .register-form-container button[type="submit"]:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(102,126,234,0.25);
+    }
+    .register-form-container p {
+      width: 100%;
+      text-align: center;
+      margin-top: 16px;
+      font-size: 0.9rem;
+    }
+    .register-form-container p a {
+      color: #667eea;
+      text-decoration: none;
+      font-weight: 600;
+    }
+    .register-form-container p a:hover {
+      text-decoration: underline;
+    }
+    /* Mobile Responsive */
+    @media (max-width: 768px) {
+      .register-form-container {
+        padding: 20px 16px;
+        border-radius: 10px;
+      }
+      .register-form-container h2 {
+        font-size: 0.9rem;
+        margin: 12px 0 8px 0;
+      }
+      .register-form-container .form-group {
+        flex: 1 1 100%;
+        min-width: unset;
+      }
+      .register-form-container form {
+        gap: 8px;
+      }
+      .register-form-container button[type="submit"] {
+        padding: 14px;
+        font-size: 1rem;
+      }
+    }
+  </style>
 </head>
 <body class="login-body">
-  <div class="login-container">
-    <div class="login-card">
-      <div class="login-header">
-        <div class="login-logo">⬡</div>
-        <h1 class="login-title">Register Company</h1>
+  <div style="display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 20px; gap: 30px; flex-wrap: wrap;">
+    <div class="register-form-container" style="flex: 1 1 500px; max-width: 600px;">
+      <div style="text-align: center; margin-bottom: 20px;">
+        <img src="/static/img/branding/logomat.png" alt="MatinexHR Logo" style="height:72px;width:auto;display:inline;vertical-align:middle" />
+        <h1 style="font-size: 1.5rem; margin-top: 12px;">Register Company</h1>
+      </div>
+
+      <!-- Important Note at Top -->
+      <div style="background: linear-gradient(135deg, #1a3a5c 0%, #0d2137 100%); border-radius: 10px; padding: 18px 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); margin-bottom: 20px;">
+        <div style="color: #ff6b6b; font-weight: 600; font-size: 0.95rem; margin-bottom: 12px; animation: pulseText 2s ease-in-out infinite;">
+          NOTE: Make sure to remember your username and password
+        </div>
+        <div style="color: #a8d4f0; font-size: 0.88rem; line-height: 1.5; animation: fadeInOut 3s ease-in-out infinite;">
+          After logging in you can now start to register your company users and have full access to the features tracking attendance, attrition rate, forecasting etc.
+        </div>
       </div>
 
       {% with messages = get_flashed_messages(with_categories=true) %}
@@ -21,7 +147,7 @@
         {% endfor %}
       {% endwith %}
 
-      <form method="POST" class="login-form">
+      <form method="POST">
         <h2>Company Info</h2>
         <div class="form-group"><label>Company Name</label><input name="company_name" required></div>
         <div class="form-group"><label>Industry</label><input name="industry"></div>
@@ -36,19 +162,37 @@
         <div class="form-group"><label>Email</label><input name="admin_email" type="email" required></div>
         <div class="form-group">
           <label>Password</label>
-          <div class="password-wrapper">
-            <input name="admin_password" type="password" class="form-control password-input" required>
-            <button type="button" class="password-toggle" onclick="togglePassword(this)">
-              <span class="eye-icon">👁️</span>
-            </button>
+          <input name="admin_password" type="password" required>
+        </div>
+
+        <div class="terms-agreement" style="width: 100%; margin: 16px 0; padding: 15px; background: #f8f9fa; border-radius: 8px; border: 1px solid #e9ecef;">
+          <div style="display: flex; align-items: flex-start; gap: 10px;">
+            <input type="checkbox" id="terms_accepted" name="terms_accepted" required style="margin-top: 4px; width: 18px; height: 18px; cursor: pointer;">
+            <label for="terms_accepted" style="font-size: 0.85rem; color: #555; line-height: 1.5; cursor: pointer;">
+              I agree to the <a href="/terms" target="_blank" style="color: #667eea; text-decoration: none; font-weight: 600;">Terms and Conditions</a>, 
+              <a href="/privacy" target="_blank" style="color: #667eea; text-decoration: none; font-weight: 600;">Privacy Policy</a>, and 
+              <a href="/policies" target="_blank" style="color: #667eea; text-decoration: none; font-weight: 600;">Acceptable Use Policy</a>. 
+              By registering, I acknowledge that I have read and agree to be bound by these terms.
+            </label>
           </div>
         </div>
 
-        <button class="btn btn-primary btn-full" type="submit">Register Company</button>
+        <button type="submit">Register Company</button>
       </form>
 
-      <p class="mt-2">Already have an account? <a href="{{ url_for('auth.login') }}">Login here</a></p>
+      <p>Already have an account? <a href="{{ url_for('auth.login') }}">Login here</a></p>
     </div>
   </div>
+
+  <style>
+    @keyframes pulseText {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; }
+    }
+    @keyframes fadeInOut {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.6; }
+    }
+  </style>
 </body>
 </html>

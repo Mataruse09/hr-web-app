@@ -4,16 +4,21 @@ System Settings Service - Manage company-level configurations
 from models.db import query, mutate
 import json
 import logging
+import time
 
 logger = logging.getLogger(__name__)
 
+# Simple in-memory cache for settings (cache for 5 minutes)
+_settings_cache = {}
+_cache_ttl = 300  # 5 minutes
+
 DEFAULT_SETTINGS = {
-    'theme_primary_color': '#2c3e50',
+    'theme_primary_color': '#1a2b4a',
     'theme_secondary_color': '#3498db',
     'theme_background_color': '#ecf0f1',
     'theme_accent_color': '#e74c3c',
     'company_logo_url': '',
-    'company_branding': 'WorkZen HR',
+    'company_branding': 'MatinexHR',
     'notification_email_enabled': True,
     'employee_self_service_enabled': True,
     'attendance_geolocation_required': False,
@@ -27,8 +32,42 @@ DEFAULT_SETTINGS = {
 }
 
 
+def _get_cache_key(company_id):
+    return f"settings_{company_id}"
+
+
+def _get_cached_settings(company_id):
+    """Get cached settings if available and not expired."""
+    cache_key = _get_cache_key(company_id)
+    if cache_key in _settings_cache:
+        cached_data, timestamp = _settings_cache[cache_key]
+        if time.time() - timestamp < _cache_ttl:
+            return cached_data
+    return None
+
+
+def _set_cached_settings(company_id, settings):
+    """Cache settings with timestamp."""
+    cache_key = _get_cache_key(company_id)
+    _settings_cache[cache_key] = (settings, time.time())
+
+
+def clear_settings_cache(company_id=None):
+    """Clear settings cache for a company or all."""
+    if company_id:
+        cache_key = _get_cache_key(company_id)
+        _settings_cache.pop(cache_key, None)
+    else:
+        _settings_cache.clear()
+
+
 def get_setting(company_id: int, setting_key: str, default=None):
     """Get a single setting value."""
+    # Try cache first
+    cached = _get_cached_settings(company_id)
+    if cached is not None and setting_key in cached:
+        return cached.get(setting_key, default)
+    
     try:
         result = query("""
             SELECT setting_value, setting_type FROM system_settings
@@ -56,7 +95,12 @@ def get_setting(company_id: int, setting_key: str, default=None):
 
 
 def get_all_settings(company_id: int) -> dict:
-    """Get all settings for a company."""
+    """Get all settings for a company (with caching)."""
+    # Check cache first
+    cached = _get_cached_settings(company_id)
+    if cached is not None:
+        return cached
+    
     try:
         results = query("""
             SELECT setting_key, setting_value, setting_type FROM system_settings
@@ -101,6 +145,9 @@ def set_setting(company_id: int, setting_key: str, setting_value, setting_type: 
                 setting_type = VALUES(setting_type),
                 updated_at = NOW()
         """, (company_id, setting_key, value_str, setting_type))
+        
+        # Clear cache after updating
+        clear_settings_cache(company_id)
         
         logger.info(f"Setting {setting_key} updated for company {company_id}")
         return True

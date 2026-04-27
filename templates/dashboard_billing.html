@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+{% block title %}Billing & Subscription{% endblock %}
+{% block page_title %}Billing & Subscription Management{% endblock %}
+
+{% block content %}
+{% set plan_name = subscription.plan_display_name if subscription else 'Free' %}
+{% set sub_status = subscription.status if subscription else 'inactive' %}
+{% set expiry = subscription.end_date.strftime('%Y-%m-%d') if subscription and subscription.end_date else 'N/A' %}
+
+<div class="section-card" style="background: linear-gradient(135deg, #1a237e 0%, #283593 100%); color: white; margin-bottom: 1.5rem; padding: 1.5rem; border-radius: 12px;">
+  <div style="display: flex; align-items: center; gap: 1.5rem; flex-wrap: wrap;">
+    <div style="width: 70px; height: 70px; border-radius: 50%; background: rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; font-size: 2rem;">
+      💳
+    </div>
+    <div style="flex: 1; min-width: 200px;">
+      <h2 style="margin: 0; color: white; font-size: 1.5rem;">Billing & Subscription</h2>
+      <p style="margin: 0.5rem 0 0; opacity: 0.9;">Manage your subscription and payment details</p>
+    </div>
+    <div style="background: rgba(255,255,255,0.15); padding: 0.75rem 1.5rem; border-radius: 10px; text-align: center; border: 1px solid rgba(255,255,255,0.2);">
+      <div style="font-size: 1.5rem; font-weight: 700;">{{ plan_name }}</div>
+      <div style="font-size: 0.8rem; opacity: 0.85;">Plan</div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-4">
+  <div class="col-md-6">
+    <div class="section-card">
+      <h3>📋 Subscription Status</h3>
+      <div class="kpi-grid">
+        <div class="kpi-card kpi-green">
+          <div class="kpi-icon">✅</div>
+          <div class="kpi-body">
+            <div class="kpi-value">{{ sub_status|title }}</div>
+            <div class="kpi-label">Status</div>
+          </div>
+        </div>
+        <div class="kpi-card kpi-blue">
+          <div class="kpi-icon">📅</div>
+          <div class="kpi-body">
+            <div class="kpi-value" style="font-size: 1rem;">{{ expiry }}</div>
+            <div class="kpi-label">Expires</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="section-card">
+      <h3>💵 Your Price</h3>
+      <div class="kpi-grid">
+        {% if subscription.is_global_free %}
+        <div class="kpi-card" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white;">
+          <div class="kpi-icon">🎉</div>
+          <div class="kpi-body">
+            <div class="kpi-value">FREE</div>
+            <div class="kpi-label">Global Free Access</div>
+          </div>
+        </div>
+        {% elif subscription.custom_price == 0 %}
+        <div class="kpi-card" style="background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); color: white;">
+          <div class="kpi-icon">🎁</div>
+          <div class="kpi-body">
+            <div class="kpi-value">FREE</div>
+            <div class="kpi-label">Free Access Until {{ subscription.free_access_until.strftime('%Y-%m-%d') if subscription.free_access_until else 'N/A' }}</div>
+          </div>
+        </div>
+        {% elif subscription.custom_price %}
+        <div class="kpi-card kpi-purple">
+          <div class="kpi-icon">💰</div>
+          <div class="kpi-body">
+            <div class="kpi-value">${{ "%.2f"|format(subscription.custom_price) }}</div>
+            <div class="kpi-label">/month (Custom)</div>
+          </div>
+        </div>
+        {% else %}
+        <div class="kpi-card kpi-purple">
+          <div class="kpi-icon">💰</div>
+          <div class="kpi-body">
+            <div class="kpi-value">${{ "%.2f"|format(subscription.price_monthly) }}</div>
+            <div class="kpi-label">/month (Plan)</div>
+          </div>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section-card mt-4">
+  <h3>💰 Plan Details</h3>
+  <div class="kpi-grid">
+    <div class="kpi-card kpi-purple">
+      <div class="kpi-icon">👥</div>
+      <div class="kpi-body">
+        <div class="kpi-value">{{ kpis.total_employees if kpis else 0 }}</div>
+        <div class="kpi-label">Current Employees</div>
+      </div>
+    </div>
+    <div class="kpi-card kpi-cyan">
+      <div class="kpi-icon">📊</div>
+      <div class="kpi-body">
+        <div class="kpi-value">{{ subscription.max_employees if subscription else '5' }}</div>
+        <div class="kpi-label">Plan Limit</div>
+      </div>
+    </div>
+    <div class="kpi-card kpi-orange">
+      <div class="kpi-icon">🔧</div>
+      <div class="kpi-body">
+        <div class="kpi-value">24/7</div>
+        <div class="kpi-label">Support</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% if available_features %}
+<div class="section-card mt-4">
+  <h3>✨ Available Features</h3>
+  <div class="row g-3">
+    {% for feature in available_features %}
+    <div class="col-md-4">
+      <div class="d-flex align-items-center p-3 border rounded">
+        <span class="me-3">✅</span>
+        <span>{{ feature|title }}</span>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+<div class="section-card mt-4">
+  <h3>⚡ Quick Actions</h3>
+  <div class="quick-actions">
+    <a href="{{ url_for('subscription.manage_subscription') }}" class="action-btn action-purple">💳 Manage Subscription</a>
+    <a href="{{ url_for('subscription.list_plans') }}" class="action-btn action-blue">📄 View Plans</a>
+    <a href="{{ url_for('dashboard.admin_setup') }}" class="action-btn action-dark">⬅️ Back to Setup</a>
+  </div>
+</div>
+{% endblock %}

@@ -2,11 +2,100 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="HRCore - Comprehensive HR Management System for modern enterprises. Manage employees, attendance, leave, payroll, and more.">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="description" content="MatinexHR is your all-in-one HR management solution to simplify workforce operations, boost productivity, and drive organizational success. Features: Employee Management, Attendance, Leave, Payroll, Analytics, AI Predictions.">
     <meta name="robots" content="index, follow">
-    <title>HRCore - HR Management System</title>
+    <meta property="og:title" content="MatinexHR - Smarter Teams. Better Business.">
+    <meta property="og:description" content="All-in-one HR management platform for modern businesses. Streamline HR, payroll, analytics, and more.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://hr-web-app-5.onrender.com/">
+    <meta property="og:image" content="https://hr-web-app-5.onrender.com/docs/logomatinex.png">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="MatinexHR - Smarter Teams. Better Business.">
+    <meta name="twitter:description" content="All-in-one HR management platform for modern businesses. Streamline HR, payroll, analytics, and more.">
+    <title>MatinexHR - Smarter Teams. Better Business.</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="icon" type="image/png" sizes="64x64" href="/static/img/branding/favicon-64x64.png">
+  <link rel="icon" type="image/png" sizes="128x128" href="/static/img/branding/favicon-128x128.png">
+  <link rel="apple-touch-icon" sizes="128x128" href="/static/img/branding/favicon-128x128.png">
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "MatinexHR",
+      "url": "https://hr-web-app-5.onrender.com",
+      "logo": "https://hr-web-app-5.onrender.com/static/img/branding/logo.png",
+      "description": "AI-powered HR management software for modern businesses",
+      "keywords": "HR software, human resources software, HRMS, HR management system, employee management, attendance tracking, payroll software, workforce analytics, SAP alternative, Workday alternative",
+      "sameAs": [
+        "https://www.linkedin.com/company/matinexhr",
+        "https://twitter.com/matinexhr"
+      ],
+      "contactPoint": {
+        "@type": "ContactPoint",
+        "telephone": "+1-555-HR-SOFT",
+        "contactType": "Customer Service"
+      }
+    }
+    </script>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "MatinexHR",
+      "applicationCategory": "BusinessApplication",
+      "operatingSystem": "Web Browser, iOS, Android",
+      "url": "https://hr-web-app-5.onrender.com",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      },
+      "description": "All-in-one HR management platform with AI-powered analytics, attendance tracking, leave management, payroll, and workforce forecasting.",
+      "featureList": "Employee Management, Attendance Tracking, Leave Management, Payroll Processing, AI Analytics, Workforce Forecasting, Performance Appraisal, Compliance Management",
+      "aggregateRating": {
+        "@type": "AggregateRating",
+        "ratingValue": "4.5",
+        "reviewCount": "127"
+      }
+    }
+    </script>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": [{
+        "@type": "Question",
+        "name": "What is MatinexHR?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "MatinexHR is an all-in-one HR management platform offering employee management, attendance tracking, leave management, payroll processing, and AI-powered analytics."
+        }
+      }, {
+        "@type": "Question", 
+        "name": "How does MatinexHR compare to SAP and Workday?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "MatinexHR provides similar core HR functionalities as SAP and Workday but with AI-powered workforce analytics, simpler pricing, and easier implementation for mid-sized businesses."
+        }
+      }, {
+        "@type": "Question",
+        "name": "What features does MatinexHR offer?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "MatinexHR offers employee management, attendance tracking, leave management, payroll processing, AI analytics, workforce forecasting, performance appraisal, and compliance management."
+        }
+      }, {
+        "@type": "Question",
+        "name": "Is MatinexHR suitable for small businesses?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes, MatinexHR is designed for businesses of all sizes with flexible pricing and easy implementation, making it ideal for small to enterprise-level organizations."
+        }
+      }]
+    }
+    </script>
     <style>
         :root {
             --primary: #4f46e5;
@@ -17,75 +106,157 @@
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             margin: 0;
             padding: 0;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #8b9aeb 0%, #9a6eb8 100%);
             min-height: 100vh;
         }
-        .hero {
-            padding: 80px 20px;
-            text-align: center;
-            color: white;
+        /* Animated Background */
+        .animated-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            overflow: hidden;
         }
-        .hero h1 {
-            font-size: 4rem;
+        .animated-bg::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(102,126,234,0.15) 0%, transparent 50%),
+                        radial-gradient(circle at 80% 20%, rgba(124,58,237,0.12) 0%, transparent 40%),
+                        radial-gradient(circle at 20% 80%, rgba(6,182,212,0.1) 0%, transparent 40%);
+            animation: bgPulse 15s ease-in-out infinite;
+        }
+        @keyframes bgPulse {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            33% { transform: translate(2%, 2%) scale(1.05); }
+            66% { transform: translate(-1%, 1%) scale(0.98); }
+        }
+        /* Floating Logo Animation */
+        .hero-logo {
+            animation: floatLogo 4s ease-in-out infinite;
+        }
+        @keyframes floatLogo {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-12px); }
+        }
+        /* Fade In Up Animation */
+        .fade-in-up {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .fade-in-up.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .delay-1 { transition-delay: 0.1s; }
+        .delay-2 { transition-delay: 0.2s; }
+        .delay-3 { transition-delay: 0.3s; }
+        .delay-4 { transition-delay: 0.4s; }
+        .delay-5 { transition-delay: 0.5s; }
+        .delay-6 { transition-delay: 0.6s; }
+        /* Tagline Typewriter Effect */
+        .matinex-tagline {
+            font-size: 2rem;
             font-weight: 700;
-            margin-bottom: 20px;
-            background: linear-gradient(to right, #fff, #e0e7ff);
+            margin-bottom: 10px;
+            letter-spacing: 0.5px;
+            text-align: center;
+            overflow: hidden;
+        }
+        .matinex-tagline .teams {
+            color: #14213d;
+            display: inline-block;
+            animation: slideInLeft 0.8s ease-out forwards;
+        }
+        .matinex-tagline .business {
+            color: #2196f3;
+            display: inline-block;
+            animation: slideInRight 0.8s ease-out 0.3s forwards;
+            opacity: 0;
+        }
+        @keyframes slideInLeft {
+            from { transform: translateX(-100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes slideInRight {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        /* Hero Title Gradient Animation */
+        .hero h1 {
+            font-size: 3.2rem;
+            font-weight: 700;
+            margin-bottom: 18px;
+            background: linear-gradient(to right, #fff, #06b6d4 60%, #e0e7ff);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
+            animation: gradientShift 5s ease infinite;
+            background-size: 200% 200%;
         }
-        .hero .subtitle {
-            font-size: 1.5rem;
-            opacity: 0.95;
-            margin-bottom: 50px;
-            max-width: 700px;
-            margin-left: auto;
-            margin-right: auto;
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
         }
+        /* Features Section - Horizontal Layout */
         .features {
             display: flex;
-            flex-wrap: wrap;
             justify-content: center;
-            gap: 30px;
-            margin-top: 60px;
+            gap: 24px;
+            flex-wrap: wrap;
+            margin: 0 auto;
             max-width: 1200px;
-            margin-left: auto;
-            margin-right: auto;
         }
+        .features-row {
+            display: flex;
+            justify-content: center;
+            gap: 24px;
+            flex-wrap: wrap;
+            width: 100%;
+        }
+        /* Feature Cards Hover Animation */
         .feature {
-            background: rgba(255,255,255,0.12);
-            padding: 35px;
-            border-radius: 20px;
-            width: 260px;
+            background: rgba(255,255,255,0.13);
+            padding: 32px 24px;
+            border-radius: 18px;
+            width: 250px;
+            min-height: 220px;
             backdrop-filter: blur(10px);
-            border: 1px solid rgba(255,255,255,0.2);
-            transition: transform 0.3s, box-shadow 0.3s;
+            border: 1px solid rgba(255,255,255,0.18);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            opacity: 0;
+            transform: translateY(40px);
+            flex: 1 1 auto;
+            max-width: 300px;
+        }
+        .feature.visible {
+            opacity: 1;
+            transform: translateY(0);
         }
         .feature:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
-        }
-        .feature h3 {
-            margin-top: 0;
-            font-size: 1.3rem;
-            margin-bottom: 15px;
-        }
-        .feature p {
-            margin: 0;
-            opacity: 0.9;
-            font-size: 0.95rem;
-            line-height: 1.6;
+            transform: translateY(-8px) scale(1.03);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.25);
+            background: rgba(255,255,255,0.2);
+            border-color: rgba(255,255,255,0.35);
         }
         .feature-icon {
-            font-size: 2.5rem;
-            margin-bottom: 15px;
+            font-size: 2.2rem;
+            margin-bottom: 12px;
+            transition: transform 0.3s ease;
         }
-        .cta {
-            margin-top: 60px;
+        .feature:hover .feature-icon {
+            transform: scale(1.2) rotate(5deg);
         }
+        /* Button Pulse Animation */
         .btn {
             display: inline-block;
-            padding: 18px 45px;
+            padding: 16px 40px;
             background: white;
             color: #667eea;
             text-decoration: none;
@@ -94,11 +265,33 @@
             font-size: 1.1rem;
             margin: 10px;
             transition: all 0.3s;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.18);
+            position: relative;
+            overflow: hidden;
+        }
+        /* CTA Button Container - Center the buttons */
+        .cta {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+            transition: left 0.5s ease;
+        }
+        .btn:hover::before {
+            left: 100%;
         }
         .btn:hover {
-            transform: scale(1.05);
-            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+            transform: scale(1.05) translateY(-3px);
+            box-shadow: 0 12px 30px rgba(0,0,0,0.25);
         }
         .btn-secondary {
             background: transparent;
@@ -109,94 +302,665 @@
             background: white;
             color: #667eea;
         }
+        /* Stats Counter Animation */
         .stats {
             display: flex;
             justify-content: center;
             gap: 60px;
-            margin-top: 80px;
+            margin-top: 48px;
             flex-wrap: wrap;
         }
         .stat {
             text-align: center;
+            opacity: 0;
+            transform: scale(0.5);
+            transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .stat.visible {
+            opacity: 1;
+            transform: scale(1);
         }
         .stat-number {
-            font-size: 3rem;
+            font-size: 2.2rem;
             font-weight: 700;
+            display: inline-block;
         }
         .stat-label {
             font-size: 1rem;
             opacity: 0.8;
         }
-        footer {
-            text-align: center;
-            padding: 40px 20px;
-            color: white;
-            opacity: 0.7;
-            font-size: 0.9rem;
+        /* Navbar Animation */
+        nav {
+            background: rgba(20, 22, 34, 0.98); /* restore dark navbar */
+            padding: 0.5rem 0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            animation: slideDown 0.8s ease-out;
+        }
+        @keyframes slideDown {
+            from { transform: translateY(-100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .nav-link {
+            position: relative;
+            transition: color 0.3s ease;
+            color: #fff !important; /* make navbar links white */
+        }
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: var(--accent);
+            transition: width 0.3s ease;
+        }
+        .nav-link:hover::after {
+            width: 100%;
+        }
+        /* Banner Animation */
+        #free-banner {
+            animation: bannerWave 3s ease-in-out infinite;
+        }
+        @keyframes bannerWave {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+        /* Showcase Cards Animation */
+        .showcase-card {
+            opacity: 0;
+            transform: translateX(-50px);
+            transition: all 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .showcase-card.visible {
+            opacity: 1;
+            transform: translateX(0);
+        }
+        .showcase-card:hover {
+            transform: translateY(-8px) scale(1.02);
+        }
+        /* Scroll Indicator */
+        .scroll-indicator {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            animation: bounce 2s infinite;
+        }
+        .scroll-indicator span {
+            display: block;
+            width: 24px;
+            height: 24px;
+            border-bottom: 3px solid white;
+            border-right: 3px solid white;
+            transform: rotate(45deg);
+            margin: 0 auto;
+        }
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateX(-50%) translateY(0); }
+            40% { transform: translateX(-50%) translateY(-10px); }
+            60% { transform: translateX(-50%) translateY(-5px); }
+        }
+        /* Footer Link Hover */
+        .footer-links a {
+            color: #e0e7ff;
+            margin: 0 10px;
+            text-decoration: none;
+            position: relative;
+            transition: color 0.3s ease;
+        }
+        .footer-links a::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 0;
+            height: 1px;
+            background: white;
+            transition: width 0.3s ease;
+        }
+        .footer-links a:hover::after {
+            width: 100%;
+        }
+        .footer-links a:hover {
+            text-decoration: none;
+        }
+        .social-icons a {
+            color: #fff;
+            margin: 0 8px;
+            font-size: 1.3rem;
+            transition: transform 0.3s ease;
+        }
+        .social-icons a:hover {
+            transform: scale(1.3);
+        }
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero h1 { font-size: 2rem; }
+            .matinex-tagline { font-size: 1.4rem; }
+            .feature { width: 100%; min-height: auto; }
+            .stats { gap: 30px; }
+        }
+        
+        /* Social Links Row - At Bottom */
+        .social-links-row {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            margin-top: 25px;
+            margin-bottom: 0;
+        }
+        
+        .social-links {
+            display: flex;
+            gap: 18px;
+            background: rgba(255,255,255,0.1);
+            padding: 12px 30px;
+            border-radius: 40px;
+            box-shadow: 0 2px 15px rgba(20,40,80,0.15);
+        }
+        
+        .social-link {
+            width: 46px;
+            height: 46px;
+            background: linear-gradient(135deg, #1a1a2e 0%, #2d3a5c 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            text-decoration: none;
+            font-size: 1.3rem;
+            transition: all 0.3s ease;
+            border: 2px solid rgba(255,255,255,0.2);
+        }
+        
+        .social-link:hover {
+            transform: translateY(-4px) scale(1.1);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.4);
+            border-color: #FFD700;
+        }
+        
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            body {
+                background-size: 300% 300%;
+            }
+            .hero {
+                padding: 60px 15px 40px;
+                min-height: auto;
+            }
+            .hero h1 {
+                font-size: 1.8rem;
+            }
+            .matinex-tagline {
+                font-size: 1.2rem;
+            }
+            .hero p {
+                font-size: 0.95rem;
+                padding: 0 10px;
+            }
+            .hero-buttons {
+                flex-direction: column;
+                gap: 12px;
+                align-items: center;
+            }
+            .hero .btn {
+                width: 100%;
+                max-width: 280px;
+                padding: 12px 20px;
+                font-size: 1rem;
+            }
+            .navbar {
+                padding: 10px 0;
+            }
+            .navbar-brand img {
+                height: 50px !important;
+            }
+            .navbar-brand span {
+                font-size: 1.2rem !important;
+            }
+            .features-grid {
+                grid-template-columns: 1fr;
+                padding: 20px 15px;
+            }
+            .feature-card {
+                padding: 20px 15px;
+            }
+            .feature-card h3 {
+                font-size: 1.1rem;
+            }
+            .feature-card p {
+                font-size: 0.9rem;
+            }
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 15px;
+            }
+            .stat-item {
+                padding: 15px 10px;
+            }
+            .stat-number {
+                font-size: 1.5rem;
+            }
+            .stat-label {
+                font-size: 0.8rem;
+            }
+            .testimonials-grid {
+                grid-template-columns: 1fr;
+                padding: 20px 15px;
+            }
+            .testimonial-card {
+                padding: 20px 15px;
+            }
+            .cta-section {
+                padding: 40px 20px;
+            }
+            .cta-section h2 {
+                font-size: 1.5rem;
+            }
+            .cta-section p {
+                font-size: 0.95rem;
+            }
+            .footer {
+                padding: 30px 15px 20px;
+            }
+            .footer-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            .footer-section h4 {
+                font-size: 1rem;
+            }
+            .footer-section ul li {
+                font-size: 0.85rem;
+            }
+            .social-links {
+                gap: 12px;
+            }
+            .social-link {
+                width: 36px;
+                height: 36px;
+                font-size: 1rem;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .hero h1 {
+                font-size: 1.5rem;
+            }
+            .matinex-tagline {
+                font-size: 1rem;
+            }
+            .stats-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+            .stat-number {
+                font-size: 1.3rem;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="hero">
-        <h1>HRCore</h1>
-        <p class="subtitle">Comprehensive HR Management System for Modern Enterprises. Streamline your HR operations with powerful tools for employee management, attendance, leave, payroll, and more.</p>
-        
-        <div class="stats">
-            <div class="stat">
-                <div class="stat-number">1000+</div>
-                <div class="stat-label">Active Users</div>
-            </div>
-            <div class="stat">
-                <div class="stat-number">50+</div>
-                <div class="stat-label">Companies</div>
-            </div>
-            <div class="stat">
-                <div class="stat-number">99.9%</div>
-                <div class="stat-label">Uptime</div>
-            </div>
+    <!-- Animated Background -->
+    <div class="animated-bg"></div>
+    <!-- Smart Banner Removed -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+      <div class="container">
+        <a class="navbar-brand d-flex align-items-center" href="/">
+          <img src="/static/img/branding/logomat.png" alt="MatinexHR Logo" style="height:60px;width:auto;display:inline;vertical-align:middle;" />
+          <span style="font-weight:700;font-size:1.5rem;margin-left:10px;vertical-align:middle;">
+            <span style="color:#6fa8dc;">Matinex</span><span style="color:#42caff;">HR</span>
+          </span>
+        </a>
+        <div class="d-none d-lg-flex align-items-center ms-auto" style="gap:12px;">
+          <a href="/auth/register-company" class="btn btn-primary" style="padding:10px 14px;font-size:0.9rem;min-width:100px;white-space:nowrap;border-radius:50px;">Get Started Free</a>
+          <a href="/policies" class="btn btn-outline-light" style="padding:10px 14px;font-size:0.9rem;min-width:90px;white-space:nowrap;border-radius:50px;">Learn More</a>
         </div>
-        
-        <div class="features">
-            <div class="feature">
-                <div class="feature-icon">👥</div>
-                <h3>Employee Management</h3>
-                <p>Complete employee lifecycle management from onboarding to offboarding. Track profiles, documents, and performance.</p>
-            </div>
-            <div class="feature">
-                <div class="feature-icon">⏰</div>
-                <h3>Attendance Tracking</h3>
-                <p>Real-time attendance monitoring with advanced reporting, clock-in/out features, and overtime calculations.</p>
-            </div>
-            <div class="feature">
-                <div class="feature-icon">🏖️</div>
-                <h3>Leave Management</h3>
-                <p>Streamlined leave requests and approval workflows. Manage vacation, sick leave, and other time-off types.</p>
-            </div>
-            <div class="feature">
-                <div class="feature-icon">💰</div>
-                <h3>Payroll Processing</h3>
-                <p>Automated payroll calculations and processing. Handle salaries, bonuses, deductions, and compliance.</p>
-            </div>
-            <div class="feature">
-                <div class="feature-icon">📊</div>
-                <h3>Analytics & Reports</h3>
-                <p>Powerful analytics and reporting tools. Get insights into workforce metrics, attendance patterns, and more.</p>
-            </div>
-            <div class="feature">
-                <div class="feature-icon">🔒</div>
-                <h3>Role-Based Access</h3>
-                <p>Secure role-based access control. Manage permissions for admins, HR, managers, and employees.</p>
-            </div>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <ul class="navbar-nav ms-auto">
+            <li class="nav-item"><a class="nav-link" href="#features">Features</a></li>
+              <li class="nav-item"><a class="nav-link" href="#modules">Modules</a></li>
+              <li class="nav-item dropdown-benefits" style="position:relative;">
+                <a class="nav-link" href="#benefits" id="benefits-link">Benefits</a>
+                <div id="benefits-dropdown" style="display:none;position:absolute;top:110%;left:0;background:#222;color:#fff;padding:10px 0 6px 0;border-radius:8px;box-shadow:0 2px 12px rgba(0,0,0,0.18);min-width:210px;z-index:1002;">
+                  <div style="padding:8px 22px;cursor:pointer;white-space:nowrap;">Totally Free for Now</div>
+                  <div style="padding:8px 22px;cursor:pointer;white-space:nowrap;">AI Predictions</div>
+                </div>
+              </li>
+            <li class="nav-item"><a class="nav-link" href="#pricing">Pricing</a></li>
+            <li class="nav-item"><a class="nav-link" href="#about">About</a></li>
+            <li class="nav-item"><a class="nav-link" href="#contact">Contact</a></li>
+            <li class="nav-item"><a class="nav-link" href="/policies" style="color: #ffd700 !important;"><i class="fas fa-gavel me-1"></i>Legal</a></li>
+            <li class="nav-item"><a class="nav-link" href="/auth/login">Login</a></li>
+            <li class="nav-item"><a class="nav-link cta" href="/auth/register-company">Register Company</a></li>
+          </ul>
         </div>
-        
-        <div class="cta">
-            <a href="/auth/login" class="btn">Login</a>
-            <a href="/auth/register-company" class="btn btn-secondary">Get Started</a>
+      </div>
+    </nav>
+    <main>
+      <section class="hero" aria-label="MatinexHR Hero" style="background: linear-gradient(135deg, #dbeafe 0%, #e0e7ff 100%);">
+          <img src="/static/img/branding/logomat.png" alt="MatinexHR Logo" class="hero-logo" style="height:140px;width:auto;display:block;margin:0 auto 18px auto;filter:drop-shadow(0 4px 18px rgba(76,110,245,0.13));" />
+          <div class="matinex-tagline">
+            <span class="teams" style="color:#18405a;">Smart Teams</span> <span class="business" style="color:#2176a5;">Better Business</span>
+          </div>
+          <h1 style="font-size:2.2rem;font-weight:600;margin-bottom:18px;color:#6fa8dc;">
+            <span style="color:#a8d4f0;">Smart HR.</span> <span style="color:#9ecceb;">Stronger Teams.</span>
+          </h1>
+          <p class="subtitle">MatinexHR is your all-in-one HR management solution to simplify workforce operations, boost productivity, and drive organizational success.</p>
+          <div class="stats" style="margin-top:32px;margin-bottom:32px;">
+            <div class="stat delay-1" style="position:relative;min-width:160px;min-height:120px;">
+              <svg class="stat-circle" width="120" height="120" style="position:absolute;top:0;left:50%;transform:translateX(-50%);z-index:1;">
+                <circle cx="60" cy="60" r="54" fill="#e0e7ff" stroke="#4f46e5" stroke-width="4" />
+              </svg>
+              <div class="stat-number" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:2.2rem;font-weight:700;z-index:2;width:120px;text-align:center;">248</div>
+              <div class="stat-label" style="margin-top:110px;">Total Employees</div>
+            </div>
+            <div class="stat delay-2" style="position:relative;min-width:160px;min-height:120px;">
+              <svg class="stat-circle" width="120" height="120" style="position:absolute;top:0;left:50%;transform:translateX(-50%);z-index:1;">
+                <circle cx="60" cy="60" r="54" fill="#e0f7fa" stroke="#06b6d4" stroke-width="4" />
+              </svg>
+              <div class="stat-number" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:2.2rem;font-weight:700;z-index:2;width:120px;text-align:center;">196</div>
+              <div class="stat-label" style="margin-top:110px;">Present Today</div>
+            </div>
+            <div class="stat delay-3" style="position:relative;min-width:160px;min-height:120px;">
+              <svg class="stat-circle" width="120" height="120" style="position:absolute;top:0;left:50%;transform:translateX(-50%);z-index:1;">
+                <circle cx="60" cy="60" r="54" fill="#f3e8ff" stroke="#7c3aed" stroke-width="4" />
+              </svg>
+              <div class="stat-number" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:2.2rem;font-weight:700;z-index:2;width:120px;text-align:center;">$45,780</div>
+              <div class="stat-label" style="margin-top:110px;">Payroll This Month</div>
+            </div>
+          </div>
+          <div class="dashboard-preview fade-in-up delay-3" aria-label="Dashboard Preview" style="margin-bottom: 40px;">
+            <img src="/static/img/dashboard-preview-new.svg" alt="MatinexHR dashboard preview" style="width:100%;height:auto;display:block;border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,0.15);" loading="lazy">
+          </div>
+        <div class="cta fade-in-up delay-4">
+        <!-- Buttons moved to navbar -->
+        <!-- Scroll Indicator -->
+        <div class="scroll-indicator">
+          <span></span>
         </div>
-    </div>
-    
-    <footer>
-        <p>&copy; 2026 HRCore. All rights reserved.</p>
+      </section>
+      <section id="features" class="features" aria-label="Key Features" style="margin-top: 40px;">
+        <div class="features-row">
+          <div class="feature delay-1">
+            <div class="feature-icon" aria-hidden="true">👥</div>
+            <h3>Employee Management</h3>
+            <p>Centralize employee information and manage your workforce efficiently.</p>
+          </div>
+          <div class="feature delay-2">
+            <div class="feature-icon" aria-hidden="true">⏰</div>
+            <h3>Attendance Tracking</h3>
+            <p>Real-time attendance monitoring with advanced reporting and analytics.</p>
+          </div>
+          <div class="feature delay-3">
+            <div class="feature-icon" aria-hidden="true">🏖️</div>
+            <h3>Leave Management</h3>
+            <p>Streamline leave requests, approvals and balance tracking seamlessly.</p>
+          </div>
+          <div class="feature delay-4">
+            <div class="feature-icon" aria-hidden="true">💰</div>
+            <h3>Payroll Processing</h3>
+            <p>Automated payroll processing with accuracy and compliance.</p>
+          </div>
+          <div class="feature">
+            <div class="feature-icon" aria-hidden="true">📊</div>
+            <h3>Analytics & Reports</h3>
+            <p>Data-driven insights and custom reports for better decision making.</p>
+          </div>
+          <div class="feature">
+            <div class="feature-icon" aria-hidden="true">🤖</div>
+            <h3>AI Predictions</h3>
+            <p>Leverage AI to predict trends and optimize your workforce.</p>
+          </div>
+        </div>
+      </section>
+
+        <!-- Docs Showcase Section -->
+        <section id="docs-showcase" style="margin: 60px auto 0 auto; max-width: 1100px;">
+          <h2 style="color:#fff; text-align:center; font-size:2rem; font-weight:700; margin-bottom:32px;">See It In Action</h2>
+          <div style="display: flex; flex-wrap: wrap; gap: 32px; justify-content: center;">
+            <div class="showcase-card delay-1" style="background:rgba(255,255,255,0.13); border-radius:18px; box-shadow:0 4px 24px rgba(0,0,0,0.13); width:320px; overflow:hidden;">
+              <img src="/static/docs/image-1777014194544.png" alt="AI Predictions" style="width:100%; height:180px; object-fit:cover; border-bottom:2px solid #06b6d4;">
+              <div style="padding:18px 16px 14px 16px; color:#fff; text-align:center;">
+                <h3 style="font-size:1.15rem; font-weight:700; margin-bottom:8px;">AI Predictions</h3>
+                <div style="font-size:0.97rem; opacity:0.92;">Unlock workforce insights and trends with advanced AI-powered analytics.</div>
+              </div>
+            </div>
+            <div class="showcase-card delay-2" style="background:rgba(255,255,255,0.13); border-radius:18px; box-shadow:0 4px 24px rgba(0,0,0,0.13); width:320px; overflow:hidden;">
+              <img src="/static/docs/image-1777013800528.png" alt="Gamification" style="width:100%; height:180px; object-fit:cover; border-bottom:2px solid #7c3aed;">
+              <div style="padding:18px 16px 14px 16px; color:#fff; text-align:center;">
+                <h3 style="font-size:1.15rem; font-weight:700; margin-bottom:8px;">Gamification</h3>
+                <div style="font-size:0.97rem; opacity:0.92;">Boost engagement with leaderboards, achievements, and rewards.</div>
+              </div>
+            </div>
+            <div class="showcase-card delay-3" style="background:rgba(255,255,255,0.13); border-radius:18px; box-shadow:0 4px 24px rgba(0,0,0,0.13); width:320px; overflow:hidden;">
+              <img src="/static/docs/image-1777013543787.png" alt="Smart Analytics" style="width:100%; height:180px; object-fit:cover; border-bottom:2px solid #4f46e5;">
+              <div style="padding:18px 16px 14px 16px; color:#fff; text-align:center;">
+                <h3 style="font-size:1.15rem; font-weight:700; margin-bottom:8px;">Smart Analytics</h3>
+                <div style="font-size:0.97rem; opacity:0.92;">Visualize key HR metrics and make data-driven decisions easily.</div>
+              </div>
+            </div>
+          </div>
+        </section>
+      <section id="benefits" style="margin-top:48px;text-align:center;">
+        <h2 style="color:#fff;font-size:2rem;font-weight:600;margin-bottom:24px;">Built for security. Designed for scale.</h2>
+        <div class="features" style="margin-top:0; display: flex; justify-content: center; gap: 24px; flex-wrap: wrap;">
+          <div class="feature delay-1" style="flex: 1 1 auto; max-width: 250px; background: linear-gradient(145deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05)); border-radius: 16px; padding: 28px 20px; border: 1px solid rgba(255,255,255,0.15); box-shadow: 0 8px 32px rgba(0,0,0,0.1); transition: all 0.3s ease;"><div class="feature-icon" aria-hidden="true" style="font-size: 2.2rem; margin-bottom: 12px; display: block;">🔒</div><h3 style="color:#fff;font-weight:600;margin-bottom:10px;font-size:1.1rem;">Bank-level Security</h3><p style="color:#e0e7ff;font-size:0.95rem;line-height:1.5;">Your data is encrypted and secured at all times.</p></div>
+          <div class="feature delay-2" style="flex: 1 1 auto; max-width: 250px; background: linear-gradient(145deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05)); border-radius: 16px; padding: 28px 20px; border: 1px solid rgba(255,255,255,0.15); box-shadow: 0 8px 32px rgba(0,0,0,0.1); transition: all 0.3s ease;"><div class="feature-icon" aria-hidden="true" style="font-size: 2.2rem; margin-bottom: 12px; display: block;">☁️</div><h3 style="color:#fff;font-weight:600;margin-bottom:10px;font-size:1.1rem;">Cloud Reliability</h3><p style="color:#e0e7ff;font-size:0.95rem;line-height:1.5;">99.9% uptime with secure cloud infrastructure.</p></div>
+          <div class="feature delay-3" style="flex: 1 1 auto; max-width: 250px; background: linear-gradient(145deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05)); border-radius: 16px; padding: 28px 20px; border: 1px solid rgba(255,255,255,0.15); box-shadow: 0 8px 32px rgba(0,0,0,0.1); transition: all 0.3s ease;"><div class="feature-icon" aria-hidden="true" style="font-size: 2.2rem; margin-bottom: 12px; display: block;">🛡️</div><h3 style="color:#fff;font-weight:600;margin-bottom:10px;font-size:1.1rem;">Role Based Access</h3><p style="color:#e0e7ff;font-size:0.95rem;line-height:1.5;">Granular permissions and role-based access control.</p></div>
+          <div class="feature delay-4" style="flex: 1 1 auto; max-width: 250px; background: linear-gradient(145deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05)); border-radius: 16px; padding: 28px 20px; border: 1px solid rgba(255,255,255,0.15); box-shadow: 0 8px 32px rgba(0,0,0,0.1); transition: all 0.3s ease;"><div class="feature-icon" aria-hidden="true" style="font-size: 2.2rem; margin-bottom: 12px; display: block;">💾</div><h3 style="color:#fff;font-weight:600;margin-bottom:10px;font-size:1.1rem;">Regular Backups</h3><p style="color:#e0e7ff;font-size:0.95rem;line-height:1.5;">Automatic backups ensure your data is always safe.</p></div>
+        </div>
+      </section>
+      <section id="contact" style="margin-top:56px;text-align:center;">
+        <h2 style="color:#fff;font-size:2rem;font-weight:600;margin-bottom:18px;">Ready to transform your HR operations?</h2>
+        <p style="color:#e0e7ff;max-width:600px;margin:0 auto 24px auto;">Join thousands of companies that trust MatinexHR. Get started for free or contact our team for a personalized demo.</p>
+        <div class="cta fade-in-up delay-2" style="display:flex;justify-content:center;gap:16px;flex-wrap:wrap;">
+          <a href="/auth/register-company" class="btn" style="background:linear-gradient(135deg, #4f46e5, #7c3aed);color:#fff;padding:10px 18px;border-radius:50px;font-weight:600;font-size:0.95rem;box-shadow:0 4px 15px rgba(79,70,229,0.4);transition:all 0.3s ease;">Get Started Free</a>
+          <a href="#contact" class="btn" style="background:transparent;color:#fff;border:2px solid #fff;padding:10px 18px;border-radius:50px;font-weight:600;font-size:0.95rem;transition:all 0.3s ease;">Contact Us</a>
+        </div>
+      </section>
+    </main>
+    <footer class="fade-in-up delay-3">
+      <div class="footer-links">
+          <div class="footer-links" style="display: flex; justify-content: center; align-items: center; gap: 12px; margin-bottom: 8px;">
+            <a href="#features">Features</a>|
+            <a href="#modules">Modules</a>|
+            <a href="#benefits">Benefits</a>|
+            <a href="#pricing">Pricing</a>|
+            <a href="#about">About</a>|
+            <a href="#contact">Contact</a>
+          </div>
+      </div>
+      <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; margin-top: 16px; margin-bottom: 8px;">
+        <!-- Social Links from Login Page -->
+        <div class="social-links-row">
+          <div class="social-links">
+            <a href="#" class="social-link" title="YouTube">
+              <i class="fab fa-youtube"></i>
+            </a>
+            <a href="#" class="social-link" title="LinkedIn">
+              <i class="fab fa-linkedin-in"></i>
+            </a>
+            <a href="#" class="social-link" title="Twitter">
+              <i class="fab fa-twitter"></i>
+            </a>
+            <a href="#" class="social-link" title="Facebook">
+              <i class="fab fa-facebook-f"></i>
+            </a>
+            <a href="#" class="social-link" title="Instagram">
+              <i class="fab fa-instagram"></i>
+            </a>
+          </div>
+        </div>
+        <div style="color: #e0e7ff; font-size: 0.85rem; margin-bottom: 6px;">Terms and conditions apply.</div>
+        <div style="color: #e0e7ff;">&copy; 2026 MatinexHR. All rights reserved.</div>
+      </div>
     </footer>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Animation JavaScript -->
+    <script>
+        // Intersection Observer for scroll animations
+        const observerOptions = {
+            root: null,
+            rootMargin: '0px',
+            threshold: 0.1
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, observerOptions);
+
+        // Observe all animated elements
+        document.addEventListener('DOMContentLoaded', () => {
+            // Feature cards
+            document.querySelectorAll('.feature').forEach(el => observer.observe(el));
+            
+            // Stats
+            document.querySelectorAll('.stat').forEach(el => observer.observe(el));
+            
+            // Fade in elements
+            document.querySelectorAll('.fade-in-up').forEach(el => observer.observe(el));
+            
+            // Showcase cards
+            document.querySelectorAll('.showcase-card').forEach(el => observer.observe(el));
+        });
+
+        // Stats counter animation
+        function animateCounter(element, target, duration = 2000) {
+            let start = 0;
+            const increment = target / (duration / 16);
+            const timer = setInterval(() => {
+                start += increment;
+                if (start >= target) {
+                    element.textContent = target;
+                    clearInterval(timer);
+                } else {
+                    element.textContent = Math.floor(start);
+                }
+            }, 16);
+        }
+
+        // Trigger counter when stats are visible
+        const statsObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const statNumbers = entry.target.querySelectorAll('.stat-number');
+                    statNumbers.forEach(num => {
+                        const text = num.textContent;
+                        if (text.startsWith('$')) {
+                            // Dollar amount - just animate the number
+                            const value = parseInt(text.replace(/[^0-9]/g, ''));
+                            animateCounter(num, value);
+                        } else if (!isNaN(text)) {
+                            // Plain number
+                            animateCounter(num, parseInt(text));
+                        }
+                    });
+                }
+            });
+        }, { threshold: 0.5 });
+
+        document.querySelectorAll('.stats').forEach(el => statsObserver.observe(el));
+    </script>
+
+      <!-- Dropdown/Tooltip container for nav buttons -->
+      <div id="nav-dropdown" style="display:none;position:absolute;z-index:9999;background:#222;color:#fff;padding:10px 18px;border-radius:8px;box-shadow:0 2px 12px rgba(0,0,0,0.18);font-size:1rem;pointer-events:none;transition:opacity 0.2s;opacity:0;">
+        Coming Soon
+      </div>
+    <!-- Modals for info popups -->
+    <div class="modal fade" id="infoModal" tabindex="-1" aria-labelledby="infoModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="infoModalLabel"></h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body" id="infoModalBody"></div>
+        </div>
+      </div>
+    </div>
+    <script>
+    // Helper to show modal with title and body
+    function showInfoModal(title, body) {
+      document.getElementById('infoModalLabel').innerHTML = title;
+      document.getElementById('infoModalBody').innerHTML = body;
+      var modal = new bootstrap.Modal(document.getElementById('infoModal'));
+      modal.show();
+    }
+    // Navbar and CTA button handlers
+    window.addEventListener('DOMContentLoaded', function() {
+      // Contact & Contact Us - use better selector
+      document.querySelectorAll('a[href="#contact"]').forEach(function(el) {
+        el.addEventListener('click', function(e) {
+          e.preventDefault();
+          showInfoModal('Contact', '<a href="mailto:tinashemataruse226@gmail.com" style="font-size:1.1rem;">tinashemataruse226@gmail.com</a>');
+        });
+      });
+      // Also handle Contact Us button in CTA section
+      document.querySelectorAll('.cta .btn-secondary').forEach(function(el) {
+        if (el.textContent.toLowerCase().includes('contact')) {
+          el.addEventListener('click', function(e) {
+            e.preventDefault();
+            showInfoModal('Contact', '<a href="mailto:tinashemataruse226@gmail.com" style="font-size:1.1rem;">tinashemataruse226@gmail.com</a>');
+          });
+        }
+      });
+      // Benefits - navbar and footer
+      document.querySelectorAll('a[href="#benefits"], #benefits-link').forEach(function(el) {
+        el.addEventListener('click', function(e) {
+          e.preventDefault();
+          showInfoModal('Benefits', '<ul style="text-align:left; font-size:1rem; line-height:1.8;">'+
+            '<li style="margin-bottom:8px;">✓ Totally free, no credit card needed</li>'+
+            '<li style="margin-bottom:8px;">✓ ML Predictions for your business</li>'+
+            '<li style="margin-bottom:8px;">✓ All in one app</li>'+
+            '<li>✓ All users of one company at the same place</li>'+
+          '</ul>');
+        });
+      });
+      // Pricing - navbar and footer
+      document.querySelectorAll('a[href="#pricing"]').forEach(function(el) {
+        el.addEventListener('click', function(e) {
+          e.preventDefault();
+          showInfoModal('Pricing', '<div style="text-align:center; font-size:1.2rem; color:#28a745;"><strong>Totally Free</strong></div><p style="margin-top:10px;">No hidden fees. No credit card required.</p>');
+        });
+      });
+      // About - navbar and footer
+      document.querySelectorAll('a[href="#about"]').forEach(function(el) {
+        el.addEventListener('click', function(e) {
+          e.preventDefault();
+          showInfoModal('About', 'Comprehensive HR Management System for Modern Enterprises. Streamline your HR operations with powerful tools for employee management, attendance, leave, payroll, and more.');
+        });
+      });
+      // Modules scrolls to Features section - navbar and footer
+      document.querySelectorAll('a[href="#modules"]').forEach(function(el) {
+        el.addEventListener('click', function(e) {
+          e.preventDefault();
+          // Try to find features section
+          var features = document.getElementById('features');
+          if (features) {
+            features.scrollIntoView({behavior:'smooth'});
+          } else {
+            // Scroll to top if no features section
+            window.scrollTo({top:0, behavior:'smooth'});
+          }
+        });
+      });
+      // Change only navbar 'Get Started' to 'Register Company'
+      document.querySelectorAll('a.nav-link').forEach(function(el) {
+        if (el.textContent.trim() === 'Get Started') {
+          el.textContent = 'Register Company';
+        }
+      });
+    });
+    </script>
 </body>
 </html>

@@ -52,7 +52,7 @@
         </div>
       </div>
       <div class="quick-actions mt-3">
-        <a href="#" class="action-btn action-purple" onclick="alert('Payment portal coming soon!')">💳 Manage Billing</a>
+        <a href="{{ url_for('dashboard.billing') }}" class="action-btn action-purple">💳 Manage Billing</a>
         <a href="#" class="action-btn action-orange" onclick="alert('Upgrade options coming soon!')">⬆️ Upgrade Plan</a>
       </div>
     </div>
@@ -65,7 +65,7 @@
     <a href="{{ url_for('employees.add_employee') }}" class="action-btn action-blue">➕ Add Employee</a>
     <a href="{{ url_for('admin.users') }}" class="action-btn action-green">👥 Manage Users</a>
     <a href="{{ url_for('admin.departments') }}" class="action-btn action-cyan">🏢 Manage Departments</a>
-    <a href="{{ url_for('admin.settings') }}" class="action-btn action-dark">⚙️ System Settings</a>
+    <a href="{{ url_for('admin.system_settings') }}" class="action-btn action-dark">⚙️ System Settings</a>
   </div>
 </div>
 

@@ -22,16 +22,62 @@
                                 <i class="fas fa-palette"></i> Theme & Branding
                             </legend>
                             
+                            <!-- Company Logo Upload -->
+                            <div class="row mb-4">
+                                <div class="col-md-12">
+                                    <label for="company_logo_url" class="form-label">Company Logo</label>
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" 
+                                               id="company_logo_url" name="company_logo_url"
+                                               value="{{ settings.get('company_logo_url', '') }}"
+                                               placeholder="Enter logo URL (e.g., https://example.com/logo.png)">
+                                        <button type="button" class="btn btn-outline-secondary" onclick="testLogoUrl()">
+                                            Test URL
+                                        </button>
+                                    </div>
+                                    <small class="text-muted">Paste a direct URL to your company logo (PNG, JPG, SVG). Recommended size: 200x60px.</small>
+                                    
+                                    {% if settings.get('company_logo_url') %}
+                                    <div class="mt-2 p-3 border rounded bg-light text-center">
+                                        <p class="small text-muted mb-2">Current Logo Preview:</p>
+                                        <img src="{{ settings.get('company_logo_url') }}" alt="Current Logo" style="max-height: 60px; max-width: 200px;" onerror="this.style.display='none';this.nextElementSibling.style.display='block';">
+                                        <p class="small text-danger" style="display:none;">Logo URL not accessible</p>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <!-- Company Branding Name -->
+                            <div class="row mb-4">
+                                <div class="col-md-12">
+                                    <label for="company_branding" class="form-label">Company Branding Name</label>
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" 
+                                               id="company_branding" name="company_branding"
+                                               value="{{ settings.get('company_branding', 'MatinexHR') }}"
+                                               placeholder="Your Company Name"
+                                               maxlength="50">
+                                        <button type="button" class="btn btn-outline-secondary" onclick="document.getElementById('company_branding').value='MatinexHR';" title="Reset to default">
+                                            ↺
+                                        </button>
+                                    </div>
+                                    <small class="text-muted">This name appears in the sidebar and page titles</small>
+                                </div>
+                            </div>
+
                             <div class="row mb-4">
                                 <div class="col-md-6">
                                     <label for="theme_primary_color" class="form-label">Primary Color</label>
                                     <div class="input-group">
                                         <input type="color" class="form-control form-control-color" 
                                                id="theme_primary_color" name="theme_primary_color"
-                                               value="{{ settings.get('theme_primary_color', '#2c3e50') }}">
+                                               value="{{ settings.get('theme_primary_color', '#1a2b4a') }}">
                                         <span class="input-group-text">
-                                            {{ settings.get('theme_primary_color', '#2c3e50') }}
+                                            {{ settings.get('theme_primary_color', '#1a2b4a') }}
                                         </span>
+                                        <button type="button" class="btn btn-outline-secondary" onclick="document.getElementById('theme_primary_color').value='#1a2b4a';document.getElementById('theme_primary_color').nextElementSibling.textContent='#1a2b4a';" title="Reset to default">
+                                            ↺
+                                        </button>
                                     </div>
                                 </div>
 
@@ -44,6 +90,9 @@
                                         <span class="input-group-text">
                                             {{ settings.get('theme_secondary_color', '#3498db') }}
                                         </span>
+                                        <button type="button" class="btn btn-outline-secondary" onclick="document.getElementById('theme_secondary_color').value='#3498db';document.getElementById('theme_secondary_color').nextElementSibling.textContent='#3498db';" title="Reset to default">
+                                            ↺
+                                        </button>
                                     </div>
                                 </div>
                             </div>
@@ -58,21 +107,29 @@
                                         <span class="input-group-text">
                                             {{ settings.get('theme_background_color', '#ecf0f1') }}
                                         </span>
+                                        <button type="button" class="btn btn-outline-secondary" onclick="document.getElementById('theme_background_color').value='#ecf0f1';document.getElementById('theme_background_color').nextElementSibling.textContent='#ecf0f1';" title="Reset to default">
+                                            ↺
+                                        </button>
                                     </div>
                                 </div>
 
                                 <div class="col-md-6">
                                     <label for="payroll_currency" class="form-label">Payroll Currency</label>
-                                    <input type="text" class="form-control" id="payroll_currency" 
-                                           name="payroll_currency" maxlength="10"
-                                           value="{{ settings.get('payroll_currency', 'USD') }}"
-                                           placeholder="USD, GBP, EUR, ZWL, etc.">
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" id="payroll_currency" 
+                                               name="payroll_currency" maxlength="10"
+                                               value="{{ settings.get('payroll_currency', 'USD') }}"
+                                               placeholder="USD, GBP, EUR, ZWL, etc.">
+                                        <button type="button" class="btn btn-outline-secondary" onclick="document.getElementById('payroll_currency').value='USD';" title="Reset to default">
+                                            ↺
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
 
                             <!-- Theme Preview -->
-                            <div id="themePreview" class="alert alert-light border" style="border-color: {{ settings.get('theme_primary_color', '#2c3e50') }} !important;">
-                                <h6 id="previewTitle" style="color: {{ settings.get('theme_primary_color', '#2c3e50') }};">
+                            <div id="themePreview" class="alert alert-light border" style="border-color: {{ settings.get('theme_primary_color', '#1a2b4a') }} !important;">
+                                <h6 id="previewTitle" style="color: {{ settings.get('theme_primary_color', '#1a2b4a') }};">
                                     🎨 Theme Preview
                                 </h6>
                                 <p id="previewText" style="background-color: {{ settings.get('theme_background_color', '#ecf0f1') }}; padding: 10px; border-radius: 4px;">
@@ -80,6 +137,9 @@
                                 </p>
                                 <button type="button" id="applyPreviewBtn" class="btn" style="background-color: {{ settings.get('theme_secondary_color', '#3498db') }}; color: white; border: none;">
                                     Apply Colors
+                                </button>
+                                <button type="button" class="btn btn-outline-danger ms-2" onclick="resetAllThemeSettings()">
+                                    🔄 Reset All to Defaults
                                 </button>
                             </div>
                         </fieldset>
@@ -236,6 +296,32 @@
             alert('Work hours must be between 1 and 24');
         }
     });
+
+    // Reset all theme settings to defaults
+    function resetAllThemeSettings() {
+        if (!confirm('Are you sure you want to reset all theme settings to defaults?')) {
+            return;
+        }
+        
+        // Reset form values
+        document.getElementById('theme_primary_color').value = '#1a2b4a';
+        document.getElementById('theme_primary_color').nextElementSibling.textContent = '#1A2B4A';
+        
+        document.getElementById('theme_secondary_color').value = '#3498db';
+        document.getElementById('theme_secondary_color').nextElementSibling.textContent = '#3498DB';
+        
+        document.getElementById('theme_background_color').value = '#ecf0f1';
+        document.getElementById('theme_background_color').nextElementSibling.textContent = '#ECF0F1';
+        
+        document.getElementById('payroll_currency').value = 'USD';
+        document.getElementById('company_branding').value = 'MatinexHR';
+        
+        // Update preview
+        updateThemePreview();
+        
+        // Show feedback
+        alert('Theme settings reset to defaults! Click "Save Settings" to apply.');
+    }
 </script>
 
 <style>

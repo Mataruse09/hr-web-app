@@ -4,16 +4,23 @@ from flask import (
 )
 import bcrypt
 import logging
-from datetime import date
+from datetime import date, datetime, timedelta
+from functools import wraps
 
 from models import user_model, company_model, employee_model
-from services.email_service import send_admin_registration_email
+from models.db import query, mutate
+from services.email_service import send_admin_registration_email, send_password_reset_email
 from services.activity_service import log_activity
 from services.settings_service import initialize_default_settings
 
 logger = logging.getLogger(__name__)
 
 auth_bp = Blueprint('auth', __name__)
+
+# Security: Track failed login attempts per IP
+failed_login_attempts = {}
+MAX_FAILED_ATTEMPTS = 5
+LOCKOUT_DURATION = 15  # minutes
 
 
 @auth_bp.route('/login', methods=['GET', 'POST'])
@@ -25,6 +32,26 @@ def login():
         company_name = (request.form.get('company') or '').strip()
         username = (request.form.get('username') or '').strip().lower()
         password = (request.form.get('password') or '').strip()
+        
+        # Get client IP for security tracking
+        client_ip = request.remote_addr
+        if request.headers.get('X-Forwarded-For'):
+            client_ip = request.headers.get('X-Forwarded-For').split(',')[0].strip()
+
+        # Check if IP is temporarily locked out due to too many failed attempts
+        if client_ip in failed_login_attempts:
+            attempts_data = failed_login_attempts[client_ip]
+            if attempts_data['count'] >= MAX_FAILED_ATTEMPTS:
+                # Check if lockout has expired
+                lockout_end = attempts_data.get('lockout_until')
+                if lockout_end and datetime.utcnow() < lockout_end:
+                    remaining = (lockout_end - datetime.utcnow()).seconds // 60
+                    flash(f'Too many failed login attempts. Please try again in {remaining} minutes.', 'danger')
+                    companies = company_model.all_active_companies()
+                    return render_template('login.html', companies=companies)
+                else:
+                    # Lockout expired, reset attempts
+                    del failed_login_attempts[client_ip]
 
         if not company_name or not username or not password:
             flash('Company, username, and password are required.', 'danger')
@@ -34,6 +61,18 @@ def login():
         company = company_model.get_by_name(company_name)
         if not company:
             flash('Company not found or inactive.', 'danger')
+            companies = company_model.all_active_companies()
+            return render_template('login.html', companies=companies)
+
+        # Check if company is blocked/inactive
+        if not company.get('is_active', True):
+            flash('Your company account has been suspended. Please contact support.', 'danger')
+            companies = company_model.all_active_companies()
+            return render_template('login.html', companies=companies)
+        
+        # Check for ban reason if exists
+        if company.get('ban_reason'):
+            flash(f'Access denied: {company.get("ban_reason")}. Please contact support.', 'danger')
             companies = company_model.all_active_companies()
             return render_template('login.html', companies=companies)
 
@@ -64,7 +103,36 @@ def login():
             return render_template('login.html', companies=companies)
         
         if not password_matches:
+            # Track failed login attempt for security
+            if client_ip not in failed_login_attempts:
+                failed_login_attempts[client_ip] = {'count': 0, 'lockout_until': None}
+            
+            failed_login_attempts[client_ip]['count'] += 1
+            
+            # If too many failed attempts, lock out the IP
+            if failed_login_attempts[client_ip]['count'] >= MAX_FAILED_ATTEMPTS:
+                failed_login_attempts[client_ip]['lockout_until'] = datetime.utcnow() + timedelta(minutes=LOCKOUT_DURATION)
+                logger.warning(f"IP {client_ip} locked out due to {failed_login_attempts[client_ip]['count']} failed login attempts")
+            
+            # Log the failed login attempt
+            if company:
+                log_activity(
+                    company['id'],
+                    user['id'] if user else None,
+                    f'Failed login attempt from IP {client_ip}',
+                    'Security',
+                    user['id'] if user else None
+                )
+            
             flash('Invalid credentials. Please try again.', 'danger')
+            companies = company_model.all_active_companies()
+            return render_template('login.html', companies=companies)
+
+        # Check if user has a linked employee and if they are active
+        from models import employee_model as em
+        employee = em.get_by_user_id(user['id'], company['id'])
+        if employee and employee.get('status') != 'Active':
+            flash('Your account has been deactivated. Please contact your administrator.', 'warning')
             companies = company_model.all_active_companies()
             return render_template('login.html', companies=companies)
 
@@ -106,6 +174,11 @@ def login():
         # Debug logging
         logger.info(f"User {user['username']} logged in with role: {session['role']}")
 
+        # Reset failed login attempts on successful login
+        if client_ip in failed_login_attempts:
+            del failed_login_attempts[client_ip]
+            logger.info(f"Reset failed login attempts for IP {client_ip}")
+
         user_model.update_last_login(user['id'])
         
         # ✅ LOG LOGIN ACTIVITY
@@ -124,6 +197,60 @@ def login():
     return render_template('login.html', companies=companies)
 
 
+@auth_bp.route('/forgot-password', methods=['GET', 'POST'])
+def forgot_password():
+    """Handle password reset request."""
+    if request.method == 'POST':
+        company_name = (request.form.get('company') or '').strip()
+        username = (request.form.get('username') or '').strip().lower()
+        email = (request.form.get('email') or '').strip().lower()
+        
+        if not company_name or not username:
+            flash('Company and username are required.', 'danger')
+            companies = company_model.all_active_companies()
+            return render_template('login.html', companies=companies, show_forgot=True)
+        
+        company = company_model.get_by_name(company_name)
+        if not company:
+            flash('Company not found.', 'danger')
+            companies = company_model.all_active_companies()
+            return render_template('login.html', companies=companies, show_forgot=True)
+        
+        user = user_model.get_by_username(username, company['id'])
+        if not user:
+            flash('If an account exists with that username, a reset link will be sent.', 'info')
+            return redirect(url_for('auth.login'))
+        
+        # Generate reset token
+        import secrets
+        reset_token = secrets.token_urlsafe(32)
+        from datetime import datetime, timedelta
+        expiry = datetime.utcnow() + timedelta(minutes=30)
+        
+        user_model.save_reset_token(user['id'], reset_token, expiry)
+        
+        # Build reset link
+        reset_link = f"{request.url_root.rstrip('/')}/auth/reset-password?token={reset_token}&company_id={company['id']}"
+        
+        # Send password reset email
+        try:
+            send_password_reset_email(
+                user['full_name'],
+                user['email'],
+                company['name'],
+                reset_link
+            )
+            flash('If an account exists, a password reset link has been sent to your email.', 'info')
+        except Exception as e:
+            logger.warning(f"Failed to send password reset email: {e}")
+            flash('If an account exists, a password reset link has been sent to your email.', 'info')
+        
+        return redirect(url_for('auth.login'))
+    
+    companies = company_model.all_active_companies()
+    return render_template('login.html', companies=companies, show_forgot=True)
+
+
 @auth_bp.route('/register-company', methods=['GET', 'POST'])
 def register_company():
     if request.method == 'POST':
@@ -138,9 +265,15 @@ def register_company():
         admin_password = (request.form.get('admin_password') or '').strip()
         admin_email = (request.form.get('admin_email') or '').strip().lower()
         admin_full_name = (request.form.get('admin_full_name') or '').strip()
+        terms_accepted = request.form.get('terms_accepted') == 'on'
 
         if not (company_name and admin_username and admin_password and admin_email and admin_full_name):
             flash('Company details and admin account fields are required.', 'danger')
+            return render_template('register_company.html')
+
+        # Check if terms are accepted
+        if not terms_accepted:
+            flash('You must agree to the Terms and Conditions, Privacy Policy, and Acceptable Use Policy to register.', 'warning')
             return render_template('register_company.html')
 
         existing_company = company_model.get_by_name(company_name)
@@ -150,7 +283,7 @@ def register_company():
 
         # ✅ CREATE COMPANY
         new_company_id = company_model.create_company(
-            company_name, industry, address, phone, email, website
+            company_name, industry, address, phone, email, website, terms_accepted
         )
 
         # ✅ CREATE ADMIN USER
@@ -266,9 +399,9 @@ def register_company():
             <html>
             <body style="font-family: Arial, sans-serif; color: #333;">
                 <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
-                    <h2 style="color: #2c3e50;">New Company Registered!</h2>
+                    <h2 style="color: #1a2b4a;">New Company Registered!</h2>
                     
-                    <p>A new company has registered on <strong>WorkZen HR</strong>.</p>
+                    <p>A new company has registered on <strong>MatinexHR</strong>.</p>
                     
                     <h3>Company Details:</h3>
                     <table style="width: 100%; border-collapse: collapse;">
@@ -294,7 +427,7 @@ def register_company():
                         </tr>
                     </table>
                     
-                    <p style="margin-top: 20px;">This is an automated notification from the WorkZen HR system.</p>
+                    <p style="margin-top: 20px;">This is an automated notification from the MatinexHR system.</p>
                 </div>
             </body>
             </html>

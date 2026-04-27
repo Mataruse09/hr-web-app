@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notifications - MatinexHR Admin</title>
+    {% include 'admin/settings.html' %}
+    <style>
+        .notification-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+        .notification-card:hover {
+            transform: translateX(5px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.12);
+        }
+        .notification-card.unread {
+            border-left: 4px solid #667eea;
+            background: #f8f9ff;
+        }
+        .notification-card.read {
+            border-left: 4px solid #dee2e6;
+            opacity: 0.7;
+        }
+        .notification-type {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        .type-info { background: #cce5ff; color: #004085; }
+        .type-warning { background: #fff3cd; color: #856404; }
+        .type-abuse { background: #f8d7da; color: #721c24; }
+        .type-ban { background: #dc3545; color: white; }
+        .type-subscription { background: #d1ecf1; color: #0c5460; }
+    </style>
+</head>
+<body>
+    {% extends 'base.html' %}
+    
+    {% block content %}
+    <div class="container-fluid py-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1><i class="fas fa-bell me-2"></i>Admin Notifications</h1>
+            <div>
+                <form method="POST" action="{{ url_for('admin.mark_all_notifications_read_route') }}" class="d-inline">
+                    <button type="submit" class="btn btn-secondary">
+                        <i class="fas fa-check-double me-2"></i>Mark All as Read
+                    </button>
+                </form>
+                <a href="/admin/companies" class="btn btn-primary">
+                    <i class="fas fa-building me-2"></i>Back to Companies
+                </a>
+            </div>
+        </div>
+        
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ 'danger' if category == 'danger' else 'success' if category == 'success' else 'warning' if category == 'warning' else 'info' }} alert-dismissible fade show">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        
+        {% for notification in notifications %}
+        <div class="notification-card {% if not notification.is_read %}unread{% else %}read{% endif %}" onclick="markAsRead({{ notification.id }})">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <span class="notification-type type-{{ notification.notification_type }}">{{ notification.notification_type }}</span>
+                    <h5 class="mt-2 mb-1">{{ notification.title }}</h5>
+                    <p class="mb-0 text-muted">{{ notification.message }}</p>
+                    <small class="text-muted">{{ notification.created_at.strftime('%Y-%m-%d %H:%M') if notification.created_at else '' }}</small>
+                </div>
+                {% if notification.link %}
+                <a href="{{ notification.link }}" class="btn btn-sm btn-outline-primary">
+                    <i class="fas fa-external-link-alt"></i>
+                </a>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+        
+        {% if not notifications %}
+        <div class="alert alert-info">
+            <i class="fas fa-bell-slash me-2"></i>No new notifications.
+        </div>
+        {% endif %}
+    </div>
+    
+    <script>
+    function markAsRead(notificationId) {
+        fetch('/admin/notifications/' + notificationId + '/read', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        }).then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            }
+        });
+    }
+    </script>
+    {% endblock %}
+</body>
+</html>

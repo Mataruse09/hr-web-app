@@ -1,8 +1,104 @@
 {% extends "base.html" %}
-{% block title %}Process Payroll{% endblock %}
-{% block page_title %}Process Payroll{% endblock %}
+{% block title %}{% if mode == 'compensation' %}Compensation Settings{% else %}Process Payroll{% endif %}{% endblock %}
+{% block page_title %}{% if mode == 'compensation' %}Compensation Settings{% else %}Process Payroll{% endif %}{% endblock %}
 
 {% block content %}
+{% if mode == 'compensation' %}
+{# ───────────────────────────────────────────────────────────── #}
+{# COMPENSATION FORM - For setting employee compensation       #}
+{# ───────────────────────────────────────────────────────────── #}
+<div class="section-card form-card">
+  <h3 class="section-title">💰 Compensation for {{ employee.first_name }} {{ employee.last_name }}</h3>
+  <p class="text-muted">Set salary, allowances, tax rates, and deductions for this employee.</p>
+  
+  <form method="POST" class="hr-form">
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Effective Date *</label>
+        <input type="date" name="effective_date" class="form-control"
+               value="{{ comp.effective_date if comp else '' }}" required />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Currency</label>
+        <select name="currency" class="form-control">
+          <option value="USD" {% if comp and comp.currency == 'USD' %}selected{% endif %}>USD - US Dollar</option>
+          <option value="EUR" {% if comp and comp.currency == 'EUR' %}selected{% endif %}>EUR - Euro</option>
+          <option value="GBP" {% if comp and comp.currency == 'GBP' %}selected{% endif %}>GBP - British Pound</option>
+          <option value="KES" {% if comp and comp.currency == 'KES' %}selected{% endif %}>KES - Kenyan Shilling</option>
+          <option value="NGN" {% if comp and comp.currency == 'NGN' %}selected{% endif %}>NGN - Nigerian Naira</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-section-title">💵 Base Salary</div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Basic Salary *</label>
+        <input type="number" name="basic_salary" class="form-control"
+               value="{{ comp.basic_salary if comp else '' }}" min="0" step="0.01" required />
+      </div>
+    </div>
+
+    <div class="form-section-title">🏠 Allowances</div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Housing Allowance</label>
+        <input type="number" name="housing_allowance" class="form-control"
+               value="{{ comp.housing_allowance if comp else '0' }}" min="0" step="0.01" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Transport Allowance</label>
+        <input type="number" name="transport_allowance" class="form-control"
+               value="{{ comp.transport_allowance if comp else '0' }}" min="0" step="0.01" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Meal Allowance</label>
+        <input type="number" name="meal_allowance" class="form-control"
+               value="{{ comp.meal_allowance if comp else '0' }}" min="0" step="0.01" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Other Allowances</label>
+        <input type="number" name="other_allowances" class="form-control"
+               value="{{ comp.other_allowances if comp else '0' }}" min="0" step="0.01" />
+      </div>
+    </div>
+
+    <div class="form-section-title">📊 Tax & Deductions</div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Income Tax Rate (%)</label>
+        <input type="number" name="income_tax_rate" class="form-control"
+               value="{{ comp.income_tax_rate if comp else '15' }}" min="0" max="100" step="0.01" />
+        <small class="text-muted">Percentage, e.g., 15 = 15%</small>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Social Insurance</label>
+        <input type="number" name="social_insurance" class="form-control"
+               value="{{ comp.social_insurance if comp else '0' }}" min="0" step="0.01" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Health Insurance</label>
+        <input type="number" name="health_insurance" class="form-control"
+               value="{{ comp.health_insurance if comp else '0' }}" min="0" step="0.01" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Other Deductions</label>
+        <input type="number" name="other_deductions" class="form-control"
+               value="{{ comp.other_deductions if comp else '0' }}" min="0" step="0.01" />
+      </div>
+    </div>
+
+    <div class="form-actions mt-3">
+      <button type="submit" class="btn btn-primary">💾 Save Compensation</button>
+      <a href="{{ url_for('employees.profile', emp_id=employee.id) }}" class="btn btn-outline">Cancel</a>
+    </div>
+  </form>
+</div>
+
+{% else %}
+{# ───────────────────────────────────────────────────────────── #}
+{# PAYROLL PROCESS FORM - For running payroll                   #}
+{# ───────────────────────────────────────────────────────────── #}
 <div class="section-card form-card">
   <form method="POST" class="hr-form">
     <div class="form-row">
@@ -33,7 +129,6 @@
           <td>{{ emp.first_name }} {{ emp.last_name }}</td>
           <td>{{ emp.department_name or '—' }}</td>
           <td>
-            <!-- Fetch comp inline isn't ideal but acceptable for process page -->
             <span class="text-muted">See compensation record</span>
           </td>
           <td>
@@ -56,4 +151,5 @@
     </div>
   </form>
 </div>
+{% endif %}
 {% endblock %}

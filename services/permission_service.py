@@ -54,8 +54,8 @@ def get_permitted_features(role: str) -> dict:
         },
         'chro': {
             'dashboard': True,
-            'employees': {'view': True, 'edit': False, 'delete': False},
-            'attendance': {'view': True, 'mark': False},
+            'employees': {'view': True, 'edit': True, 'delete': False},
+            'attendance': {'view': True, 'mark': True},
             'leave': {'view': True, 'approve': False},
             'payroll': {'view': True, 'edit': False, 'approve': False},
             'appraisals': {'view': True, 'create': True, 'review': True},

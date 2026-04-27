@@ -74,12 +74,17 @@ def create_appraisal(employee_id):
     try:
         # Verify employee exists and belongs to company
         employee = query(
-            "SELECT id, first_name, last_name, job_title FROM employees_core WHERE id = %s AND company_id = %s",
+            "SELECT id, first_name, last_name, job_title, status FROM employees_core WHERE id = %s AND company_id = %s",
             (employee_id, company_id), one=True
         )
         
         if not employee:
             flash('Employee not found.', 'danger')
+            return redirect(url_for('appraisals.list_appraisals'))
+        
+        # Check if employee is active
+        if employee.get('status') != 'Active':
+            flash('Cannot create appraisal for inactive or terminated employee.', 'warning')
             return redirect(url_for('appraisals.list_appraisals'))
         
         if request.method == 'POST':

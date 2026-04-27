@@ -2,6 +2,32 @@
 {# Include this in base.html sidebar to show role-appropriate menu #}
 {% set current_endpoint = request.endpoint or '' %}
 
+{# Helper macro to check if a feature is available #}
+{% macro is_feature_enabled(feature_name) %}
+  {% if g.all_features %}
+    {% for f in g.all_features %}
+      {% if f.name == feature_name %}
+        {{ f.is_available }}
+      {% endif %}
+    {% endfor %}
+  {% else %}
+    false
+  {% endif %}
+{% endmacro %}
+
+{# Helper macro to get feature info #}
+{% macro get_feature_info(feature_name) %}
+  {% if g.all_features %}
+    {% for f in g.all_features %}
+      {% if f.name == feature_name %}
+        {{ f.required_plan }}|{{ f.display_name }}
+      {% endif %}
+    {% endfor %}
+  {% else %}
+    Professional|{{ feature_name }}
+  {% endif %}
+{% endmacro %}
+
 <nav class="sidebar-nav">
   {# DASHBOARD - All Roles #}
   <a href="{{ url_for('dashboard.index') }}"
@@ -66,12 +92,18 @@
   </a>
   {% endif %}
 
-  {# Payroll - Admin, HR, CHRO only #}
+  {# Payroll - Admin, HR, CHRO only - Check subscription #}
   {% if session.role in ['Admin', 'HR', 'CHRO'] %}
+    {% if g.can_access_payroll %}
   <a href="{{ url_for('payroll.list_payroll') }}"
      class="nav-item {% if 'payroll' in current_endpoint %}active{% endif %}">
     <span class="nav-icon">💰</span><span class="nav-label">Payroll</span>
   </a>
+    {% else %}
+  <a href="#" class="nav-item nav-item-disabled" data-feature="payroll" onclick="showUpgradeMessage('payroll', event)">
+    <span class="nav-icon">💰</span><span class="nav-label">Payroll <span class="badge-upgrade">🔒 Upgrade</span></span>
+  </a>
+    {% endif %}
   {% endif %}
 
   {# PERFORMANCE & DEVELOPMENT - All roles #}
@@ -83,23 +115,41 @@
     <span class="nav-icon">⭐</span><span class="nav-label">Appraisals</span>
   </a>
 
-  {# Gamification - All roles can view #}
+  {# Gamification - All roles can view - Check subscription #}
+  {% if g.can_access_gamification %}
   <a href="{{ url_for('gamification.leaderboard') }}"
      class="nav-item {% if 'gamification' in current_endpoint %}active{% endif %}">
     <span class="nav-icon">🎖️</span><span class="nav-label">Gamification</span>
   </a>
+  {% else %}
+  <a href="#" class="nav-item nav-item-disabled" data-feature="gamification" onclick="showUpgradeMessage('gamification', event)">
+    <span class="nav-icon">🎖️</span><span class="nav-label">Gamification <span class="badge-upgrade">🔒 Upgrade</span></span>
+  </a>
+  {% endif %}
 
-  {# Compliance - Admin, HR, CHRO can manage; Employee can view own #}
+  {# Compliance - Admin, HR, CHRO can manage - Check subscription #}
   {% if session.role in ['Admin', 'HR', 'CHRO'] %}
+    {% if g.can_access_compliance %}
   <a href="{{ url_for('compliance.list_compliance') }}"
      class="nav-item {% if 'compliance' in current_endpoint %}active{% endif %}">
     <span class="nav-icon">📋</span><span class="nav-label">Compliance</span>
   </a>
+    {% else %}
+  <a href="#" class="nav-item nav-item-disabled" data-feature="compliance" onclick="showUpgradeMessage('compliance', event)">
+    <span class="nav-icon">📋</span><span class="nav-label">Compliance <span class="badge-upgrade">🔒 Upgrade</span></span>
+  </a>
+    {% endif %}
   {% elif session.role == 'Employee' %}
+    {% if g.can_access_compliance %}
   <a href="{{ url_for('compliance.list_compliance') }}"
      class="nav-item {% if 'compliance' in current_endpoint %}active{% endif %}">
     <span class="nav-icon">📋</span><span class="nav-label">My Compliance</span>
   </a>
+    {% else %}
+  <a href="#" class="nav-item nav-item-disabled" data-feature="compliance" onclick="showUpgradeMessage('compliance', event)">
+    <span class="nav-icon">📋</span><span class="nav-label">My Compliance <span class="badge-upgrade">🔒 Upgrade</span></span>
+  </a>
+    {% endif %}
   {% endif %}
 
   {# ANALYTICS & FORECASTING - Admin, HR, CHRO only #}
@@ -112,11 +162,33 @@
     <span class="nav-icon">📉</span><span class="nav-label">Attrition</span>
   </a>
 
-  {# Labour Forecasting #}
+  {# Labour Forecasting - Check subscription #}
+  {% if session.role in ['Admin', 'HR', 'CHRO', 'Manager'] %}
+    {% if g.can_access_forecasting %}
   <a href="{{ url_for('forecasting.list_forecasts') }}"
      class="nav-item {% if 'forecasting' in current_endpoint %}active{% endif %}">
     <span class="nav-icon">📊</span><span class="nav-label">Forecasting</span>
   </a>
+    {% else %}
+  <a href="#" class="nav-item nav-item-disabled" data-feature="forecasting" onclick="showUpgradeMessage('forecasting', event)">
+    <span class="nav-icon">📊</span><span class="nav-label">Forecasting <span class="badge-upgrade">🔒 Upgrade</span></span>
+  </a>
+    {% endif %}
+  {% endif %}
+
+  {# AI Analytics - Check subscription #}
+  {% if session.role in ['Admin', 'HR', 'CHRO', 'Manager'] %}
+    {% if g.can_access_ai %}
+  <a href="{{ url_for('ai_analytics.dashboard') }}"
+     class="nav-item {% if 'ai_analytics' in current_endpoint %}active{% endif %}">
+    <span class="nav-icon">🤖</span><span class="nav-label">AI Analytics</span>
+  </a>
+    {% else %}
+  <a href="#" class="nav-item nav-item-disabled" data-feature="ai_analytics" onclick="showUpgradeMessage('ai_analytics', event)">
+    <span class="nav-icon">🤖</span><span class="nav-label">AI Analytics <span class="badge-upgrade">🔒 Upgrade</span></span>
+  </a>
+    {% endif %}
+  {% endif %}
 
   {# CHRO Analytics - CHRO & Admin only #}
   {% if session.role in ['CHRO', 'Admin'] %}
@@ -154,10 +226,18 @@
      class="nav-item {% if 'admin.system_settings' in current_endpoint %}active{% endif %}">
     <span class="nav-icon">⚙️</span><span class="nav-label">System Settings</span>
   </a>
+
+  {# Subscription Management - Admin, HR, CHRO #}
+  {% if session.role in ['Admin', 'HR', 'CHRO'] %}
+  <a href="{{ url_for('subscription.manage_subscription') }}"
+     class="nav-item {% if 'subscription' in current_endpoint %}active{% endif %}">
+    <span class="nav-icon">💳</span><span class="nav-label">Subscription</span>
+  </a>
+  {% endif %}
   {% endif %}
 
-  {# Employee Self-Service Profile Link #}
-  {% if session.role == 'Employee' %}
+  {# Employee Self-Service Profile Link - Check gamification access #}
+  {% if session.role == 'Employee' and g.can_access_gamification %}
   <div class="nav-group-label">MY PROFILE</div>
   <a href="{{ url_for('gamification.my_profile') }}"
      class="nav-item {% if current_endpoint == 'gamification.my_profile' %}active{% endif %}">

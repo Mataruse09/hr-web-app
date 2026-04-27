@@ -1,0 +1,221 @@
+{% extends "base.html" %}
+
+{% block title %}Attendance Pattern Analysis{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h1 class="display-5">📅 AI Attendance Pattern Analysis</h1>
+            <p class="text-muted">Intelligent attendance insights and anomaly detection</p>
+        </div>
+        <div class="col-md-4">
+            <form method="get" class="d-flex">
+                <select name="days" class="form-select me-2">
+                    <option value="30" {% if days == 30 %}selected{% endif %}>Last 30 Days</option>
+                    <option value="60" {% if days == 60 %}selected{% endif %}>Last 60 Days</option>
+                    <option value="90" {% if days == 90 %}selected{% endif %}>Last 90 Days</option>
+                </select>
+                <button type="submit" class="btn btn-primary">Update</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Overall Stats -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm" style="border-left: 4px solid #28a745;">
+                <div class="card-body text-center">
+                    <div class="display-4 text-success">{{ analysis.overall.present }}</div>
+                    <h5>Present</h5>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm" style="border-left: 4px solid #dc3545;">
+                <div class="card-body text-center">
+                    <div class="display-4 text-danger">{{ analysis.overall.absent }}</div>
+                    <h5>Absent</h5>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm" style="border-left: 4px solid #ffc107;">
+                <div class="card-body text-center">
+                    <div class="display-4 text-warning">{{ analysis.overall.late }}</div>
+                    <h5>Late</h5>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm" style="border-left: 4px solid #17a2b8;">
+                <div class="card-body text-center">
+                    <div class="display-4">{{ analysis.overall.attendance_rate }}%</div>
+                    <h5>Attendance Rate</h5>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Daily Patterns -->
+        <div class="col-md-6 mb-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white border-0">
+                    <h5 class="mb-0">📊 Attendance by Day of Week</h5>
+                </div>
+                <div class="card-body">
+                    {% if analysis.daily_patterns %}
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Day</th>
+                                    <th>Total</th>
+                                    <th>Absent</th>
+                                    <th>Absent Rate</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for pattern in analysis.daily_patterns %}
+                                <tr>
+                                    <td>{{ pattern.day }}</td>
+                                    <td>{{ pattern.total }}</td>
+                                    <td>{{ pattern.absent }}</td>
+                                    <td>
+                                        <div class="progress" style="height: 15px;">
+                                            <div class="progress-bar bg-{% if pattern.absent_rate > 15 %}danger{% elif pattern.absent_rate > 10 %}warning{% else %}success{% endif %}" 
+                                                 style="width: {{ pattern.absent_rate }}%">
+                                            </div>
+                                        </div>
+                                        <small>{{ pattern.absent_rate }}%</small>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-muted">No daily pattern data available.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Department Analysis -->
+        <div class="col-md-6 mb-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white border-0">
+                    <h5 class="mb-0">🏢 Attendance by Department</h5>
+                </div>
+                <div class="card-body">
+                    {% if analysis.department_analysis %}
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Department</th>
+                                    <th>Present</th>
+                                    <th>Absent</th>
+                                    <th>Rate</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for dept in analysis.department_analysis %}
+                                <tr>
+                                    <td>{{ dept.department }}</td>
+                                    <td>{{ dept.present }}</td>
+                                    <td>{{ dept.absent }}</td>
+                                    <td>
+                                        <span class="badge bg-{% if dept.attendance_rate > 90 %}success{% elif dept.attendance_rate > 80 %}warning{% else %}danger{% endif %}">
+                                            {{ dept.attendance_rate }}%
+                                        </span>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-muted">No department data available.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Anomalies -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white border-0">
+            <h5 class="mb-0">⚠️ Anomaly Detection</h5>
+        </div>
+        <div class="card-body">
+            {% if analysis.anomalies %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Employee</th>
+                            <th>Job Title</th>
+                            <th>Absent Days</th>
+                            <th>Total Days</th>
+                            <th>Absence Rate</th>
+                            <th>Severity</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for anomaly in analysis.anomalies %}
+                        <tr>
+                            <td>{{ anomaly.employee_name }}</td>
+                            <td>{{ anomaly.job_title }}</td>
+                            <td>{{ anomaly.absent_days }}</td>
+                            <td>{{ anomaly.total_days }}</td>
+                            <td>{{ anomaly.absence_rate }}%</td>
+                            <td>
+                                <span class="badge bg-{% if anomaly.severity == 'high' %}danger{% else %}warning{% endif %}">
+                                    {{ anomaly.severity }}
+                                </span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="alert alert-success">
+                <p class="mb-0">✅ No anomalies detected. All attendance patterns are within normal range.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Predictions -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white border-0">
+            <h5 class="mb-0">🔮 Attendance Predictions</h5>
+        </div>
+        <div class="card-body">
+            {% if analysis.predictions %}
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="text-center">
+                        <div class="h3">{{ analysis.predictions.expected_attendance_rate }}%</div>
+                        <p class="text-muted">Expected Attendance Rate</p>
+                    </div>
+                </div>
+                <div class="col-md-8">
+                    <h6>Prediction Factors:</h6>
+                    <ul>
+                        {% for factor in analysis.predictions.factors %}
+                        <li>{{ factor }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+            {% else %}
+            <p class="text-muted">No prediction data available.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

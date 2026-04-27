@@ -241,15 +241,27 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // Department Bar Chart
   const deptCtx = document.getElementById('departmentChart');
-  if (deptCtx) {
+  if (deptCtx && {{ departments | length if departments else 0 }} > 0) {
+    // Generate distinct colors for each department
+    const deptCount = {{ departments | length if departments else 0 }};
+    const colorPalette = [
+      '#667eea', '#764ba2', '#11998e', '#38ef7d', '#f093fb', '#f5576c',
+      '#4facfe', '#00f2fe', '#fa709a', '#fee140', '#30cf99', '#a8ed65',
+      '#ff9a9e', '#fecfef', '#feada6', '#f5efef', '#8fd3f4', '#fccb90'
+    ];
+    const backgroundColors = [];
+    for (let i = 0; i < deptCount; i++) {
+      backgroundColors.push(colorPalette[i % colorPalette.length]);
+    }
+    
     new Chart(deptCtx.getContext('2d'), {
       type: 'bar',
       data: {
-        labels: [{% for d in departments %}'{{ d.name }}'{% if not loop.last %}, {% endif %}{% endfor %}],
+        labels: [{% if departments %}{% for d in departments %}'{{ d.name }}'{% if not loop.last %}, {% endif %}{% endfor %}{% endif %}],
         datasets: [{
           label: 'Employees',
-          data: [{% for d in departments %}{{ d.employee_count or 0 }}{% if not loop.last %}, {% endif %}{% endfor %}],
-          backgroundColor: ['#667eea', '#764ba2', '#11998e', '#38ef7d', '#f093fb', '#f5576c'],
+          data: [{% if departments %}{% for d in departments %}{{ d.employee_count or 0 }}{% if not loop.last %}, {% endif %}{% endfor %}{% endif %}],
+          backgroundColor: backgroundColors,
           borderRadius: 4
         }]
       },

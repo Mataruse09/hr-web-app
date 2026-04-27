@@ -47,7 +47,7 @@
           </form>
           <form method="POST" action="{{ url_for('leave.reject', req_id=r.id) }}"
                 style="display:inline">
-            <input type="hidden" name="notes" value="Rejected by {{ session.full_name }}" />
+            <input type="hidden" name="notes" value="Rejected by {{ session.full_name or 'Admin' }}" />
             <button class="btn-action btn-action-red" type="submit"
                     onclick="return confirm('Reject this request?')">✗ Reject</button>
           </form>

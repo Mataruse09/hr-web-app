@@ -5,6 +5,9 @@ from flask import (
 from utils import login_required, roles_required
 from models import attendance_model, employee_model
 from datetime import date
+import logging
+
+logger = logging.getLogger(__name__)
 
 attendance_bp = Blueprint('attendance', __name__)
 
@@ -73,7 +76,7 @@ def logs():
 
 @attendance_bp.route('/mark', methods=['GET', 'POST'])
 @login_required
-@roles_required('Admin', 'HR', 'company_admin')
+@roles_required('Admin', 'HR', 'CHRO', 'company_admin')
 def mark():
     company_id = session.get('company_id')
     user_id = session.get('user_id')
@@ -84,7 +87,8 @@ def mark():
 
     today = date.today().isoformat()
 
-    employees = employee_model.get_all(company_id)
+    # Only get active employees for attendance marking
+    employees = employee_model.get_all(company_id, status='Active')
     existing = attendance_model.get_by_date(company_id, today)
 
     # Faster lookup
@@ -118,6 +122,11 @@ def mark():
 
             saved += 1
 
+        # Invalidate KPI cache for this company after attendance update
+        from services.calculation_services import invalidate_company_cache
+        invalidate_company_cache(company_id)
+        logger.info(f"Invalidated KPI cache for company {company_id} after attendance update")
+        
         flash(f'Attendance saved for {saved} employee(s).', 'success')
         return redirect(url_for('attendance.mark'))
 

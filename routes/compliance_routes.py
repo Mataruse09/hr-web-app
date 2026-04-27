@@ -9,6 +9,7 @@ from datetime import datetime
 from utils import login_required, roles_required
 from models.db import query, mutate
 from services.activity_service import log_activity
+from services.subscription_service import compliance_feature_required
 
 logger = logging.getLogger(__name__)
 
@@ -28,6 +29,7 @@ COMPLIANCE_POLICIES = [
 @compliance_bp.route('/compliance')
 @login_required
 @roles_required('Admin', 'HR', 'CHRO', 'Employee')
+@compliance_feature_required
 def list_compliance():
     """List all compliance records."""
     company_id = session['company_id']
@@ -76,6 +78,7 @@ def list_compliance():
 @compliance_bp.route('/compliance/assign/<int:employee_id>', methods=['GET', 'POST'])
 @login_required
 @roles_required('Admin', 'HR', 'CHRO')
+@compliance_feature_required
 def assign_compliance(employee_id):
     """Assign compliance policy to employee."""
     company_id = session['company_id']
@@ -134,6 +137,7 @@ def assign_compliance(employee_id):
 @compliance_bp.route('/compliance/<int:compliance_id>/mark-complete', methods=['POST'])
 @login_required
 @roles_required('Admin', 'HR', 'CHRO')
+@compliance_feature_required
 def mark_complete(compliance_id):
     """Mark compliance as completed."""
     company_id = session['company_id']
@@ -178,6 +182,7 @@ def mark_complete(compliance_id):
 @compliance_bp.route('/compliance/dashboard')
 @login_required
 @roles_required('Admin', 'HR', 'CHRO')
+@compliance_feature_required
 def compliance_dashboard():
     """View compliance dashboard with overdue items."""
     company_id = session['company_id']

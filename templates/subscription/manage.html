@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+
+{% block title %}Subscription Management - {{ company_name }}{% endblock %}
+
+{% block content %}
+<div class="section-card">
+    <h2>Subscription Management</h2>
+    <p class="text-muted">Manage your subscription plan and features</p>
+    
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+    
+    <!-- Current Subscription Status -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card {% if subscription.status == 'active' %}border-success{% elif subscription.status == 'trial' %}border-warning{% elif subscription.status == 'pending_payment' %}border-warning{% else %}border-secondary{% endif %}">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <i class="fas fa-credit-card"></i> Current Plan
+                        {% if subscription.status == 'active' %}
+                            <span class="badge bg-success">Active</span>
+                        {% elif subscription.status == 'trial' %}
+                            <span class="badge bg-warning">Trial</span>
+                        {% elif subscription.status == 'pending_payment' %}
+                            <span class="badge bg-warning">Payment Pending</span>
+                        {% else %}
+                            <span class="badge bg-secondary">Inactive</span>
+                        {% endif %}
+                    </h5>
+                    <h3 class="mt-3">{{ subscription.plan_display_name or 'Free Plan' }}</h3>
+                    {% if subscription.status == 'pending_payment' %}
+                        <p class="text-warning">
+                            <i class="fas fa-exclamation-triangle"></i> 
+                            Your subscription is pending payment. Please complete payment to activate.
+                        </p>
+                        <a href="{{ url_for('subscription.manage_subscription') }}" class="btn btn-success mt-2">
+                            <i class="fas fa-credit-card"></i> Complete Payment
+                        </a>
+                    {% elif subscription.start_date and subscription.end_date %}
+                        <p class="text-muted">
+                            Period: {{ subscription.start_date }} to {{ subscription.end_date }}
+                        </p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Available Features -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <h4>Your Available Features</h4>
+            <div class="row">
+                {% set feature_categories = {
+                    'basic': 'Basic Features',
+                    'advanced': 'Advanced Features',
+                    'ai': 'AI Features',
+                    'premium': 'Premium Features'
+                } %}
+                
+                {% for category, display_name in feature_categories.items() %}
+                <div class="col-md-6 mb-3">
+                    <div class="card">
+                        <div class="card-header">
+                            <h6 class="mb-0">{{ display_name }}</h6>
+                        </div>
+                        <ul class="list-group list-group-flush">
+                            {% for feature in features %}
+                                {% if feature.category == category %}
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    {{ feature.display_name }}
+                                    {% if feature.name in subscription.features %}
+                                        <span class="badge bg-success"><i class="fas fa-check"></i> Included</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary"><i class="fas fa-lock"></i> Locked</span>
+                                    {% endif %}
+                                </li>
+                                {% endif %}
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Upgrade Options -->
+    <div class="row">
+        <div class="col-md-12">
+            <h4>Available Plans</h4>
+            <div class="row">
+                {% for plan in plans %}
+                {# Check if this is the user's current plan #}
+                {% set is_current_plan = (subscription.plan_name == plan.name) %}
+                <div class="col-md-3 mb-3">
+                    <div class="card h-100 {% if is_current_plan %}border-success{% elif plan.name == 'professional' %}border-primary{% endif %}">
+                        <div class="card-body text-center {% if is_current_plan %}bg-light{% endif %}" style="{% if is_current_plan %}opacity: 0.7;{% endif %}">
+                            <h5 class="card-title">{{ plan.display_name }}</h5>
+                            <h3 class="my-3">${{ plan.price_monthly }}<small class="text-muted">/mo</small></h3>
+                            <ul class="list-unstyled text-start mb-3">
+                                <li><i class="fas fa-users"></i> Up to {{ plan.max_employees }} employees</li>
+                                <li><i class="fas fa-user-tag"></i> Up to {{ plan.max_users }} users</li>
+                            </ul>
+                            {# Show current plan as disabled/grey, other plans as selectable #}
+                            {% if is_current_plan %}
+                                <button class="btn btn-secondary w-100" disabled>
+                                    <i class="fas fa-check-circle"></i> Current Plan
+                                </button>
+                            {% else %}
+                                <form action="{{ url_for('subscription.upgrade_plan') }}" method="POST">
+                                    <input type="hidden" name="plan_id" value="{{ plan.id }}">
+                                    <button type="submit" class="btn btn-primary w-100">Select Plan</button>
+                                </form>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Trial Option -->
+    {% if subscription.status != 'trial' and subscription.status != 'active' %}
+    <div class="row mt-4">
+        <div class="col-md-12">
+            <div class="card border-info">
+                <div class="card-body">
+                    <h5><i class="fas fa-gift"></i> Start a Free Trial</h5>
+                    <p>Try all Professional features free for 14 days!</p>
+                    <form action="{{ url_for('subscription.start_trial') }}" method="POST">
+                        <button type="submit" class="btn btn-info">Start 14-Day Free Trial</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

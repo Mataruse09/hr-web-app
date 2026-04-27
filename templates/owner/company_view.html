@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>View Company - MatinexHR Owner</title>
+    <link rel="icon" type="image/png" sizes="64x64" href="/static/img/branding/favicon-64x64.png">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { font-family: 'Inter', sans-serif; background: #0f0f1a; min-height: 100vh; }
+        .owner-content { padding: 30px; }
+        .page-title { color: white; font-size: 1.8rem; font-weight: 700; margin-bottom: 25px; }
+        .back-link { color: rgba(255,255,255,0.7); text-decoration: none; }
+        .back-link:hover { color: white; }
+        .info-card { background: #1a1a2e; border-radius: 12px; padding: 25px; margin-bottom: 20px; border: 1px solid rgba(255,255,255,0.1); }
+        .info-card h3 { color: white; font-size: 1.3rem; margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px; }
+        .info-row { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .info-row:last-child { border-bottom: none; }
+        .info-label { color: rgba(255,255,255,0.6); }
+        .info-value { color: white; font-weight: 500; }
+        .badge-status { padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 600; }
+        .badge-active { background: #28a745; color: white; }
+        .badge-banned { background: #dc3545; color: white; }
+        .btn-action { padding: 8px 16px; border-radius: 8px; font-size: 0.9rem; border: none; cursor: pointer; }
+        .btn-ban { background: #dc3545; color: white; }
+        .btn-unban { background: #28a745; color: white; }
+        .btn-delete { background: #6c757d; color: white; }
+        .danger-zone { border: 2px solid #dc3545; }
+        .danger-zone h3 { color: #dc3545; }
+        .text-muted { color: rgba(255,255,255,0.6) !important; }
+    </style>
+</head>
+<body>
+    <div class="owner-content">
+        <a href="{{ url_for('owner.all_companies') }}" class="back-link"><i class="fas fa-arrow-left me-2"></i>Back to Companies</a>
+        
+        <h1 class="page-title">
+            <i class="fas fa-building me-2"></i>{{ company.name }}
+            {% if not company.is_active %}<span class="badge badge-banned ms-2">INACTIVE</span>{% endif %}
+        </h1>
+        
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ 'danger' if category == 'danger' else 'success' }} alert-dismissible fade show">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        
+        <div class="row">
+            <!-- Company Info -->
+            <div class="col-md-6">
+                <div class="info-card">
+                    <h3><i class="fas fa-info-circle me-2"></i>Company Information</h3>
+                    <div class="info-row">
+                        <span class="info-label">Email</span>
+                        <span class="info-value">{{ company.email }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Phone</span>
+                        <span class="info-value">{{ company.phone or 'N/A' }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Industry</span>
+                        <span class="info-value">{{ company.industry or 'N/A' }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Website</span>
+                        <span class="info-value">{{ company.website or 'N/A' }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Address</span>
+                        <span class="info-value">{{ company.address or 'N/A' }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Registered</span>
+                        <span class="info-value">{{ company.created_at.strftime('%Y-%m-%d %H:%M') if company.created_at else 'N/A' }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Status</span>
+                        <span class="badge-status {% if company.is_banned %}badge-banned{% else %}badge-active{% endif %}">
+                            {% if company.is_banned %}BANNED{% else %}ACTIVE{% endif %}
+                        </span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Stats -->
+            <div class="col-md-6">
+                <div class="info-card">
+                    <h3><i class="fas fa-chart-bar me-2"></i>Statistics</h3>
+                    <div class="info-row">
+                        <span class="info-label">Users</span>
+                        <span class="info-value">{{ company.user_count }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Employees</span>
+                        <span class="info-value">{{ company.employee_count }}</span>
+                    </div>
+                    {% if company.is_banned %}
+                    <div class="info-row">
+                        <span class="info-label">Ban Reason</span>
+                        <span class="info-value text-danger">{{ company.ban_reason }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Banned At</span>
+                        <span class="info-value">{{ company.banned_at.strftime('%Y-%m-%d %H:%M') if company.banned_at else 'N/A' }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Ban Type</span>
+                        <span class="info-value">{{ company.ban_type|upper }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Users -->
+        <div class="info-card">
+            <h3><i class="fas fa-users me-2"></i>Users ({{ users|length }})</h3>
+            {% for user in users %}
+            <div class="info-row">
+                <span class="info-label">{{ user.username }}</span>
+                <span class="info-value">{{ user.email }} - {{ user.role }}</span>
+            </div>
+            {% endfor %}
+            {% if not users %}
+            <p style="color: rgba(255,255,255,0.6);">No users found.</p>
+            {% endif %}
+        </div>
+        
+        <!-- Employees -->
+        <div class="info-card">
+            <h3><i class="fas fa-user-tie me-2"></i>Recent Employees ({{ employees|length }})</h3>
+            {% for emp in employees %}
+            <div class="info-row">
+                <span class="info-label">{{ emp.employee_code }}</span>
+                <span class="info-value">{{ emp.first_name }} {{ emp.last_name }} - {{ emp.job_title or 'N/A' }}</span>
+            </div>
+            {% endfor %}
+            {% if not employees %}
+            <p style="color: rgba(255,255,255,0.6);">No employees found.</p>
+            {% endif %}
+        </div>
+        
+        <!-- Abuse Reports -->
+        {% if abuse_reports %}
+        <div class="info-card">
+            <h3><i class="fas fa-exclamation-triangle me-2"></i>Abuse Reports ({{ abuse_reports|length }})</h3>
+            {% for report in abuse_reports %}
+            <div class="info-row">
+                <span class="info-label">{{ report.report_type }} ({{ report.severity }})</span>
+                <span class="info-value">{{ report.description[:50] }}... - {{ report.status }}</span>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        
+        <!-- Actions -->
+        <div class="row mt-4">
+            <div class="col-md-6">
+                <div class="info-card">
+                    <h3><i class="fas fa-gavel me-2"></i>Actions</h3>
+                    {% if not company.is_banned %}
+                    <button type="button" class="btn btn-action btn-ban" data-bs-toggle="modal" data-bs-target="#banModal">
+                        <i class="fas fa-ban me-2"></i>Ban Company
+                    </button>
+                    {% else %}
+                    <button type="button" class="btn btn-action btn-unban" data-bs-toggle="modal" data-bs-target="#unbanModal">
+                        <i class="fas fa-check me-2"></i>Unban Company
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+                <div class="info-card danger-zone">
+                    <h3><i class="fas fa-exclamation-triangle me-2"></i>Danger Zone</h3>
+                    <button type="button" class="btn btn-action btn-delete" data-bs-toggle="modal" data-bs-target="#deleteModal">
+                        <i class="fas fa-trash me-2"></i>Delete Company
+                    </button>
+                    <p style="color: rgba(255,255,255,0.6);" class="mt-2">This action cannot be undone. All company data will be permanently deleted.</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Ban Modal -->
+        <div class="modal fade" id="banModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content" style="background: #1a1a2e; color: white;">
+                    <div class="modal-header" style="border-bottom: 1px solid rgba(255,255,255,0.1);">
+                        <h5 class="modal-title">Ban Company: {{ company.name }}</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <form method="POST" action="{{ url_for('owner.ban_company', company_id=company.id) }}">
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <label class="form-label">Ban Reason</label>
+                                <textarea name="reason" class="form-control" rows="3" required placeholder="Please provide a reason for banning..."></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Ban Type</label>
+                                <select name="ban_type" class="form-select">
+                                    <option value="manual">Manual</option>
+                                    <option value="auto">Auto</option>
+                                </select>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="send_email" id="send_email" checked>
+                                <label class="form-check-label" for="send_email">
+                                    <i class="fas fa-envelope me-1"></i> Send email notification to company admin
+                                </label>
+                            </div>
+                            <div class="alert alert-danger mt-3">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                This will immediately suspend the company's access to the platform.
+                            </div>
+                        </div>
+                        <div class="modal-footer" style="border-top: 1px solid rgba(255,255,255,0.1);">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-danger">Ban Company</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Unban Modal -->
+        <div class="modal fade" id="unbanModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content" style="background: #1a1a2e; color: white;">
+                    <div class="modal-header" style="border-bottom: 1px solid rgba(255,255,255,0.1);">
+                        <h5 class="modal-title">Unban Company: {{ company.name }}</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <form method="POST" action="{{ url_for('owner.unban_company', company_id=company.id) }}">
+                        <div class="modal-body">
+                            <div class="alert alert-success">
+                                <i class="fas fa-check-circle me-2"></i>
+                                This will restore the company's access to the platform.
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="send_email" id="send_unban_email" checked>
+                                <label class="form-check-label" for="send_unban_email">
+                                    <i class="fas fa-envelope me-1"></i> Send email notification to company admin
+                                </label>
+                            </div>
+                        </div>
+                        <div class="modal-footer" style="border-top: 1px solid rgba(255,255,255,0.1);">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-success">Unban Company</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Delete Modal -->
+        <div class="modal fade" id="deleteModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content" style="background: #1a1a2e; color: white;">
+                    <div class="modal-header" style="border-bottom: 1px solid rgba(255,255,255,0.1);">
+                        <h5 class="modal-title text-danger">Delete Company: {{ company.name }}</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <form method="POST" action="{{ url_for('owner.delete_company', company_id=company.id) }}">
+                        <div class="modal-body">
+                            <div class="alert alert-danger">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                <strong>WARNING:</strong> This will permanently delete this company and ALL its data. This action cannot be undone!
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Type DELETE to confirm</label>
+                                <input type="text" name="confirm_delete" class="form-control" required placeholder="Type DELETE">
+                            </div>
+                        </div>
+                        <div class="modal-footer" style="border-top: 1px solid rgba(255,255,255,0.1);">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-danger">Delete Permanently</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

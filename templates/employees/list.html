@@ -12,7 +12,7 @@
     <a href="{{ url_for('employees.list_employees') }}" class="btn btn-outline">Clear</a>
     {% endif %}
   </form>
-  {% if session.role in ['Admin', 'HR'] %}
+  {% if session.role in ['Admin', 'HR', 'CHRO'] %}
   <a href="{{ url_for('employees.add_employee') }}" class="btn btn-primary">
     ➕ Add Employee
   </a>

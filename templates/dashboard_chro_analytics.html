@@ -74,16 +74,16 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-  // Attrition Line Chart
+  // Attrition Line Chart - Using real monthly data
   const attritionCtx = document.getElementById('attritionChart');
   if (attritionCtx) {
     new Chart(attritionCtx.getContext('2d'), {
       type: 'line',
       data: {
-        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+        labels: [{% for m in monthly_attrition %}'{{ m.month }}'{% if not loop.last %}, {% endif %}{% endfor %}],
         datasets: [{
-          label: 'Attrition Rate %',
-          data: [{{ attrition }}, {{ attrition|int - 1 }}, {{ attrition|int + 2 }}, {{ attrition|int - 2 }}, {{ attrition|int }}, {{ attrition }}],
+          label: 'Attrition Count',
+          data: [{% for m in monthly_attrition %}{{ m.count }}{% if not loop.last %}, {% endif %}{% endfor %}],
           borderColor: '#dc3545',
           backgroundColor: 'rgba(220, 53, 69, 0.1)',
           fill: true,
@@ -93,21 +93,21 @@ document.addEventListener('DOMContentLoaded', function() {
       options: {
         responsive: true,
         plugins: { legend: { display: false } },
-        scales: { y: { beginAtZero: true, max: 20 } }
+        scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
       }
     });
   }
 
-  // Attendance Doughnut Chart
+  // Attendance Doughnut Chart - Using real KPI data
   const attBreakCtx = document.getElementById('attendanceBreakdownChart');
   if (attBreakCtx) {
     new Chart(attBreakCtx.getContext('2d'), {
       type: 'doughnut',
       data: {
-        labels: ['Present', 'Absent', 'On Leave', 'WFH'],
+        labels: ['Present', 'Absent', 'On Leave', 'Late'],
         datasets: [{
-          data: [{{ kpis.present_today }}, {{ kpis.absent_today }}, {{ kpis.on_leave_today }}, {{ kpis.wfh_today or 10 }}],
-          backgroundColor: ['#28a745', '#dc3545', '#ffc107', '#667eea'],
+          data: [{{ kpis.present_today }}, {{ kpis.absent_today }}, {{ kpis.on_leave_today }}, {{ kpis.late_today or 0 }}],
+          backgroundColor: ['#28a745', '#dc3545', '#ffc107', '#fd7e14'],
           borderWidth: 0
         }]
       },
@@ -120,7 +120,7 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
-{# AI Predictions Section - Premium Feature #}
+{# AI Predictions Section - Now Active #}
 <div class="section-card mt-4" style="background: linear-gradient(135deg, #1a237e 0%, #283593 100%); color: white;">
   <div style="display: flex; align-items: center; gap: 1rem;">
     <div style="font-size: 2.5rem;">🤖</div>
@@ -129,30 +129,36 @@ document.addEventListener('DOMContentLoaded', function() {
       <p style="margin: 0.5rem 0 0; opacity: 0.9;">Predictive analytics for workforce planning, attrition risk, and talent insights.</p>
     </div>
   </div>
-  <div style="margin-top: 1.5rem; padding: 1rem; background: rgba(255,255,255,0.1); border-radius: 8px;">
-    <div style="display: flex; align-items: center; gap: 0.5rem; justify-content: center;">
-      <span style="font-size: 1.2rem;">🔒</span>
-      <span style="font-weight: 600;">Premium Feature</span>
-    </div>
-    <p style="text-align: center; margin: 0.5rem 0 0; font-size: 0.9rem; opacity: 0.9;">
-      Subscribe to access AI-powered workforce predictions, attrition forecasting, and talent analytics.
-    </p>
-    <div style="text-align: center; margin-top: 1rem;">
-      <a href="#" class="btn" style="background: #ffc107; color: #1a237e; font-weight: 600; padding: 0.75rem 2rem; border-radius: 25px;">
-        🚀 Subscribe to Premium
-      </a>
+  <div style="margin-top: 1.5rem;">
+    <div class="row text-center">
+      <div class="col-md-3">
+        <div style="font-size: 2rem; font-weight: bold;">{{ ai_summary.projected_hiring }}</div>
+        <div style="font-size: 0.9rem; opacity: 0.9;">Projected Hiring (6 mo)</div>
+      </div>
+      <div class="col-md-3">
+        <div style="font-size: 2rem; font-weight: bold;">{{ ai_summary.high_risk_employees }}</div>
+        <div style="font-size: 0.9rem; opacity: 0.9;">High Risk Employees</div>
+      </div>
+      <div class="col-md-3">
+        <div style="font-size: 2rem; font-weight: bold;">{{ ai_summary.avg_attrition_risk }}%</div>
+        <div style="font-size: 0.9rem; opacity: 0.9;">Avg Attrition Risk</div>
+      </div>
+      <div class="col-md-3">
+        <div style="font-size: 2rem; font-weight: bold;">{{ ai_summary.recommendations_count }}</div>
+        <div style="font-size: 0.9rem; opacity: 0.9;">AI Recommendations</div>
+      </div>
     </div>
   </div>
 </div>
 
-{# More Analytics Features #}
+{# More Analytics Features - Now Active with Real Data #}
 <div class="section-card mt-4">
   <h3 class="section-title">📊 Advanced Analytics</h3>
   <div class="kpi-grid">
     <div class="kpi-card" style="border-top: 4px solid #9c27b0;">
       <div class="kpi-icon">📉</div>
       <div class="kpi-body">
-        <div class="kpi-value">—</div>
+        <div class="kpi-value">{{ ai_summary.avg_attrition_risk }}%</div>
         <div class="kpi-label">Attrition Forecast</div>
       </div>
       <div class="kpi-sub">AI-powered prediction</div>
@@ -160,15 +166,15 @@ document.addEventListener('DOMContentLoaded', function() {
     <div class="kpi-card" style="border-top: 4px solid #00acc1;">
       <div class="kpi-icon">👥</div>
       <div class="kpi-body">
-        <div class="kpi-value">—</div>
+        <div class="kpi-value">{{ employees }}</div>
         <div class="kpi-label">Talent Gap Analysis</div>
       </div>
-      <div class="kpi-sub">Skill workforce mapping</div>
+      <div class="kpi-sub">Current headcount</div>
     </div>
     <div class="kpi-card" style="border-top: 4px solid #ff7043;">
       <div class="kpi-icon">📅</div>
       <div class="kpi-body">
-        <div class="kpi-value">—</div>
+        <div class="kpi-value">{{ ai_summary.projected_hiring }}</div>
         <div class="kpi-label">Hiring Forecast</div>
       </div>
       <div class="kpi-sub">Predictive hiring needs</div>
@@ -176,14 +182,16 @@ document.addEventListener('DOMContentLoaded', function() {
     <div class="kpi-card" style="border-top: 4px solid #66bb6a;">
       <div class="kpi-icon">💼</div>
       <div class="kpi-body">
-        <div class="kpi-value">—</div>
+        <div class="kpi-value">{{ ai_summary.recommendations_count }}</div>
         <div class="kpi-label">Productivity Insights</div>
       </div>
-      <div class="kpi-sub">Team performance AI</div>
+      <div class="kpi-sub">AI recommendations</div>
     </div>
   </div>
-  <p class="text-muted text-center mt-3">
-    <em>Upgrade to Premium to unlock all AI-powered analytics and predictions.</em>
-  </p>
+  <div class="text-center mt-3">
+    <a href="{{ url_for('ai_analytics.dashboard') }}" class="btn btn-primary">
+      🚀 View Full AI Analytics
+    </a>
+  </div>
 </div>
 {% endblock %}

@@ -1,0 +1,218 @@
+{% extends "base.html" %}
+
+{% block title %}Workforce Composition Analysis{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h1 class="display-5">👥 Workforce Composition Analysis</h1>
+            <p class="text-muted">Diversity metrics and workforce demographics</p>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Tenure Distribution -->
+        <div class="col-md-6 mb-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white border-0">
+                    <h5 class="mb-0">📅 Tenure Distribution</h5>
+                </div>
+                <div class="card-body">
+                    {% if analysis.tenure_distribution %}
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Tenure</th>
+                                    <th>Count</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for t in analysis.tenure_distribution %}
+                                <tr>
+                                    <td>{{ t.tenure_bracket }}</td>
+                                    <td>{{ t.count }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-muted">No tenure data available.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Age Distribution -->
+        <div class="col-md-6 mb-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white border-0">
+                    <h5 class="mb-0">🎂 Age Distribution</h5>
+                </div>
+                <div class="card-body">
+                    {% if analysis.age_distribution %}
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Age Group</th>
+                                    <th>Count</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for a in analysis.age_distribution %}
+                                <tr>
+                                    <td>{{ a.age_bracket }}</td>
+                                    <td>{{ a.count }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-muted">No age data available (DOB not recorded).</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Gender Distribution -->
+        <div class="col-md-6 mb-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white border-0">
+                    <h5 class="mb-0">♀️ Gender Distribution</h5>
+                </div>
+                <div class="card-body">
+                    {% if analysis.gender_distribution %}
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Gender</th>
+                                    <th>Count</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for g in analysis.gender_distribution %}
+                                <tr>
+                                    <td>{{ g.gender or 'Not Specified' }}</td>
+                                    <td>{{ g.count }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-muted">No gender data available.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Employment Type -->
+        <div class="col-md-6 mb-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white border-0">
+                    <h5 class="mb-0">💼 Employment Type</h5>
+                </div>
+                <div class="card-body">
+                    {% if analysis.employment_distribution %}
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Type</th>
+                                    <th>Count</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for e in analysis.employment_distribution %}
+                                <tr>
+                                    <td>{{ e.employment_type }}</td>
+                                    <td>{{ e.count }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-muted">No employment type data available.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Department Distribution -->
+        <div class="col-md-6 mb-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white border-0">
+                    <h5 class="mb-0">🏢 Department Distribution</h5>
+                </div>
+                <div class="card-body">
+                    {% if analysis.department_distribution %}
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Department</th>
+                                    <th>Count</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for d in analysis.department_distribution %}
+                                <tr>
+                                    <td>{{ d.department or 'Unassigned' }}</td>
+                                    <td>{{ d.count }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-muted">No department data available.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Job Level Distribution -->
+        <div class="col-md-6 mb-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white border-0">
+                    <h5 class="mb-0">📊 Job Level Distribution</h5>
+                </div>
+                <div class="card-body">
+                    {% if analysis.job_level_distribution %}
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Level</th>
+                                    <th>Count</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for j in analysis.job_level_distribution %}
+                                <tr>
+                                    <td>{{ j.level }}</td>
+                                    <td>{{ j.count }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-muted">No job level data available.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

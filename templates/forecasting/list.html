@@ -61,7 +61,7 @@
     </div>
     {% endif %}
 
-    {# AI Predictions Section - Premium Feature #}
+    {# AI Predictions Section - Now Active #}
     <div class="section-card mt-4" style="background: linear-gradient(135deg, #1a237e 0%, #283593 100%); color: white;">
         <div style="display: flex; align-items: center; gap: 1rem;">
             <div style="font-size: 2.5rem;">🤖</div>
@@ -70,30 +70,36 @@
                 <p style="margin: 0.5rem 0 0; opacity: 0.9;">Smart workforce planning with machine learning predictions.</p>
             </div>
         </div>
-        <div style="margin-top: 1.5rem; padding: 1rem; background: rgba(255,255,255,0.1); border-radius: 8px;">
-            <div style="display: flex; align-items: center; gap: 0.5rem; justify-content: center;">
-                <span style="font-size: 1.2rem;">🔒</span>
-                <span style="font-weight: 600;">Premium Feature</span>
-            </div>
-            <p style="text-align: center; margin: 0.5rem 0 0; font-size: 0.9rem; opacity: 0.9;">
-                Subscribe to access AI-powered workforce predictions, smart hiring forecasts, and trend analysis.
-            </p>
-            <div style="text-align: center; margin-top: 1rem;">
-                <a href="#" class="btn" style="background: #ffc107; color: #1a237e; font-weight: 600; padding: 0.75rem 2rem; border-radius: 25px;">
-                    🚀 Subscribe to Premium
-                </a>
+        <div style="margin-top: 1.5rem;">
+            <div class="row text-center">
+                <div class="col-md-3">
+                    <div style="font-size: 2rem; font-weight: bold;">{{ ai_summary.projected_hiring }}</div>
+                    <div style="font-size: 0.9rem; opacity: 0.9;">Projected Hiring (6 mo)</div>
+                </div>
+                <div class="col-md-3">
+                    <div style="font-size: 2rem; font-weight: bold;">{{ ai_summary.high_risk_employees }}</div>
+                    <div style="font-size: 0.9rem; opacity: 0.9;">High Risk Employees</div>
+                </div>
+                <div class="col-md-3">
+                    <div style="font-size: 2rem; font-weight: bold;">{{ ai_summary.avg_attrition_risk }}%</div>
+                    <div style="font-size: 0.9rem; opacity: 0.9;">Avg Attrition Risk</div>
+                </div>
+                <div class="col-md-3">
+                    <div style="font-size: 2rem; font-weight: bold;">{{ ai_summary.recommendations_count }}</div>
+                    <div style="font-size: 0.9rem; opacity: 0.9;">AI Recommendations</div>
+                </div>
             </div>
         </div>
     </div>
 
-    {# AI Features Preview #}
+    {# AI Features Preview - Now Active with Real Data #}
     <div class="section-card mt-4">
-        <h3 class="section-title">🔮 AI-Powered Forecasting (Premium)</h3>
+        <h3 class="section-title">🔮 AI-Powered Forecasting</h3>
         <div class="kpi-grid">
             <div class="kpi-card" style="border-top: 4px solid #9c27b0;">
                 <div class="kpi-icon">📈</div>
                 <div class="kpi-body">
-                    <div class="kpi-value">—</div>
+                    <div class="kpi-value">{{ ai_summary.projected_hiring }}</div>
                     <div class="kpi-label">Demand Forecast</div>
                 </div>
                 <div class="kpi-sub">ML-based prediction</div>
@@ -101,7 +107,7 @@
             <div class="kpi-card" style="border-top: 4px solid #00acc1;">
                 <div class="kpi-icon">👥</div>
                 <div class="kpi-body">
-                    <div class="kpi-value">—</div>
+                    <div class="kpi-value">{{ ai_summary.high_risk_employees }}</div>
                     <div class="kpi-label">Attrition Risk</div>
                 </div>
                 <div class="kpi-sub">Predict leaving employees</div>
@@ -109,7 +115,7 @@
             <div class="kpi-card" style="border-top: 4px solid #ff7043;">
                 <div class="kpi-icon">💰</div>
                 <div class="kpi-body">
-                    <div class="kpi-value">—</div>
+                    <div class="kpi-value">{{ ai_summary.recommendations_count }}</div>
                     <div class="kpi-label">Budget Planning</div>
                 </div>
                 <div class="kpi-sub">Smart budget allocation</div>
@@ -117,15 +123,17 @@
             <div class="kpi-card" style="border-top: 4px solid #66bb6a;">
                 <div class="kpi-icon">🎯</div>
                 <div class="kpi-body">
-                    <div class="kpi-value">—</div>
+                    <div class="kpi-value">{{ ai_summary.avg_attrition_risk }}%</div>
                     <div class="kpi-label">Talent Insights</div>
                 </div>
-                <div class="kpi-sub">Skills gap analysis</div>
+                <div class="kpi-sub">Risk score</div>
             </div>
         </div>
-        <p class="text-muted text-center mt-3">
-            <em>Upgrade to Premium to unlock all AI-powered forecasting features.</em>
-        </p>
+        <div class="text-center mt-3">
+            <a href="{{ url_for('ai_analytics.dashboard') }}" class="btn btn-primary">
+                🚀 View Full AI Analytics
+            </a>
+        </div>
     </div>
 </div>
 {% endblock %}

@@ -1,0 +1,295 @@
+{% extends "base.html" %}
+
+{% block title %}AI Analytics Report - {{ report_type|title }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h1 class="display-5">📑 AI Analytics Report</h1>
+            <p class="text-muted">Comprehensive {{ report_type }} analysis</p>
+        </div>
+        <div class="col-md-4 text-end">
+            <button onclick="window.print()" class="btn btn-primary">
+                🖨️ Print Report
+            </button>
+        </div>
+    </div>
+
+    <!-- Report Metadata -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body bg-light">
+            <div class="row">
+                <div class="col-md-6">
+                    <p class="mb-1"><strong>Report Type:</strong> {{ report_type|title }}</p>
+                    <p class="mb-0"><strong>Generated:</strong> {{ report.generated_at }}</p>
+                </div>
+                <div class="col-md-6 text-end">
+                    <p class="mb-1">Company ID: {{ report.company_id }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Attrition Risk Section -->
+    {% if report.attrition_risk %}
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white border-0">
+            <h4 class="mb-0">🎯 Attrition Risk Analysis</h4>
+        </div>
+        <div class="card-body">
+            {% set high_risk = report.attrition_risk|selectattr('risk_level', 'equalto', 'High')|list %}
+            {% set medium_risk = report.attrition_risk|selectattr('risk_level', 'equalto', 'Medium')|list %}
+            
+            <div class="row text-center mb-4">
+                <div class="col-md-4">
+                    <div class="h2 text-danger">{{ high_risk|length }}</div>
+                    <small>High Risk</small>
+                </div>
+                <div class="col-md-4">
+                    <div class="h2 text-warning">{{ medium_risk|length }}</div>
+                    <small>Medium Risk</small>
+                </div>
+                <div class="col-md-4">
+                    <div class="h2 text-success">{{ report.attrition_risk|length - high_risk|length - medium_risk|length }}</div>
+                    <small>Low Risk</small>
+                </div>
+            </div>
+            
+            {% if high_risk|length > 0 %}
+            <h5>High Risk Employees:</h5>
+            <table class="table table-sm">
+                <thead>
+                    <tr>
+                        <th>Employee</th>
+                        <th>Risk Score</th>
+                        <th>Factors</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for risk in high_risk[:5] %}
+                    <tr>
+                        <td>{{ risk.employee_name or 'Employee #' ~ risk.employee_id }}</td>
+                        <td>{{ risk.risk_score }}%</td>
+                        <td>{{ risk.factors|join(', ') if risk.factors else 'None' }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Workforce Forecast Section -->
+    {% if report.workforce_forecast %}
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white border-0">
+            <h4 class="mb-0">📈 Workforce Demand Forecast</h4>
+        </div>
+        <div class="card-body">
+            {% if report.workforce_forecast.current %}
+            <div class="row mb-3">
+                <div class="col-md-3">
+                    <strong>Current Headcount:</strong> {{ report.workforce_forecast.current.total_employees }}
+                </div>
+                <div class="col-md-3">
+                    <strong>Active:</strong> {{ report.workforce_forecast.current.active_employees }}
+                </div>
+                <div class="col-md-3">
+                    <strong>Growth Rate:</strong> {{ (report.workforce_forecast.trends.growth_rate * 100)|round(1) }}%
+                </div>
+                <div class="col-md-3">
+                    <strong>Confidence:</strong> {{ report.workforce_forecast.trends.confidence }}
+                </div>
+            </div>
+            {% endif %}
+            
+            {% if report.workforce_forecast.forecasts %}
+            <h5>6-Month Forecast:</h5>
+            <table class="table table-sm">
+                <thead>
+                    <tr>
+                        <th>Month</th>
+                        <th>Projected</th>
+                        <th>Hiring Needed</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for f in report.workforce_forecast.forecasts[:6] %}
+                    <tr>
+                        <td>{{ f.month }}</td>
+                        <td>{{ f.projected_headcount }}</td>
+                        <td>{{ f.hiring_needed }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Attendance Analysis Section -->
+    {% if report.attendance_analysis %}
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white border-0">
+            <h4 class="mb-0">📅 Attendance Pattern Analysis</h4>
+        </div>
+        <div class="card-body">
+            {% set overall = report.attendance_analysis.overall %}
+            <div class="row text-center mb-3">
+                <div class="col-md-3">
+                    <div class="h3">{{ overall.present }}</div>
+                    <small>Present</small>
+                </div>
+                <div class="col-md-3">
+                    <div class="h3 text-danger">{{ overall.absent }}</div>
+                    <small>Absent</small>
+                </div>
+                <div class="col-md-3">
+                    <div class="h3 text-warning">{{ overall.late }}</div>
+                    <small>Late</small>
+                </div>
+                <div class="col-md-3">
+                    <div class="h3">{{ overall.attendance_rate }}%</div>
+                    <small>Attendance Rate</small>
+                </div>
+            </div>
+            
+            {% if report.attendance_analysis.anomalies %}
+            <h5>Detected Anomalies:</h5>
+            <p>{{ report.attendance_analysis.anomalies|length }} employees with unusual attendance patterns.</p>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Leave Trends Section -->
+    {% if report.leave_trends %}
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white border-0">
+            <h4 class="mb-0">🏖️ Leave Trend Analysis</h4>
+        </div>
+        <div class="card-body">
+            {% set stats = report.leave_trends.statistics %}
+            <div class="row text-center mb-3">
+                <div class="col-md-3">
+                    <div class="h3">{{ stats.total_requests }}</div>
+                    <small>Total Requests</small>
+                </div>
+                <div class="col-md-3">
+                    <div class="h3 text-success">{{ stats.approved }}</div>
+                    <small>Approved</small>
+                </div>
+                <div class="col-md-3">
+                    <div class="h3 text-warning">{{ stats.pending }}</div>
+                    <small>Pending</small>
+                </div>
+                <div class="col-md-3">
+                    <div class="h3">{{ stats.total_days }}</div>
+                    <small>Total Days</small>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Productivity Section -->
+    {% if report.productivity %}
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white border-0">
+            <h4 class="mb-0">📊 Productivity Insights</h4>
+        </div>
+        <div class="card-body">
+            {% set perf = report.productivity.performance %}
+            <div class="row text-center mb-3">
+                <div class="col-md-3">
+                    <div class="h3 text-success">{{ perf.excellent }}</div>
+                    <small>Excellent</small>
+                </div>
+                <div class="col-md-3">
+                    <div class="h3 text-info">{{ perf.good }}</div>
+                    <small>Good</small>
+                </div>
+                <div class="col-md-3">
+                    <div class="h3 text-warning">{{ perf.needs_improvement }}</div>
+                    <small>Needs Improvement</small>
+                </div>
+                <div class="col-md-3">
+                    <div class="h3">{{ perf.average_rating }}</div>
+                    <small>Average Rating</small>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Workforce Composition Section -->
+    {% if report.workforce_composition %}
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white border-0">
+            <h4 class="mb-0">👥 Workforce Composition</h4>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                {% if report.workforce_composition.employment_distribution %}
+                <div class="col-md-6">
+                    <h5>Employment Type:</h5>
+                    <table class="table table-sm">
+                        {% for e in report.workforce_composition.employment_distribution %}
+                        <tr>
+                            <td>{{ e.employment_type }}</td>
+                            <td>{{ e.count }}</td>
+                        </tr>
+                        {% endfor %}
+                    </table>
+                </div>
+                {% endif %}
+                
+                {% if report.workforce_composition.job_level_distribution %}
+                <div class="col-md-6">
+                    <h5>Job Level:</h5>
+                    <table class="table table-sm">
+                        {% for j in report.workforce_composition.job_level_distribution %}
+                        <tr>
+                            <td>{{ j.level }}</td>
+                            <td>{{ j.count }}</td>
+                        </tr>
+                        {% endfor %}
+                    </table>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Recommendations Section -->
+    {% if report.recommendations %}
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white border-0">
+            <h4 class="mb-0">💡 Smart Recommendations</h4>
+        </div>
+        <div class="card-body">
+            {% for rec in report.recommendations %}
+            <div class="border-bottom pb-2 mb-2">
+                <div class="d-flex justify-content-between">
+                    <strong>{{ rec.title }}</strong>
+                    <span class="badge bg-{% if rec.priority == 'high' %}danger{% elif rec.priority == 'medium' %}warning{% else %}info{% endif %}">
+                        {{ rec.priority }}
+                    </span>
+                </div>
+                <small class="text-muted">{{ rec.description }}</small>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Footer -->
+    <div class="text-center text-muted mt-4">
+        <small>Report generated by AI Analytics Engine</small>
+    </div>
+</div>
+{% endblock %}

@@ -4,15 +4,19 @@
   <meta charset="UTF-8" />
   <meta name="google-site-verification" content="bUOaXdJVqd7ORv5ooeZDfNpK8q1WfMyas7sujEHXbM0" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Login — WorkZen HR</title>
+  <title>Login — MatinexHR</title>
+  <link rel="icon" type="image/png" sizes="64x64" href="/static/img/branding/favicon-64x64.png">
+  <link rel="icon" type="image/png" sizes="128x128" href="/static/img/branding/favicon-128x128.png">
+  <link rel="apple-touch-icon" sizes="128x128" href="/static/img/branding/favicon-128x128.png">
   <style>
     /* ── Custom Login Redesign ─────────────────────────────── */
     .login-page-wrapper {
-      min-height: 200vh;
+      min-height: 100vh;
       background: linear-gradient(135deg, #0f1c2e 0%, #1a3a5c 100%);
       padding: 0;
       position: relative;
       overflow-x: hidden;
+      overflow-y: auto;
     }
     
     /* Bold Pentagon Blue Area */
@@ -275,7 +279,9 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      background: linear-gradient(135deg, #1e3a5f 0%, #142850 100%);
+      background: linear-gradient(270deg, #667eea, #764ba2, #11998e, #38ef7d);
+      background-size: 400% 400%;
+      animation: lively-gradient 6s ease infinite;
       border-radius: 14px;
       padding: 12px 18px;
       color: #fff;
@@ -283,6 +289,11 @@
       border: 1px solid rgba(255,255,255,0.2);
       transition: all 0.3s ease;
       min-width: 80px;
+    }
+    @keyframes lively-gradient {
+      0% {background-position:0% 50%}
+      50% {background-position:100% 50%}
+      100% {background-position:0% 50%}
     }
     .diagonal-feature:hover {
       transform: translateY(-8px);
@@ -347,12 +358,13 @@
       flex-direction: column;
       align-items: center;
       z-index: 900 !important;
-      position: fixed;
-      top: -50px;
+      position: relative;
+      top: 0;
       left: 50%;
       transform: translateX(-50%);
       width: 100%;
       padding: 0 20px;
+      margin-top: -110px;
     }
     
     .login-card-wrapper {
@@ -388,15 +400,28 @@
     }
     
     .login-card-title {
-      font-size: 1.9rem;
+      font-size: 2rem;
       font-weight: 800;
-      color: #1a1a2e;
       margin-top: 12px;
       letter-spacing: 0.5px;
     }
+    .login-card-title .matinex-dark {
+      background: linear-gradient(90deg, #0a2540 0%, #17407b 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      text-fill-color: transparent;
+    }
+    .login-card-title .hr-light {
+      background: linear-gradient(90deg, #2196f3 0%, #6ec6ff 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      text-fill-color: transparent;
+    }
     
     .login-card-subtitle {
-      font-size: 0.95rem;
+      font-size: 1rem;
       color: #666;
       margin-top: 8px;
     }
@@ -660,7 +685,7 @@
         </button>
         <div class="dropdown-content">
           <div class="dropdown-header">
-            <i class="fas fa-book-open"></i> How to Use WorkZen HR
+            <i class="fas fa-book-open"></i> How to Use MatinexHR
           </div>
           <div class="dropdown-body">
             <p style="margin-bottom: 15px; font-size: 1rem;"><strong>Important:</strong> If your company is not registered yet, please click "Register your company" below the login form first!</p>
@@ -700,8 +725,8 @@
     <div class="login-center-area">
       <div class="login-card-wrapper">
         <div class="login-card-header">
-          <div class="login-card-logo">⬡</div>
-          <h1 class="login-card-title">WorkZen HR</h1>
+          <div class="login-card-logo"><img src="/static/img/branding/logomat.png" alt="MatinexHR Logo" style="height:72px;width:auto;display:inline;vertical-align:middle;" /></div>
+          <h1 class="login-card-title"><span class="matinex-dark">Matinex</span><span class="hr-light">HR</span></h1>
           <p class="login-card-subtitle">Sign in to continue</p>
         </div>
         
@@ -743,26 +768,26 @@
         
         <div class="login-links">
           <p>New? <a href="{{ url_for('auth.register_company') }}">Register your company</a></p>
-          <p><a href="{{ url_for('auth.reset_password') }}">Forgot password?</a></p>
+          <p><a href="{{ url_for('auth.forgot_password') }}">Forgot password?</a></p>
         </div>
       </div>
       
       <!-- Social Links at Bottom -->
       <div class="social-links-row">
         <div class="social-links">
-          <a href="https://www.youtube.com/@TinasheMataruse09" target="_blank" class="social-link" title="YouTube">
+          <a href="#" class="social-link" title="YouTube">
             <i class="fab fa-youtube"></i>
           </a>
-          <a href="https://linkedin.com" target="_blank" class="social-link" title="LinkedIn">
+          <a href="#" class="social-link" title="LinkedIn">
             <i class="fab fa-linkedin-in"></i>
           </a>
-          <a href="https://twitter.com" target="_blank" class="social-link" title="Twitter">
+          <a href="#" class="social-link" title="Twitter">
             <i class="fab fa-twitter"></i>
           </a>
-          <a href="https://facebook.com" target="_blank" class="social-link" title="Facebook">
+          <a href="#" class="social-link" title="Facebook">
             <i class="fab fa-facebook-f"></i>
           </a>
-          <a href="https://instagram.com" target="_blank" class="social-link" title="Instagram">
+          <a href="#" class="social-link" title="Instagram">
             <i class="fab fa-instagram"></i>
           </a>
         </div>
@@ -770,7 +795,7 @@
       
       <!-- YouTube Area -->
       <div class="youtube-row">
-        <a href="https://www.youtube.com/@TinasheMataruse09" target="_blank" class="youtube-link">
+        <a href="#" class="youtube-link">
           <i class="fab fa-youtube youtube-icon"></i> 
           <span class="youtube-label">Watch App Overview</span>
         </a>

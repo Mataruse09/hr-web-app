@@ -9,7 +9,7 @@ from datetime import datetime, timedelta, date
 
 from utils import login_required, roles_required, send_email
 from models import employee_model, user_model, company_model
-from services.email_service import send_employee_added_email
+from services.email_service import send_employee_added_email, send_password_reset_email
 
 logger = logging.getLogger(__name__)
 
@@ -62,7 +62,7 @@ def list_employees():
 # ─────────────────────────────────────────────────────────────
 @employee_bp.route('/add', methods=['GET', 'POST'])
 @login_required
-@roles_required('Admin', 'HR')
+@roles_required('Admin', 'HR', 'CHRO')
 def add_employee():
     company_id = session.get('company_id')
 
@@ -145,17 +145,26 @@ def add_employee():
 
                 # Get company name for email
                 company = company_model.get_by_id(company_id)
-                company_name = company[1] if company else "Your Company"
+                company_name = company['name'] if company else "Your Company"
 
-                # Use enhanced email service
-                send_employee_added_email(
-                    first_name, email, company_name, username, default_password
+                # Send password reset email with security info
+                send_password_reset_email(
+                    first_name,
+                    email,
+                    company_name,
+                    reset_link
                 )
 
             except Exception as email_error:
                 logger.warning('SMTP failed: %s', email_error)
 
             flash('Employee added successfully.', 'success')
+            
+            # Invalidate KPI cache for this company
+            from services.calculation_services import invalidate_company_cache
+            invalidate_company_cache(company_id)
+            logger.info(f"Invalidated KPI cache for company {company_id} after employee creation")
+            
             return redirect(url_for('employees.profile', emp_id=emp_id))
 
         except Exception as e:
@@ -302,7 +311,7 @@ def profile(emp_id):
 # ─────────────────────────────────────────────────────────────
 @employee_bp.route('/<int:emp_id>/edit', methods=['GET', 'POST'])
 @login_required
-@roles_required('Admin', 'HR')
+@roles_required('Admin', 'HR', 'CHRO')
 def edit_employee(emp_id):
     company_id = session.get('company_id')
 
@@ -319,9 +328,56 @@ def edit_employee(emp_id):
 
     if request.method == 'POST':
         data = request.form.to_dict()
+        
+        # Check if employee is being reactivated
+        old_status = employee.get('status')
+        new_status = data.get('status', old_status)
+        is_reactivation = (old_status != 'Active' and new_status == 'Active')
+        
         employee_model.update(emp_id, company_id, data)
 
-        flash('Employee updated successfully.', 'success')
+        # If employee is reactivated, send reset password email
+        if is_reactivation and employee.get('user_id'):
+            try:
+                from services.email_service import send_password_reset_email
+                from models import user_model
+                from datetime import datetime, timedelta
+                import secrets
+                
+                user = user_model.get_by_id(employee['user_id'])
+                if user and user.get('email'):
+                    # Generate reset token
+                    reset_token = secrets.token_urlsafe(32)
+                    expiry = datetime.utcnow() + timedelta(minutes=30)
+                    user_model.save_reset_token(employee['user_id'], reset_token, expiry)
+                    
+                    # Build reset link
+                    reset_link = (
+                        f"{request.url_root.rstrip('/')}"
+                        f"/auth/reset-password?token={reset_token}&company_id={company_id}"
+                    )
+                    
+                    # Get company name
+                    from models import company_model
+                    company = company_model.get_by_id(company_id)
+                    company_name = company['name'] if company else "Your Company"
+                    
+                    # Send email
+                    send_password_reset_email(
+                        employee['first_name'],
+                        user['email'],
+                        company_name,
+                        reset_link
+                    )
+                    flash(f'Employee activated. Reset password email sent to {user["email"]}.', 'success')
+                else:
+                    flash('Employee activated but could not send reset email (no user email).', 'warning')
+            except Exception as e:
+                logger.error(f"Error sending reactivation email: {e}")
+                flash('Employee activated but failed to send reset email.', 'warning')
+        else:
+            flash('Employee updated successfully.', 'success')
+        
         return redirect(url_for('employees.profile', emp_id=emp_id))
 
     return render_template(
@@ -381,6 +437,11 @@ def delete_employee(emp_id):
         return redirect(url_for('auth.login'))
 
     employee_model.delete(emp_id, company_id)
+    
+    # Invalidate KPI cache for this company
+    from services.calculation_services import invalidate_company_cache
+    invalidate_company_cache(company_id)
+    logger.info(f"Invalidated KPI cache for company {company_id} after employee deletion")
 
     flash('Employee deleted.', 'info')
     return redirect(url_for('employees.list_employees'))

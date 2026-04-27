@@ -2,9 +2,13 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <meta name="google-site-verification" content="bUOaXdJVqd7ORv5ooeZDfNpK8q1WfMyas7sujEHXbM0" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>{% block title %}HRCore{% endblock %}</title>
+  <title>{% block title %}MatinexHR{% endblock %}</title>
+  <link rel="icon" type="image/png" sizes="64x64" href="/static/img/branding/favicon-64x64.png">
+  <link rel="icon" type="image/png" sizes="128x128" href="/static/img/branding/favicon-128x128.png">
+  <link rel="apple-touch-icon" sizes="128x128" href="/static/img/branding/favicon-128x128.png">
 
   <!-- reuse same CSS -->
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
@@ -95,8 +99,31 @@
     /* ===== Mobile tweak ===== */
     @media (max-width: 500px) {
       .auth-container {
-        margin: 20px;
+        margin: 15px;
         padding: 20px;
+        max-width: 100%;
+        border-radius: 12px;
+      }
+    }
+    
+    /* ===== Enhanced Mobile Responsive ===== */
+    @media (max-width: 768px) {
+      body {
+        padding: 10px;
+        background-size: 300% 300%;
+      }
+      .auth-container {
+        padding: 20px 16px;
+      }
+      .flash-container {
+        right: 10px;
+        left: 10px;
+      }
+      .alert {
+        min-width: unset;
+        width: 100%;
+        font-size: 13px;
+        padding: 8px 12px;
       }
     }
   </style>

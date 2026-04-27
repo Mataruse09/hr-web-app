@@ -202,9 +202,9 @@
     <h3 class="section-title">Compensation</h3>
     {% if comp %}
     <dl class="detail-list">
-      <dt>Basic Salary</dt>  <dd>${{ "{:,.2f}".format(comp.basic_salary) }}</dd>
-      <dt>Housing</dt>       <dd>${{ "{:,.2f}".format(comp.housing_allowance) }}</dd>
-      <dt>Transport</dt>     <dd>${{ "{:,.2f}".format(comp.transport_allowance) }}</dd>
+      <dt>Basic Salary</dt>  <dd>${{ "{:,.2f}".format(comp.basic_salary|default(0)) }}</dd>
+      <dt>Housing</dt>       <dd>${{ "{:,.2f}".format(comp.housing_allowance|default(0)) }}</dd>
+      <dt>Transport</dt>     <dd>${{ "{:,.2f}".format(comp.transport_allowance|default(0)) }}</dd>
       <dt>Tax Rate</dt>      <dd>{{ comp.income_tax_rate }}%</dd>
       <dt>Currency</dt>      <dd>{{ comp.currency }}</dd>
       <dt>Effective</dt>     <dd>{{ comp.effective_date }}</dd>

@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Terms & Conditions - MatinexHR</title>
+    <link rel="icon" type="image/png" sizes="64x64" href="/static/img/branding/favicon-64x64.png">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --secondary: #7c3aed;
+            --accent: #06b6d4;
+        }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+        }
+        .terms-container {
+            max-width: 900px;
+            margin: 40px auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .terms-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+        .terms-header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+        .terms-header p {
+            opacity: 0.9;
+            font-size: 1.1rem;
+        }
+        .terms-nav {
+            background: #f8f9fa;
+            padding: 15px 0;
+            border-bottom: 1px solid #e9ecef;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .terms-nav .nav-pills {
+            justify-content: center;
+        }
+        .terms-nav .nav-link {
+            color: #495057;
+            border-radius: 20px;
+            padding: 8px 20px;
+            margin: 0 5px;
+            font-weight: 500;
+        }
+        .terms-nav .nav-link.active {
+            background: var(--primary);
+            color: white;
+        }
+        .terms-content {
+            padding: 40px;
+        }
+        .terms-section {
+            margin-bottom: 40px;
+            scroll-margin-top: 100px;
+        }
+        .terms-section h2 {
+            color: var(--primary);
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e9ecef;
+        }
+        .terms-section h3 {
+            color: #333;
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin: 20px 0 10px 0;
+        }
+        .terms-section p, .terms-section ul {
+            color: #555;
+            line-height: 1.8;
+            font-size: 1rem;
+        }
+        .terms-section ul {
+            padding-left: 20px;
+        }
+        .terms-section li {
+            margin-bottom: 8px;
+        }
+        .highlight-box {
+            background: #f8f9fa;
+            border-left: 4px solid var(--primary);
+            padding: 15px 20px;
+            margin: 15px 0;
+            border-radius: 0 8px 8px 0;
+        }
+        .warning-box {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px 20px;
+            margin: 15px 0;
+            border-radius: 0 8px 8px 0;
+        }
+        .danger-box {
+            background: #f8d7da;
+            border-left: 4px solid #dc3545;
+            padding: 15px 20px;
+            margin: 15px 0;
+            border-radius: 0 8px 8px 0;
+        }
+        .success-box {
+            background: #d4edda;
+            border-left: 4px solid #28a745;
+            padding: 15px 20px;
+            margin: 15px 0;
+            border-radius: 0 8px 8px 0;
+        }
+        .info-box {
+            background: #d1ecf1;
+            border-left: 4px solid #17a2b8;
+            padding: 15px 20px;
+            margin: 15px 0;
+            border-radius: 0 8px 8px 0;
+        }
+        .last-updated {
+            text-align: center;
+            color: #666;
+            font-size: 0.9rem;
+            padding: 20px;
+            background: #f8f9fa;
+            border-top: 1px solid #e9ecef;
+        }
+        .back-to-top {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: var(--primary);
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            box-shadow: 0 4px 15px rgba(79, 70, 229, 0.3);
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+        }
+        .back-to-top:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(79, 70, 229, 0.4);
+        }
+        @media (max-width: 768px) {
+            .terms-container {
+                margin: 20px;
+            }
+            .terms-header {
+                padding: 30px 20px;
+            }
+            .terms-header h1 {
+                font-size: 1.8rem;
+            }
+            .terms-content {
+                padding: 20px;
+            }
+            .terms-nav .nav-pills {
+                flex-wrap: nowrap;
+                overflow-x: auto;
+                padding: 0 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="terms-container">
+        <div class="terms-header">
+            <h1><i class="fas fa-file-contract me-2"></i>Terms & Conditions</h1>
+            <p>MatinexHR - Human Resource Management Platform</p>
+        </div>
+        
+        <nav class="terms-nav">
+            <ul class="nav nav-pills" id="termsTab" role="tablist">
+                <li class="nav-item">
+                    <button class="nav-link active" data-bs-toggle="pill" data-bs-target="#overview">Overview</button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link" data-bs-toggle="pill" data-bs-target="#acceptance">Acceptance</button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link" data-bs-toggle="pill" data-bs-target="#services">Services</button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link" data-bs-toggle="pill" data-bs-target="#account">Account</button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link" data-bs-toggle="pill" data-bs-target="#payment">Payment</button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link" data-bs-toggle="pill" data-bs-target="#conduct">Conduct</button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link" data-bs-toggle="pill" data-bs-target="#privacy">Privacy</button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link" data-bs-toggle="pill" data-bs-target="#termination">Termination</button>
+                </li>
+            </ul>
+        </nav>
+        
+        <div class="tab-content" id="termsTabContent">
+            <!-- Overview Tab -->
+            <div class="tab-pane fade show active" id="overview">
+                <div class="terms-content">
+                    <div class="terms-section" id="introduction">
+                        <h2><i class="fas fa-info-circle me-2"></i>1. Introduction</h2>
+                        <p>Welcome to MatinexHR ("we," "our," or "us"). These Terms and Conditions ("Terms") govern your use of the MatinexHR website, applications, and services (collectively, the "Service").</p>
+                        <p>By accessing or using MatinexHR, you agree to be bound by these Terms. If you disagree with any part of these Terms, you may not access our Service.</p>
+                        
+                        <div class="info-box">
+                            <strong><i class="fas fa-exclamation-circle me-2"></i>Important Notice</strong>
+                            <p class="mb-0">These Terms constitute a legally binding agreement between you and MatinexHR. Please read them carefully.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="terms-section" id="agreement">
+                        <h2><i class="fas fa-handshake me-2"></i>2. Agreement to Terms</h2>
+                        <p>By registering a company account, creating a user account, or accessing any part of the MatinexHR platform, you acknowledge that:</p>
+                        <ul>
+                            <li>You have read and understood these Terms</li>
+                            <li>You agree to be bound by these Terms and our Privacy Policy</li>
+                            <li>You are at least 18 years of age and have the legal capacity to enter into binding contracts</li>
+                            <li>You are authorized to represent the company you are registering</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Acceptance Tab -->
+            <div class="tab-pane fade" id="acceptance">
+                <div class="terms-content">
+                    <div class="terms-section" id="terms-acceptance">
+                        <h2><i class="fas fa-check-circle me-2"></i>1. Acceptance of Terms</h2>
+                        <p>Your use of MatinexHR constitutes your express acceptance of these Terms. When you register a company, you must check a box or click a button confirming that you have read and agree to these Terms.</p>
+                        
+                        <div class="highlight-box">
+                            <strong>Registration Agreement</strong>
+                            <p class="mb-0">By registering on MatinexHR, you confirm: "I have read and agree to the Terms and Conditions, Privacy Policy, and Acceptable Use Policy of MatinexHR."</p>
+                        </div>
+                    </div>
+                    
+                    <div class="terms-section" id="changes">
+                        <h2><i class="fas fa-sync-alt me-2"></i>2. Modifications to Terms</h2>
+                        <p>MatinexHR reserves the right to modify these Terms at any time. We will provide notice of material changes via:</p>
+                        <ul>
+                            <li>Email notification to registered users</li>
+                            <li>Notice on the MatinexHR website</li>
+                            <li>Notification when you next log in</li>
+                        </ul>
+                        <p>Your continued use of the Service after such modifications constitutes acceptance of the updated Terms.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Services Tab -->
+            <div class="tab-pane fade" id="services">
+                <div class="terms-content">
+                    <div class="terms-section" id="service-description">
+                        <h2><i class="fas fa-cogs me-2"></i>1. Service Description</h2>
+                        <p>MatinexHR provides a comprehensive human resource management platform including:</p>
+                        <ul>
+                            <li><strong>Employee Management</strong> - Centralized employee database and profiles</li>
+                            <li><strong>Attendance Tracking</strong> - Time tracking, clock in/out, attendance reports</li>
+                            <li><strong>Leave Management</strong> - Request and approval workflows for leave</li>
+                            <li><strong>Payroll Processing</strong> - Salary calculation and payroll management</li>
+                            <li><strong>AI Analytics</strong> - Data-driven insights and workforce predictions</li>
+                            <li><strong>Performance Appraisals</strong> - Employee review and appraisal systems</li>
+                            <li><strong>Forecasting</strong> - Workforce planning and trend analysis</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="terms-section" id="service-level">
+                        <h2><i class="fas fa-tachometer-alt me-2"></i>2. Service Level</h2>
+                        <p>We strive to maintain high availability for our Service, but we do not guarantee uninterrupted access.</p>
+                        <div class="highlight-box">
+                            <strong>Availability Commitment</strong>
+                            <p>MatinexHR aims for 99.9% uptime, excluding scheduled maintenance and force majeure events.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Account Tab -->
+            <div class="tab-pane fade" id="account">
+                <div class="terms-content">
+                    <div class="terms-section" id="account-responsibilities">
+                        <h2><i class="fas fa-user-circle me-2"></i>1. Account Responsibilities</h2>
+                        <p>When you create a company account and user accounts, you are responsible for:</p>
+                        <ul>
+                            <li>Providing accurate and complete registration information</li>
+                            <li>Maintaining the security of account credentials</li>
+                            <li>All activities that occur under your accounts</li>
+                            <li>Immediately notifying us of any unauthorized use</li>
+                            <li>Ensuring all users comply with these Terms</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="terms-section" id="account-types">
+                        <h2><i class="fas fa-users me-2"></i>2. Account Types & Access</h2>
+                        <p>MatinexHR offers different user roles with varying access levels:</p>
+                        <ul>
+                            <li><strong>Admin</strong> - Full system access and company settings</li>
+                            <li><strong>HR Manager</strong> - HR functions and employee management</li>
+                            <li><strong>Manager</strong> - Team management and approvals</li>
+                            <li><strong>Employee</strong> - Self-service and view access</li>
+                        </ul>
+                        <p>You are responsible for assigning appropriate access levels to users within your organization.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Payment Tab -->
+            <div class="tab-pane fade" id="payment">
+                <div class="terms-content">
+                    <div class="terms-section" id="pricing">
+                        <h2><i class="fas fa-tags me-2"></i>1. Pricing & Payment</h2>
+                        <p>MatinexHR offers subscription-based pricing with tiered plans:</p>
+                        <ul>
+                            <li><strong>Free Plan</strong> - Limited features for small teams (up to 10 employees)</li>
+                            <li><strong>Starter Plan</strong> - $29/month - Basic features for growing businesses</li>
+                            <li><strong>Professional Plan</strong> - $79/month - Advanced features with AI analytics</li>
+                            <li><strong>Enterprise Plan</strong> - $199/month - Full-featured for large organizations</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="terms-section" id="billing">
+                        <h2><i class="fas fa-credit-card me-2"></i>2. Billing Terms</h2>
+                        <ul>
+                            <li>Subscriptions are billed monthly or annually in advance</li>
+                            <li>All fees are non-refundable unless otherwise specified</li>
+                            <li>Prices are subject to change with 30 days notice</li>
+                            <li>Failed payments may result in service suspension</li>
+                            <li>You are responsible for all applicable taxes</li>
+                        </ul>
+                        
+                        <div class="warning-box">
+                            <strong><i class="fas fa-exclamation-triangle me-2"></i>Payment Failure</strong>
+                            <p class="mb-0">If payment fails, we will provide 7 days to update payment information before suspending access.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Conduct Tab -->
+            <div class="tab-pane fade" id="conduct">
+                <div class="terms-content">
+                    <div class="terms-section" id="acceptable-use">
+                        <h2><i class="fas fa-gavel me-2"></i>1. Acceptable Use Policy</h2>
+                        <p>You agree NOT to use MatinexHR to:</p>
+                        <ul>
+                            <li>Upload or transmit viruses, malware, or other harmful code</li>
+                            <li>Attempt to gain unauthorized access to our systems</li>
+                            <li>Interfere with or disrupt the integrity or performance of the Service</li>
+                            <li>Collect or store personal data about other users without consent</li>
+                            <li>Post or transmit illegal, harmful, offensive, or discriminatory content</li>
+                            <li>Use the Service for any illegal purpose or in violation of any laws</li>
+                            <li>Harass, abuse, or threaten other users</li>
+                            <li>Impersonate any person or entity</li>
+                            <li>Spam or send unsolicited communications</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="terms-section" id="content">
+                        <h2><i class="fas fa-file-alt me-2"></i>2. User Content</h2>
+                        <p>You retain ownership of content you upload to MatinexHR, but you grant us license to use it for providing the Service.</p>
+                        <p>You represent and warrant that:</p>
+                        <ul>
+                            <li>You own or have the right to use all content you upload</li>
+                            <li>Your content does not infringe on any third party's rights</li>
+                            <li>Your content complies with these Terms and applicable laws</li>
+                        </ul>
+                        
+                        <div class="danger-box">
+                            <strong><i class="fas fa-ban me-2"></i>Prohibited Content</strong>
+                            <p class="mb-0">Content containing illegal material, child exploitation, hate speech, or threats will be immediately removed and reported to authorities.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Privacy Tab -->
+            <div class="tab-pane fade" id="privacy">
+                <div class="terms-content">
+                    <div class="terms-section" id="data-collection">
+                        <h2><i class="fas fa-database me-2"></i>1. Data Collection & Use</h2>
+                        <p>We collect and process personal data as described in our Privacy Policy. By using MatinexHR, you consent to such processing.</p>
+                        <p>We collect:</p>
+                        <ul>
+                            <li>Account and profile information</li>
+                            <li>Employee data you choose to store</li>
+                            <li>Usage data and analytics</li>
+                            <li>Communication data</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="terms-section" id="data-security">
+                        <h2><i class="fas fa-shield-alt me-2"></i>2. Data Security</h2>
+                        <p>We implement industry-standard security measures to protect your data. However, no method of transmission over the Internet is 100% secure.</p>
+                        <div class="success-box">
+                            <strong><i class="fas fa-lock me-2"></i>Security Commitment</strong>
+                            <p class="mb-0">We use encryption, access controls, and regular security audits to protect your data.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Termination Tab -->
+            <div class="tab-pane fade" id="termination">
+                <div class="terms-content">
+                    <div class="terms-section" id="termination-by-user">
+                        <h2><i class="fas fa-sign-out-alt me-2"></i>1. Termination by You</h2>
+                        <p>You may cancel your subscription at any time through your account settings. Upon cancellation:</p>
+                        <ul>
+                            <li>Access continues until the end of your billing period</li>
+                            <li>Data is retained for 30 days after expiration</li>
+                            <li>You can export your data before deletion</li>
+                            <li>You may reactivate within 30 days</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="terms-section" id="termination-by-us">
+                        <h2><i class="fas fa-exclamation-triangle me-2"></i>2. Termination by Us</h2>
+                        <p>We may terminate or suspend your access immediately, without notice, for:</p>
+                        <ul>
+                            <li>Violation of these Terms</li>
+                            <li>Non-payment of fees</li>
+                            <li>Illegal or abusive activity</li>
+                            <li>Repeated abuse reports</li>
+                            <li>Bankruptcy or insolvency proceedings</li>
+                        </ul>
+                        
+                        <div class="danger-box">
+                            <strong><i class="fas fa-gavel me-2"></i>Ban Policy</strong>
+                            <p class="mb-0">Companies may be manually or automatically banned for Terms violations. Banned companies will be notified and given opportunity to appeal.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="terms-section" id="effects">
+                        <h2><i class="fas fa-balance-scale me-2"></i>3. Effects of Termination</h2>
+                        <p>Upon termination:</p>
+                        <ul>
+                            <li>All access to the Service will be revoked</li>
+                            <li>Your data will be deleted according to our data retention policy</li>
+                            <li>Any outstanding fees remain due</li>
+                            <li>Provisions that by their nature should survive will survive</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="last-updated">
+            <p><strong>Last Updated:</strong> April 26, 2026 | <strong>Version:</strong> 1.0</p>
+            <p>&copy; 2026 MatinexHR. All rights reserved.</p>
+        </div>
+    </div>
+    
+    <a href="#" class="back-to-top" onclick="window.scrollTo({top: 0, behavior: 'smooth'}); return false;">
+        <i class="fas fa-arrow-up"></i>
+    </a>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Smooth scroll for navigation
+        document.querySelectorAll('.terms-nav .nav-link').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                document.querySelectorAll('.terms-nav .nav-link').forEach(l => l.classList.remove('active'));
+                this.classList.add('active');
+                const targetId = this.getAttribute('data-bs-target');
+                document.querySelectorAll('.tab-pane').forEach(pane => pane.classList.remove('show', 'active'));
+                document.querySelector(targetId).classList.add('show', 'active');
+            });
+        });
+    </script>
+</body>
+</html>

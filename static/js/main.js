@@ -1,3 +1,29 @@
+// ── Benefits Dropdown ──────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', function () {
+  const benefitsLink = document.getElementById('benefits-link');
+  const benefitsDropdown = document.getElementById('benefits-dropdown');
+  if (benefitsLink && benefitsDropdown) {
+    benefitsLink.addEventListener('click', function (e) {
+      e.preventDefault();
+      // Toggle dropdown
+      if (benefitsDropdown.style.display === 'block') {
+        benefitsDropdown.style.display = 'none';
+      } else {
+        benefitsDropdown.style.display = 'block';
+        // Hide after 2.5s
+        setTimeout(function(){
+          benefitsDropdown.style.display = 'none';
+        }, 2500);
+      }
+    });
+    // Hide dropdown if click outside
+    document.addEventListener('click', function(e) {
+      if (!benefitsDropdown.contains(e.target) && e.target !== benefitsLink) {
+        benefitsDropdown.style.display = 'none';
+      }
+    });
+  }
+});
 // Sidebar toggle for mobile
 function toggleSidebar() {
   var sidebar = document.getElementById('sidebar');
@@ -6,7 +32,7 @@ function toggleSidebar() {
   }
 }
 /* ================================================================
-   HRCore ERP — Main JavaScript
+   MatinexHR ERP — Main JavaScript
    ================================================================ */
 
 // ── Live Clock ────────────────────────────────────────────────────
@@ -148,6 +174,50 @@ function animateValue(element, start, end, duration) {
   };
   window.requestAnimationFrame(step);
 }
+
+// ── Navbar Dropdown/Tooltip for Inactive Buttons ───────────────
+document.addEventListener('DOMContentLoaded', function () {
+  const navDropdown = document.getElementById('nav-dropdown');
+  // List of nav links that have no section to show
+  const dropdownLinks = [
+    'Modules',
+    'Pricing',
+    'About'
+  ];
+  document.querySelectorAll('.navbar-nav .nav-link').forEach(function (link) {
+    const text = link.textContent.trim();
+    if (dropdownLinks.includes(text)) {
+      link.addEventListener('click', function (e) {
+        e.preventDefault();
+        // Show dropdown/tooltip near the button
+        const rect = link.getBoundingClientRect();
+        navDropdown.style.left = (rect.left + window.scrollX + rect.width/2 - 70) + 'px';
+        navDropdown.style.top = (rect.bottom + window.scrollY + 8) + 'px';
+        navDropdown.style.display = 'block';
+        navDropdown.style.opacity = '1';
+        navDropdown.textContent = 'Coming Soon';
+        setTimeout(function () {
+          navDropdown.style.opacity = '0';
+          setTimeout(function(){navDropdown.style.display = 'none';}, 200);
+        }, 1400);
+      });
+    }
+    // For demo: show alert for Get Started
+    if (text === 'Get Started') {
+      link.addEventListener('click', function (e) {
+        // Allow default navigation, but show a message
+        alert('Redirecting to registration!');
+      });
+    }
+    // For demo: show alert for Login
+    if (text === 'Login') {
+      link.addEventListener('click', function (e) {
+        // Allow default navigation, but show a message
+        alert('Redirecting to login!');
+      });
+    }
+  });
+});
 
 // Animate KPI values on page load
 document.addEventListener('DOMContentLoaded', function () {

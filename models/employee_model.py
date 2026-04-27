@@ -1,44 +1,74 @@
 from datetime import date
 from models.db import query, mutate
+import logging
+import traceback
+
+logger = logging.getLogger(__name__)
 
 
 # ── Read ────────────────────────────────────────────────────────────────────
 
-def get_all(company_id: int):
-    return query("""
-        SELECT e.*, d.name AS department_name
-        FROM   employees_core e
-        LEFT JOIN departments d ON d.id = e.department_id
-        WHERE  e.company_id = %s
-        ORDER BY e.first_name, e.last_name
-    """, (company_id,))
+def get_all(company_id: int, status: str = None):
+    """Get all employees, optionally filtered by status"""
+    try:
+        if status:
+            return query("""
+                SELECT e.*, d.name AS department_name
+                FROM   employees_core e
+                LEFT JOIN departments d ON d.id = e.department_id
+                WHERE  e.company_id = %s AND e.status = %s
+                ORDER BY e.first_name, e.last_name
+            """, (company_id, status))
+        return query("""
+            SELECT e.*, d.name AS department_name
+            FROM   employees_core e
+            LEFT JOIN departments d ON d.id = e.department_id
+            WHERE  e.company_id = %s
+            ORDER BY e.first_name, e.last_name
+        """, (company_id,))
+    except Exception as e:
+        logger.error(f"Error getting all employees for company {company_id}: {e}")
+        logger.error(traceback.format_exc())
+        return []
 
 
 def get_by_id(emp_id: int, company_id: int):
-    return query("""
-        SELECT e.*, d.name AS department_name
-        FROM   employees_core e
-        LEFT JOIN departments d ON d.id = e.department_id
-        WHERE  e.id = %s AND e.company_id = %s
-    """, (emp_id, company_id), one=True)
+    try:
+        return query("""
+            SELECT e.*, d.name AS department_name
+            FROM   employees_core e
+            LEFT JOIN departments d ON d.id = e.department_id
+            WHERE  e.id = %s AND e.company_id = %s
+        """, (emp_id, company_id), one=True)
+    except Exception as e:
+        logger.error(f"Error getting employee {emp_id}: {e}")
+        return None
 
 
 def get_by_user_id(user_id: int, company_id: int):
-    return query("""
-        SELECT e.*, d.name AS department_name
-        FROM   employees_core e
-        LEFT JOIN departments d ON d.id = e.department_id
-        WHERE  e.user_id = %s AND e.company_id = %s
-    """, (user_id, company_id), one=True)
+    try:
+        return query("""
+            SELECT e.*, d.name AS department_name
+            FROM   employees_core e
+            LEFT JOIN departments d ON d.id = e.department_id
+            WHERE  e.user_id = %s AND e.company_id = %s
+        """, (user_id, company_id), one=True)
+    except Exception as e:
+        logger.error(f"Error getting employee by user_id {user_id}: {e}")
+        return None
 
 
 def get_active_count(company_id: int) -> int:
-    row = query(
-        "SELECT COUNT(*) AS cnt FROM employees_core "
-        "WHERE company_id=%s AND status='Active'",
-        (company_id,), one=True
-    )
-    return row['cnt'] if row else 0
+    try:
+        row = query(
+            "SELECT COUNT(*) AS cnt FROM employees_core "
+            "WHERE company_id=%s AND status='Active'",
+            (company_id,), one=True
+        )
+        return row['cnt'] if row else 0
+    except Exception as e:
+        logger.error(f"Error getting active count for company {company_id}: {e}")
+        return 0
 
 
 def get_terminated_count(company_id: int) -> int:
@@ -51,25 +81,33 @@ def get_terminated_count(company_id: int) -> int:
 
 
 def get_total_count(company_id: int) -> int:
-    row = query(
-        "SELECT COUNT(*) AS cnt FROM employees_core WHERE company_id=%s",
-        (company_id,), one=True
-    )
-    return row['cnt'] if row else 0
+    try:
+        row = query(
+            "SELECT COUNT(*) AS cnt FROM employees_core WHERE company_id=%s",
+            (company_id,), one=True
+        )
+        return row['cnt'] if row else 0
+    except Exception as e:
+        logger.error(f"Error getting total count for company {company_id}: {e}")
+        return 0
 
 
 def search(company_id: int, term: str):
     """Search employees by name, email, or code using MySQL LIKE operator."""
-    t = f"%{term}%"
-    return query("""
-        SELECT e.*, d.name AS department_name
-        FROM   employees_core e
-        LEFT JOIN departments d ON d.id = e.department_id
-        WHERE  e.company_id = %s
-          AND (e.first_name LIKE %s OR e.last_name LIKE %s
-               OR e.email LIKE %s OR e.employee_code LIKE %s)
-        ORDER BY e.first_name
-    """, (company_id, t, t, t, t))
+    try:
+        t = f"%{term}%"
+        return query("""
+            SELECT e.*, d.name AS department_name
+            FROM   employees_core e
+            LEFT JOIN departments d ON d.id = e.department_id
+            WHERE  e.company_id = %s
+              AND (e.first_name LIKE %s OR e.last_name LIKE %s
+                   OR e.email LIKE %s OR e.employee_code LIKE %s)
+            ORDER BY e.first_name
+        """, (company_id, t, t, t, t))
+    except Exception as e:
+        logger.error(f"Error searching employees: {e}")
+        return []
 
 
 # ── Write ───────────────────────────────────────────────────────────────────
@@ -103,24 +141,55 @@ def link_user(emp_id: int, user_id: int, company_id: int):
 
 
 def update(emp_id: int, company_id: int, data: dict):
-    mutate("""
-        UPDATE employees_core SET
-          first_name=%s, last_name=%s, email=%s, phone=%s,
-          department_id=%s, job_title=%s, employment_type=%s,
-          status=%s, hire_date=%s
-        WHERE id=%s AND company_id=%s
-    """, (
-        data.get('first_name'),
-        data.get('last_name'),
-        data.get('email'),
-        data.get('phone',''),
-        data.get('department_id') or None,
-        data.get('job_title',''),
-        data.get('employment_type','Full-Time'),
-        data.get('status','Active'),
-        data.get('hire_date'),
-        emp_id, company_id,
-    ))
+    """Update employee - only change fields that are provided and not empty"""
+    # Get current employee data first
+    current = get_by_id(emp_id, company_id)
+    if not current:
+        return
+    
+    # Build dynamic update - only change fields that are provided and not empty
+    fields = []
+    values = []
+    
+    # Map form fields to database fields
+    field_mapping = {
+        'first_name': 'first_name',
+        'last_name': 'last_name',
+        'email': 'email',
+        'phone': 'phone',
+        'department_id': 'department_id',
+        'job_title': 'job_title',
+        'employment_type': 'employment_type',
+        'status': 'status',
+        'hire_date': 'hire_date',
+    }
+    
+    for form_field, db_field in field_mapping.items():
+        new_value = data.get(form_field)
+        current_value = current.get(db_field)
+        
+        # Only update if the value is provided and different from current
+        if new_value is not None and str(new_value).strip() != '':
+            # Convert empty strings to None for optional fields
+            if form_field in ['phone', 'job_title']:
+                new_value = new_value.strip() or None
+            if new_value != current_value:
+                fields.append(f"{db_field}=%s")
+                values.append(new_value)
+        elif new_value == '' and current_value:
+            # Allow clearing optional fields
+            fields.append(f"{db_field}=%s")
+            values.append(None)
+    
+    # Only execute if there are fields to update
+    if fields:
+        values.extend([emp_id, company_id])
+        sql = f"""
+            UPDATE employees_core SET
+                {', '.join(fields)}
+            WHERE id=%s AND company_id=%s
+        """
+        mutate(sql, tuple(values))
 
 
 def delete(emp_id: int, company_id: int):
@@ -133,22 +202,30 @@ def delete(emp_id: int, company_id: int):
 # ── Departments ─────────────────────────────────────────────────────────────
 
 def get_departments(company_id: int):
-    return query("""
-        SELECT d.*, 
-               COUNT(e.id) AS employee_count
-        FROM departments d
-        LEFT JOIN employees_core e ON e.department_id = d.id AND e.status = 'Active'
-        WHERE d.company_id=%s
-        GROUP BY d.id
-        ORDER BY d.name
-    """, (company_id,))
+    try:
+        return query("""
+            SELECT d.*, 
+                   COUNT(e.id) AS employee_count
+            FROM departments d
+            LEFT JOIN employees_core e ON e.department_id = d.id AND e.status = 'Active'
+            WHERE d.company_id=%s
+            GROUP BY d.id
+            ORDER BY d.name
+        """, (company_id,))
+    except Exception as e:
+        logger.error(f"Error getting departments for company {company_id}: {e}")
+        return []
 
 
 def create_department(company_id: int, name: str, description: str = '') -> int:
-    return mutate(
-        "INSERT INTO departments (company_id,name,description) VALUES(%s,%s,%s)",
-        (company_id, name, description)
-    )
+    try:
+        return mutate(
+            "INSERT INTO departments (company_id,name,description) VALUES(%s,%s,%s)",
+            (company_id, name, description)
+        )
+    except Exception as e:
+        logger.error(f"Error creating department: {e}")
+        return None
 
 
 def get_next_employee_code(company_id: int) -> str:

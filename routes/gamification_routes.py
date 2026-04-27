@@ -10,6 +10,7 @@ from datetime import datetime
 from utils import login_required, roles_required
 from models.db import query, mutate
 from services.activity_service import log_activity
+from services.subscription_service import gamification_feature_required
 
 logger = logging.getLogger(__name__)
 
@@ -18,6 +19,7 @@ gamification_bp = Blueprint('gamification', __name__)
 
 @gamification_bp.route('/gamification/leaderboard')
 @login_required
+@gamification_feature_required
 def leaderboard():
     """View employee leaderboard (points, levels, badges)."""
     company_id = session['company_id']
@@ -44,6 +46,7 @@ def leaderboard():
 
 @gamification_bp.route('/gamification/my-profile')
 @login_required
+@gamification_feature_required
 def my_profile():
     """View personal gamification profile."""
     company_id = session['company_id']
@@ -87,6 +90,7 @@ def my_profile():
 @gamification_bp.route('/gamification/award-points', methods=['POST'])
 @login_required
 @roles_required('Admin', 'HR', 'CHRO', 'Manager')
+@gamification_feature_required
 def award_points():
     """Award points to employee (HR/Manager/Admin only)."""
     company_id = session['company_id']
@@ -145,6 +149,7 @@ def award_points():
 
 @gamification_bp.route('/gamification/achievements')
 @login_required
+@gamification_feature_required
 def view_achievements():
     """View possible achievements and unlocked badges."""
     achievements = [
