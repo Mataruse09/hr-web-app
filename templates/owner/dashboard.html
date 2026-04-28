@@ -60,7 +60,7 @@
         
         /* Default: hide nav container on all sizes, show on desktop */
         .owner-nav .nav-container {
-            display: none;
+            display: none !important;
         }
         
         /* Desktop: always show nav */
@@ -69,17 +69,17 @@
                 display: flex !important;
             }
             .nav-toggle-btn {
-                display: none;
+                display: none !important;
             }
         }
         
         /* Mobile Responsive Styles */
         @media (max-width: 992px) {
             .nav-toggle-btn {
-                display: block;
+                display: block !important;
             }
             .owner-nav .nav-container {
-                display: none;
+                display: none !important;
                 position: absolute;
                 top: 100%;
                 left: 0;
@@ -90,7 +90,7 @@
                 box-shadow: 0 4px 20px rgba(0,0,0,0.5);
             }
             .owner-nav .nav-container.active {
-                display: block;
+                display: block !important;
             }
             .owner-nav .nav-container .nav {
                 flex-direction: column;
@@ -299,8 +299,8 @@
                             <br><small>{{ company.email }}</small>
                         </div>
                         <div class="d-flex align-items-center gap-2">
-                            <span class="badge-status {% if not company.is_active %}badge-banned{% else %}badge-active{% endif %}">
-                                {% if not company.is_active %}Inactive{% else %}Active{% endif %}
+                            <span class="badge-status {% if company.is_banned %}badge-banned{% elif not company.is_active %}badge-inactive{% else %}badge-active{% endif %}">
+                                {% if company.is_banned %}Banned{% elif not company.is_active %}Inactive{% else %}Active{% endif %}
                             </span>
                             <a href="{{ url_for('owner.view_company', company_id=company.id) }}" class="btn btn-action btn-view">View</a>
                         </div>

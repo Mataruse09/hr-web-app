@@ -75,7 +75,7 @@
         
         <!-- Companies List -->
         {% for company in companies %}
-        <div class="company-card {% if not company.is_active %}inactive{% else %}active{% endif %}">
+        <div class="company-card {% if not company.is_active %}inactive{% elif company.is_banned %}banned{% else %}active{% endif %}">
             <div class="row">
                 <div class="col-md-8">
                     <div class="company-name">{{ company.name }}</div>
@@ -89,8 +89,8 @@
                     </div>
                 </div>
                 <div class="col-md-4 text-end">
-                    <span class="badge-status {% if not company.is_active %}badge-inactive{% else %}badge-active{% endif %}">
-                        {% if not company.is_active %}INACTIVE{% else %}ACTIVE{% endif %}
+                    <span class="badge-status {% if company.is_banned %}badge-banned{% elif not company.is_active %}badge-inactive{% else %}badge-active{% endif %}">
+                        {% if company.is_banned %}BANNED{% elif not company.is_active %}INACTIVE{% else %}ACTIVE{% endif %}
                     </span>
                     <a href="{{ url_for('owner.view_company', company_id=company.id) }}" class="btn btn-action btn-view ms-2">View</a>
                 </div>

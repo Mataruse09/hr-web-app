@@ -101,64 +101,33 @@ def init_pool(app):
 
 
 def _run_migrations(pool):
-    """Run database schema migrations to add missing columns."""
+    """Run database schema migrations to add missing columns - simplified for performance."""
     try:
         conn = pool.get_connection()
         cur = conn.cursor()
         
-        # Get existing columns in attendance table
-        cur.execute("""
-            SELECT COLUMN_NAME 
-            FROM information_schema.COLUMNS 
-            WHERE TABLE_SCHEMA = DATABASE() 
-            AND TABLE_NAME = 'attendance'
-        """)
-        existing_cols = {row[0] for row in cur.fetchall()}
-        
-        # Columns that should exist in attendance table based on schema
-        required_cols = {
-            'working_hours': "ALTER TABLE attendance ADD COLUMN working_hours DECIMAL(5,2) DEFAULT NULL AFTER status",
-            'notes': "ALTER TABLE attendance ADD COLUMN notes VARCHAR(500) DEFAULT NULL AFTER working_hours",
-            'recorded_by': "ALTER TABLE attendance ADD COLUMN recorded_by INT UNSIGNED DEFAULT NULL AFTER notes"
-        }
-        
-        for col_name, alter_sql in required_cols.items():
-            if col_name not in existing_cols:
-                cur.execute(alter_sql)
+        # Only check attendance table (most common issue)
+        try:
+            cur.execute("""
+                SELECT COLUMN_NAME 
+                FROM information_schema.COLUMNS 
+                WHERE TABLE_SCHEMA = DATABASE() 
+                AND TABLE_NAME = 'attendance'
+            """)
+            existing_cols = {row[0] for row in cur.fetchall()}
+            
+            if 'working_hours' not in existing_cols:
+                cur.execute("ALTER TABLE attendance ADD COLUMN working_hours DECIMAL(5,2) DEFAULT NULL")
                 conn.commit()
-                logger.info(f"✅ Migration: Added {col_name} column to attendance table")
-        
-        # Get existing columns in payroll_runs table
-        cur.execute("""
-            SELECT COLUMN_NAME 
-            FROM information_schema.COLUMNS 
-            WHERE TABLE_SCHEMA = DATABASE() 
-            AND TABLE_NAME = 'payroll_runs'
-        """)
-        payroll_cols = {row[0] for row in cur.fetchall()}
-        
-        # Columns that should exist in payroll_runs table
-        payroll_required = {
-            'overtime_hours': "ALTER TABLE payroll_runs ADD COLUMN overtime_hours DECIMAL(6,2) DEFAULT 0",
-            'overtime_amount': "ALTER TABLE payroll_runs ADD COLUMN overtime_amount DECIMAL(15,2) DEFAULT 0",
-            'prorated_salary': "ALTER TABLE payroll_runs ADD COLUMN prorated_salary DECIMAL(15,2) DEFAULT 0",
-            'housing_allowance': "ALTER TABLE payroll_runs ADD COLUMN housing_allowance DECIMAL(15,2) DEFAULT 0",
-            'transport_allowance': "ALTER TABLE payroll_runs ADD COLUMN transport_allowance DECIMAL(15,2) DEFAULT 0",
-            'meal_allowance': "ALTER TABLE payroll_runs ADD COLUMN meal_allowance DECIMAL(15,2) DEFAULT 0",
-            'performance_bonus': "ALTER TABLE payroll_runs ADD COLUMN performance_bonus DECIMAL(15,2) DEFAULT 0",
-        }
-        
-        for col_name, alter_sql in payroll_required.items():
-            if col_name not in payroll_cols:
-                cur.execute(alter_sql)
-                conn.commit()
-                logger.info(f"✅ Migration: Added {col_name} column to payroll_runs table")
+        except:
+            pass
         
         cur.close()
         conn.close()
         
     except Error as e:
-        logger.warning(f"Migration check failed (non-critical): {e}")
+        # Silently fail - migrations are non-critical
+        pass
 
 
 def get_db():
@@ -262,48 +231,34 @@ def query(sql: str, params: tuple = (), one: bool = False, max_retries: int = 3)
     last_error = None
     
     for attempt in range(max_retries):
+        db = None
+        cur = None
         try:
             # Wrap get_db() in try-except to catch any issues
             try:
                 db = get_db()
             except Exception as db_err:
                 logger.error(f"Error getting database connection: {db_err}")
-                # Try again instead of returning empty
                 time.sleep(0.1)
                 continue
             
             # Check if db connection is valid (more robust check)
             if not db or not hasattr(db, 'cursor'):
-                # Try again - connection might be re-established
                 logger.warning("Database connection is None or invalid - retrying")
                 time.sleep(0.1)
                 continue
             
             # Use buffered=True to fetch all results immediately and avoid unread result issues
             cur = db.cursor(dictionary=True, buffered=True)
+            cur.execute(sql, params)
+            result = cur.fetchone() if one else cur.fetchall()
+            return result
 
-            try:
-                cur.execute(sql, params)
-                result = cur.fetchone() if one else cur.fetchall()
-                return result
+        except Error as exc:
+            logger.error("DB query error: %s | SQL: %s", exc, sql)
+            raise
 
-            except Error as exc:
-                logger.error("DB query error: %s | SQL: %s", exc, sql)
-                raise
-
-            finally:
-                if cur:
-                    cur.close()
-                if db:
-                    try:
-                        if db.is_connected():
-                            db.close()
-                    except Exception as close_err:
-                        logger.debug("Error closing DB connection in query: %s", close_err)
-            
-            break  # Exit loop after successful execution
-                    
-        except Error as e:
+        except Exception as e:
             last_error = e
             error_msg = str(e).lower()
             
@@ -321,16 +276,30 @@ def query(sql: str, params: tuple = (), one: bool = False, max_retries: int = 3)
             
             if is_transient and attempt < max_retries - 1:
                 logger.warning(f"Transient DB error (attempt {attempt + 1}/{max_retries}): {e}")
-                time.sleep(0.1 * (attempt + 1))  # Faster backoff
+                time.sleep(0.1 * (attempt + 1))
                 continue
             else:
                 logger.error("DB query error: %s | SQL: %s", e, sql)
                 raise
+        
+        finally:
+            if cur:
+                try:
+                    cur.close()
+                except:
+                    pass
+            if db:
+                try:
+                    if db.is_connected():
+                        db.close()
+                except Exception as close_err:
+                    logger.debug("Error closing DB connection in query: %s", close_err)
     
     # If we get here, all retries failed
-    logger.error(f"DB query failed after {max_retries} attempts: {last_error}")
-    logger.error(traceback.format_exc())
-    raise last_error
+    if last_error:
+        logger.error(f"DB query failed after {max_retries} attempts: {last_error}")
+        logger.error(traceback.format_exc())
+        raise last_error
 
 
 def mutate(sql: str, params: tuple = (), max_retries: int = 3):
@@ -344,55 +313,42 @@ def mutate(sql: str, params: tuple = (), max_retries: int = 3):
     last_error = None
     
     for attempt in range(max_retries):
+        db = None
+        cur = None
         try:
             # Wrap get_db() in try-except to catch any issues
             try:
                 db = get_db()
             except Exception as db_err:
                 logger.error(f"Error getting database connection: {db_err}")
-                # Try again instead of returning None
                 time.sleep(0.1)
                 continue
             
             # Check if db connection is valid (more robust check)
             if not db or not hasattr(db, 'cursor'):
-                # Try again - connection might be re-established
                 logger.warning("Database connection is None or invalid - retrying")
                 time.sleep(0.1)
                 continue
             
             cur = db.cursor()
-
-            try:
-                cur.execute(sql, params)
-                
-                # For INSERT statements, return the last inserted ID
-                if sql.strip().upper().startswith('INSERT'):
-                    last_id = cur.lastrowid
-                    db.commit()
-                    return last_id
-                else:
-                    db.commit()
-                    return True
-
-            except Error as exc:
-                if db:
-                    db.rollback()
-                logger.error("DB mutate error: %s | SQL: %s", exc, sql)
-                raise
-
-            finally:
-                if cur:
-                    cur.close()
-                if db:
-                    try:
-                        if db.is_connected():
-                            db.close()
-                    except Exception as close_err:
-                        # Connection may be in bad state, just log and continue
-                        logger.debug("Error closing DB connection in mutate: %s", close_err)
+            cur.execute(sql, params)
             
-            break  # Exit loop after successful execution
+            # For INSERT statements, return the last inserted ID
+            if sql.strip().upper().startswith('INSERT'):
+                last_id = cur.lastrowid
+                db.commit()
+                return last_id
+            else:
+                db.commit()
+                return True
+
+        except Error as exc:
+            if db:
+                db.rollback()
+            logger.error("DB mutate error: %s | SQL: %s", exc, sql)
+            raise
+
+        except Exception as e:
             last_error = e
             error_msg = str(e).lower()
             
@@ -415,10 +371,25 @@ def mutate(sql: str, params: tuple = (), max_retries: int = 3):
             else:
                 logger.error("DB mutate error: %s | SQL: %s", e, sql)
                 raise
+        
+        finally:
+            if cur:
+                try:
+                    cur.close()
+                except:
+                    pass
+            if db:
+                try:
+                    if db.is_connected():
+                        db.close()
+                except Exception as close_err:
+                    logger.debug("Error closing DB connection in mutate: %s", close_err)
     
-    logger.error(f"DB mutate failed after {max_retries} attempts: {last_error}")
-    logger.error(traceback.format_exc())
-    raise last_error
+    # If we get here, all retries failed
+    if last_error:
+        logger.error(f"DB mutate failed after {max_retries} attempts: {last_error}")
+        logger.error(traceback.format_exc())
+        raise last_error
 
 
 def begin_transaction():

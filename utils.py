@@ -1,6 +1,7 @@
 from functools import wraps
 from flask import session, redirect, url_for, flash
 import os
+import logging
 import smtplib
 from email.message import EmailMessage
 

@@ -1,6 +1,7 @@
 from flask import (
     Blueprint, render_template, request,
     redirect, url_for, flash, session,
+    current_app
 )
 import bcrypt
 import logging
@@ -78,120 +79,113 @@ def login():
 
         user = user_model.get_by_username(username, company['id'])
 
-        # Debug: Log the user data retrieved
-        logger.info(f"User found: {user}")
         if user:
-            logger.info(f"User role from DB: '{user.get('role')}'")
+            # ✅ safer password check (PostgreSQL-safe)
+            if not user or not user.get('password_hash'):
+                flash('Invalid credentials. Please try again.', 'danger')
+                companies = company_model.all_active_companies()
+                return render_template('login.html', companies=companies)
+            
+            # Handle password hash that may already be bytes or string
+            password_hash = user['password_hash']
+            if isinstance(password_hash, str):
+                password_hash = password_hash.encode('utf-8')
+            
+            try:
+                password_matches = bcrypt.checkpw(password.encode('utf-8'), password_hash)
+            except Exception as e:
+                flash('Invalid credentials. Please try again.', 'danger')
+                companies = company_model.all_active_companies()
+                return render_template('login.html', companies=companies)
+            
+            if not password_matches:
+                # Track failed login attempt for security
+                if client_ip not in failed_login_attempts:
+                    failed_login_attempts[client_ip] = {'count': 0, 'lockout_until': None}
+                
+                failed_login_attempts[client_ip]['count'] += 1
+                
+                # If too many failed attempts, lock out the IP
+                if failed_login_attempts[client_ip]['count'] >= MAX_FAILED_ATTEMPTS:
+                    failed_login_attempts[client_ip]['lockout_until'] = datetime.utcnow() + timedelta(minutes=LOCKOUT_DURATION)
+                
+                # Log the failed login attempt
+                if company:
+                    log_activity(
+                        company['id'],
+                        user['id'] if user else None,
+                        f'Failed login attempt from IP {client_ip}',
+                        'Security',
+                        user['id'] if user else None
+                    )
+                
+                flash('Invalid credentials. Please try again.', 'danger')
+                companies = company_model.all_active_companies()
+                return render_template('login.html', companies=companies)
 
-        # ✅ safer password check (PostgreSQL-safe)
-        if not user or not user.get('password_hash'):
+            # Check if user has a linked employee and if they are active
+            from models import employee_model as em
+            employee = em.get_by_user_id(user['id'], company['id'])
+            if employee and employee.get('status') != 'Active':
+                flash('Your account has been deactivated. Please contact your administrator.', 'warning')
+                companies = company_model.all_active_companies()
+                return render_template('login.html', companies=companies)
+
+            # ✅ clean session
+            session.clear()
+            session.permanent = True
+
+            session['user_id'] = user['id']
+            session['company_id'] = user['company_id']
+            session['company_name'] = company['name']
+            session['username'] = user['username']
+            session['full_name'] = user['full_name']
+
+            # ✅ normalize role
+            role = (user.get('role') or '').strip().lower()
+
+            # If role is empty or None, check user_roles table
+            if not role:
+                from models import user_model as um
+                user_roles = um.get_user_roles(user['id'], company['id'])
+                if user_roles and len(user_roles) > 0:
+                    role = user_roles[0]['role'].strip().lower()
+
+            role_map = {
+                'admin': 'Admin',
+                'hr': 'HR',
+                'manager': 'Manager',
+                'chro': 'CHRO',
+                'company_admin': 'company_admin',
+                'employee': 'Employee',
+                'emp': 'Employee',
+                'staff': 'Employee',
+                'user': 'Employee'
+            }
+
+            session['role'] = role_map.get(role, 'Employee')
+
+            # Reset failed login attempts on successful login
+            if client_ip in failed_login_attempts:
+                del failed_login_attempts[client_ip]
+
+            user_model.update_last_login(user['id'])
+            
+            # ✅ LOG LOGIN ACTIVITY
+            log_activity(
+                user['company_id'],
+                user['id'],
+                'User logged in',
+                'User',
+                user['id']
+            )
+
+            flash(f'Welcome back, {user["full_name"]}!', 'success')
+            return redirect(url_for('dashboard.index'))
+        else:
             flash('Invalid credentials. Please try again.', 'danger')
             companies = company_model.all_active_companies()
             return render_template('login.html', companies=companies)
-        
-        # Handle password hash that may already be bytes or string
-        password_hash = user['password_hash']
-        if isinstance(password_hash, str):
-            password_hash = password_hash.encode('utf-8')
-        
-        try:
-            password_matches = bcrypt.checkpw(password.encode('utf-8'), password_hash)
-        except Exception as e:
-            logger.error(f"Password check error: {e}")
-            flash('Invalid credentials. Please try again.', 'danger')
-            companies = company_model.all_active_companies()
-            return render_template('login.html', companies=companies)
-        
-        if not password_matches:
-            # Track failed login attempt for security
-            if client_ip not in failed_login_attempts:
-                failed_login_attempts[client_ip] = {'count': 0, 'lockout_until': None}
-            
-            failed_login_attempts[client_ip]['count'] += 1
-            
-            # If too many failed attempts, lock out the IP
-            if failed_login_attempts[client_ip]['count'] >= MAX_FAILED_ATTEMPTS:
-                failed_login_attempts[client_ip]['lockout_until'] = datetime.utcnow() + timedelta(minutes=LOCKOUT_DURATION)
-                logger.warning(f"IP {client_ip} locked out due to {failed_login_attempts[client_ip]['count']} failed login attempts")
-            
-            # Log the failed login attempt
-            if company:
-                log_activity(
-                    company['id'],
-                    user['id'] if user else None,
-                    f'Failed login attempt from IP {client_ip}',
-                    'Security',
-                    user['id'] if user else None
-                )
-            
-            flash('Invalid credentials. Please try again.', 'danger')
-            companies = company_model.all_active_companies()
-            return render_template('login.html', companies=companies)
-
-        # Check if user has a linked employee and if they are active
-        from models import employee_model as em
-        employee = em.get_by_user_id(user['id'], company['id'])
-        if employee and employee.get('status') != 'Active':
-            flash('Your account has been deactivated. Please contact your administrator.', 'warning')
-            companies = company_model.all_active_companies()
-            return render_template('login.html', companies=companies)
-
-        # ✅ clean session
-        session.clear()
-        session.permanent = True
-
-        session['user_id'] = user['id']
-        session['company_id'] = user['company_id']
-        session['company_name'] = company['name']
-        session['username'] = user['username']
-        session['full_name'] = user['full_name']
-
-        # ✅ normalize role
-        role = (user.get('role') or '').strip().lower()
-
-        # If role is empty or None, check user_roles table
-        if not role:
-            from models import user_model as um
-            user_roles = um.get_user_roles(user['id'], company['id'])
-            if user_roles and len(user_roles) > 0:
-                role = user_roles[0]['role'].strip().lower()
-                logger.info(f"Role from user_roles table: '{role}'")
-
-        role_map = {
-            'admin': 'Admin',
-            'hr': 'HR',
-            'manager': 'Manager',
-            'chro': 'CHRO',
-            'company_admin': 'company_admin',
-            'employee': 'Employee',
-            'emp': 'Employee',
-            'staff': 'Employee',
-            'user': 'Employee'
-        }
-
-        session['role'] = role_map.get(role, 'Employee')
-
-        # Debug logging
-        logger.info(f"User {user['username']} logged in with role: {session['role']}")
-
-        # Reset failed login attempts on successful login
-        if client_ip in failed_login_attempts:
-            del failed_login_attempts[client_ip]
-            logger.info(f"Reset failed login attempts for IP {client_ip}")
-
-        user_model.update_last_login(user['id'])
-        
-        # ✅ LOG LOGIN ACTIVITY
-        log_activity(
-            user['company_id'],
-            user['id'],
-            'User logged in',
-            'User',
-            user['id']
-        )
-
-        flash(f'Welcome back, {user["full_name"]}!', 'success')
-        return redirect(url_for('dashboard.index'))
 
     companies = company_model.all_active_companies()
     return render_template('login.html', companies=companies)
@@ -338,7 +332,6 @@ def register_company():
         # ✅ ASSIGN ROLE TO USER_ROLES TABLE
         try:
             user_model.assign_role_to_user(new_user_id, new_company_id, 'Admin')
-            logger.info(f"✅ Admin user (ID: {new_user_id}) assigned role: Admin")
         except Exception as e:
             logger.error(f"⚠️ Failed to assign role to user_roles table: {e}")
 

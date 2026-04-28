@@ -37,7 +37,8 @@
         
         <h1 class="page-title">
             <i class="fas fa-building me-2"></i>{{ company.name }}
-            {% if not company.is_active %}<span class="badge badge-banned ms-2">INACTIVE</span>{% endif %}
+            {% if company.is_banned %}<span class="badge badge-banned ms-2">BANNED</span>
+            {% elif not company.is_active %}<span class="badge badge-banned ms-2">INACTIVE</span>{% endif %}
         </h1>
         
         {% with messages = get_flashed_messages(with_categories=true) %}

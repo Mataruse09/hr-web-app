@@ -10,15 +10,6 @@ logger = logging.getLogger(__name__)
 dashboard_bp = Blueprint('dashboard', __name__)
 
 
-@dashboard_bp.route('/debug/cache-stats')
-@login_required
-@roles_required('Admin', 'company_admin')
-def cache_stats():
-    """Debug endpoint to view KPI cache statistics"""
-    cache = get_kpi_cache()
-    return jsonify(cache.get_stats())
-
-
 def render_dashboard(role, company_id):
     from models.company_model import get_by_id
     
@@ -78,14 +69,9 @@ def index():
 @dashboard_bp.route('/dashboard')
 @login_required
 def index_authenticated():
-    import logging
-    logger = logging.getLogger(__name__)
-    
     company_id = session.get('company_id')
     user_id = session.get('user_id')
     role = (session.get('role') or 'Employee').strip()
-
-    logger.info(f"Dashboard index - User: {user_id}, Role from session: '{role}'")
 
     # If role is not set or invalid, try to get from user_roles table
     if not role or role not in ['Admin', 'HR', 'CHRO', 'Manager', 'Employee', 'company_admin']:
@@ -94,29 +80,22 @@ def index_authenticated():
         if user_roles and len(user_roles) > 0:
             role = user_roles[0]['role']
             session['role'] = role
-            logger.info(f"Role updated from user_roles table: '{role}'")
 
     if not company_id:
         flash("Session expired. Please login again.", "danger")
         return redirect(url_for('auth.login'))
 
     if role in ('Admin', 'company_admin'):
-        logger.info("Redirecting to admin_dashboard")
         return redirect(url_for('dashboard.admin_dashboard'))
     elif role == 'HR':
-        logger.info("Redirecting to hr_dashboard")
         return redirect(url_for('dashboard.hr_dashboard'))
     elif role == 'CHRO':
-        logger.info("Redirecting to chro_analytics")
         return redirect(url_for('dashboard.chro_analytics'))
     elif role == 'Manager':
-        logger.info("Redirecting to manager_dashboard")
         return redirect(url_for('dashboard.manager_dashboard'))
     elif role == 'Employee':
-        logger.info("Redirecting to employee_dashboard")
         return redirect(url_for('dashboard.employee_dashboard'))
 
-    logger.warning(f"Unknown role '{role}', falling back to render_dashboard")
     return render_dashboard(role, company_id)
 
 
@@ -125,14 +104,8 @@ def index_authenticated():
 @roles_required('Employee')
 def employee_dashboard():
     """Personal employee dashboard - shows only their own data"""
-    import logging
-    logger = logging.getLogger(__name__)
-    logger.info("Accessing employee_dashboard")
-    
     company_id = session.get('company_id')
     user_id = session.get('user_id')
-    user_role = session.get('role')
-    logger.info(f"Employee dashboard - user_role: {user_role}, user_id: {user_id}")
 
     if not company_id or not user_id:
         flash("Session expired. Please login again.", "danger")
@@ -165,13 +138,7 @@ def employee_dashboard():
 @login_required
 @roles_required('Admin', 'company_admin')
 def admin_dashboard():
-    import logging
-    logger = logging.getLogger(__name__)
-    logger.info("Accessing admin_dashboard")
-    
     company_id = session.get('company_id')
-    user_role = session.get('role')
-    logger.info(f"Admin dashboard - user_role: {user_role}")
 
     if not company_id:
         flash("Session expired. Please login again.", "danger")
@@ -179,7 +146,9 @@ def admin_dashboard():
 
     from models.company_model import get_by_id
     company = get_by_id(company_id)
-    kpis = get_dashboard_kpis(company_id)
+    
+    # Get KPIs with caching disabled for faster initial load
+    kpis = get_dashboard_kpis(company_id, use_cache=False)
     departments = employee_model.get_departments(company_id)
 
     return render_template(
@@ -204,7 +173,7 @@ def hr_dashboard():
 
     from models.company_model import get_by_id
     company = get_by_id(company_id)
-    kpis = get_dashboard_kpis(company_id)
+    kpis = get_dashboard_kpis(company_id, use_cache=False)
     departments = employee_model.get_departments(company_id)
 
     return render_template(
@@ -229,7 +198,7 @@ def manager_dashboard():
 
     from models.company_model import get_by_id
     company = get_by_id(company_id)
-    kpis = get_dashboard_kpis(company_id)
+    kpis = get_dashboard_kpis(company_id, use_cache=False)
     departments = employee_model.get_departments(company_id)
 
     return render_template(

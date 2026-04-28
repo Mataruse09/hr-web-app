@@ -353,12 +353,21 @@ def dashboard():
         result = query("SELECT COUNT(*) as count FROM companies", one=True)
         stats['total_companies'] = result['count'] if result else 0
         
-        # Active companies (without is_banned column check)
+        # Active companies
         result = query("SELECT COUNT(*) as count FROM companies WHERE is_active = TRUE", one=True)
         stats['active_companies'] = result['count'] if result else 0
         
-        # Banned companies (set to 0 if column doesn't exist)
-        stats['banned_companies'] = 0
+        # Banned companies - use is_banned column if it exists, otherwise use ban_reason
+        try:
+            result = query("SELECT COUNT(*) as count FROM companies WHERE is_banned = TRUE", one=True)
+            stats['banned_companies'] = result['count'] if result else 0
+        except:
+            # Fallback: check companies with ban_reason but no is_banned column
+            try:
+                result = query("SELECT COUNT(*) as count FROM companies WHERE ban_reason IS NOT NULL AND ban_reason != ''", one=True)
+                stats['banned_companies'] = result['count'] if result else 0
+            except:
+                stats['banned_companies'] = 0
         
         # Total users
         result = query("SELECT COUNT(*) as count FROM users", one=True)
@@ -451,6 +460,12 @@ def all_companies():
             query_str += " AND c.is_active = TRUE"
         elif status_filter == 'inactive':
             query_str += " AND c.is_active = FALSE"
+        elif status_filter == 'banned':
+            # Try to filter by is_banned column, fallback to ban_reason
+            try:
+                query_str += " AND c.is_banned = TRUE"
+            except:
+                query_str += " AND c.ban_reason IS NOT NULL AND c.ban_reason != ''"
         
         query_str += " ORDER BY c.created_at DESC"
         
@@ -1177,43 +1192,70 @@ def manage_subscriptions():
         # Get all subscription plans
         plans = query("SELECT * FROM subscription_plans ORDER BY price_monthly")
         
-        # Check if global free is enabled
-        global_free = query("""
-            SELECT COUNT(*) as count FROM company_subscriptions 
-            WHERE is_global_free = TRUE AND status IN ('active', 'trial')
-        """, one=True)
-        is_global_free = global_free['count'] > 0 if global_free else False
+        # Check if global free is enabled - handle missing column gracefully
+        try:
+            global_free = query("""
+                SELECT COUNT(*) as count FROM company_subscriptions 
+                WHERE is_global_free = TRUE AND status IN ('active', 'trial')
+            """, one=True)
+            is_global_free = global_free['count'] > 0 if global_free else False
+        except:
+            is_global_free = False
         
-        # Get all companies with their subscriptions
-        companies = query("""
-            SELECT c.id, c.name, c.email, c.is_active,
-                   cs.status as sub_status, 
-                   cs.custom_price, 
-                   cs.end_date,
-                   cs.is_global_free,
-                   cs.free_access_until,
-                   sp.name as plan_name, 
-                   sp.price_monthly as plan_price
-            FROM companies c
-            LEFT JOIN company_subscriptions cs ON cs.company_id = c.id AND cs.status IN ('active', 'trial')
-            LEFT JOIN subscription_plans sp ON cs.plan_id = sp.id
-            ORDER BY c.created_at DESC
-        """)
+        # Get all companies with their subscriptions - handle missing columns gracefully
+        try:
+            companies = query("""
+                SELECT c.id, c.name, c.email, c.is_active,
+                       cs.status as sub_status, 
+                       COALESCE(cs.custom_price, sp.price_monthly) as custom_price, 
+                       cs.end_date,
+                       cs.is_global_free,
+                       cs.free_access_until,
+                       sp.name as plan_name, 
+                       sp.price_monthly as plan_price
+                FROM companies c
+                LEFT JOIN company_subscriptions cs ON cs.company_id = c.id AND cs.status IN ('active', 'trial')
+                LEFT JOIN subscription_plans sp ON cs.plan_id = sp.id
+                ORDER BY c.created_at DESC
+            """)
+        except:
+            # Fallback: get companies without subscription info
+            companies = query("""
+                SELECT c.id, c.name, c.email, c.is_active,
+                       NULL as sub_status, 
+                       NULL as custom_price, 
+                       NULL as end_date,
+                       NULL as is_global_free,
+                       NULL as free_access_until,
+                       'free' as plan_name, 
+                       0 as plan_price
+                FROM companies c
+                ORDER BY c.created_at DESC
+            """)
         
-        # Get subscription statistics
+        # Get subscription statistics - handle missing columns gracefully
         stats = {}
-        result = query("SELECT COUNT(*) as count FROM company_subscriptions WHERE status = 'active'", one=True)
-        stats['active_subs'] = result['count'] if result else 0
+        try:
+            result = query("SELECT COUNT(*) as count FROM company_subscriptions WHERE status = 'active'", one=True)
+            stats['active_subs'] = result['count'] if result else 0
+        except:
+            stats['active_subs'] = 0
         
-        result = query("SELECT COUNT(*) as count FROM company_subscriptions WHERE custom_price = 0", one=True)
-        stats['free_subs'] = result['count'] if result else 0
+        try:
+            result = query("SELECT COUNT(*) as count FROM company_subscriptions WHERE custom_price = 0", one=True)
+            stats['free_subs'] = result['count'] if result else 0
+        except:
+            stats['free_subs'] = 0
         
-        result = query("""
-            SELECT COUNT(*) as count FROM company_subscriptions 
-            WHERE end_date IS NOT NULL AND end_date <= DATE_ADD(NOW(), INTERVAL 7 DAY)
-            AND status = 'active'
-        """, one=True)
-        stats['expiring_soon'] = result['count'] if result else 0
+        try:
+            result = query("""
+                SELECT COUNT(*) as count FROM company_subscriptions 
+                WHERE end_date IS NOT NULL AND end_date <= DATE_ADD(NOW(), INTERVAL 7 DAY)
+                AND status = 'active'
+            """, one=True)
+            stats['expiring_soon'] = result['count'] if result else 0
+        except:
+            stats['expiring_soon'] = 0
         
         return render_template('owner/subscriptions.html', 
                              plans=plans, 

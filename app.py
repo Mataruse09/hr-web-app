@@ -84,30 +84,20 @@ logger = setup_logging(Flask(__name__))
 
 # Dynamic sitemap generation
 def generate_sitemap():
-    """Generate XML sitemap dynamically"""
+    """Generate XML sitemap dynamically - only public pages for Google indexing"""
     from datetime import datetime
     
     base_url = "https://hr-web-app-5.onrender.com"
     today = datetime.now().strftime("%Y-%m-%d")
     
+    # Only include public pages that should be indexed
     pages = [
         ("/", "1.0", "weekly"),
-        ("/login", "0.9", "monthly"),
-        ("/register", "0.9", "monthly"),
-        ("/dashboard", "0.9", "weekly"),
-        ("/employees", "0.9", "weekly"),
-        ("/employees/add", "0.7", "monthly"),
-        ("/attendance", "0.8", "weekly"),
-        ("/attendance/logs", "0.7", "weekly"),
-        ("/leave", "0.8", "weekly"),
-        ("/payroll", "0.8", "monthly"),
-        ("/ai-analytics", "0.8", "weekly"),
-        ("/forecasting", "0.7", "weekly"),
-        ("/attrition", "0.7", "monthly"),
-        ("/compliance", "0.7", "monthly"),
-        ("/appraisals", "0.7", "monthly"),
-        ("/gamification", "0.6", "monthly"),
-        ("/admin", "0.7", "monthly"),
+        ("/login", "0.8", "monthly"),
+        ("/register", "0.8", "monthly"),
+        ("/terms", "0.5", "yearly"),
+        ("/privacy", "0.5", "yearly"),
+        ("/policies", "0.5", "yearly"),
     ]
     
     xml = '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
@@ -147,11 +137,17 @@ def create_app(config=Config):
     app.register_blueprint(owner_bp)
 
     # ── Security Middleware ─────────────────────────────────────
+    # Cache blocked IPs to avoid querying on every request
+    _blocked_ip_cache = {}
+    _blocked_ip_cache_time = {}
+    _BLOCKED_IP_CACHE_TTL = 300  # 5 minutes
+
     @app.before_request
     def check_blocked_ip():
-        """Block suspicious IPs"""
+        """Block suspicious IPs - with caching"""
         from flask import request, abort
         from models.db import query
+        import time
         
         # Skip for owner routes
         if request.path.startswith('/owner'):
@@ -161,13 +157,36 @@ def create_app(config=Config):
         if request.path.startswith('/static'):
             return
         
-        # Check if IP is blocked
-        ip = request.remote_addr
-        blocked = query("SELECT ip_address FROM blocked_ips WHERE ip_address = %s AND is_active = TRUE", (ip,), one=True)
+        # Skip for debug routes
+        if '/debug/' in request.path:
+            return
         
-        if blocked:
-            logger.warning(f"Blocked IP attempted access: {ip}")
-            abort(403)  # Forbidden
+        # Check if IP is blocked (with caching)
+        try:
+            ip = request.remote_addr
+            current_time = time.time()
+            
+            # Check cache first
+            if ip in _blocked_ip_cache:
+                cache_time = _blocked_ip_cache_time.get(ip, 0)
+                if current_time - cache_time < _BLOCKED_IP_CACHE_TTL:
+                    if _blocked_ip_cache[ip]:
+                        abort(403)
+                    return
+            
+            # Query database
+            blocked = query("SELECT ip_address FROM blocked_ips WHERE ip_address = %s AND is_active = TRUE", (ip,), one=True)
+            
+            # Update cache
+            _blocked_ip_cache[ip] = bool(blocked)
+            _blocked_ip_cache_time[ip] = current_time
+            
+            if blocked:
+                logger.warning(f"Blocked IP attempted access: {ip}")
+                abort(403)  # Forbidden
+        except Exception as e:
+            # Log the error but don't block the request - let it continue
+            pass
     @app.route('/sitemap.xml')
     def sitemap():
         """Serve dynamic sitemap"""
