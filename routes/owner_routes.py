@@ -443,7 +443,7 @@ def all_companies():
         params = []
         
         if search:
-            query_str += " AND (c.name ILIKE %s OR c.email ILIKE %s)"
+            query_str += " AND (c.name LIKE %s OR c.email LIKE %s)"
             search_pattern = f"%{search}%"
             params.extend([search_pattern, search_pattern])
         
@@ -829,12 +829,19 @@ def block_ip():
         return redirect(url_for('owner.security'))
     
     try:
-        # Add to blocked IPs
-        mutate("""
-            INSERT INTO blocked_ips (ip_address, reason, blocked_by) 
-            VALUES (%s, %s, 'owner')
-            ON CONFLICT (ip_address) DO UPDATE SET reason = %s, blocked_at = NOW()
-        """, (ip_address, reason, reason))
+        # Add to blocked IPs (MySQL syntax - use INSERT IGNORE and UPDATE)
+        # First try to insert, if duplicate then update
+        try:
+            mutate("""
+                INSERT INTO blocked_ips (ip_address, reason, blocked_by, is_active) 
+                VALUES (%s, %s, 'owner', 1)
+            """, (ip_address, reason))
+        except:
+            # If duplicate, update the existing record
+            mutate("""
+                UPDATE blocked_ips SET reason = %s, blocked_at = NOW(), is_active = 1 
+                WHERE ip_address = %s
+            """, (reason, ip_address))
         
         flash(f'IP {ip_address} has been blocked.', 'success')
         logger.warning(f"Owner blocked IP: {ip_address} - {reason}")
@@ -864,7 +871,7 @@ def activity_logs():
         params = []
         
         if action_filter:
-            query_str += " AND al.action ILIKE %s"
+            query_str += " AND al.action LIKE %s"
             params.append(f"%{action_filter}%")
         
         if date_from:

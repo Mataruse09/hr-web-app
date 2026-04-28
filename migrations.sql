@@ -1,13 +1,13 @@
 -- ============================================================
--- HR APP UPGRADE MIGRATIONS — PostgreSQL
+-- HR APP UPGRADE MIGRATIONS — MySQL
 -- Run this after the base schema.sql
 -- ============================================================
 
 -- 1. ACTIVITY/AUDIT LOG TABLE
 CREATE TABLE IF NOT EXISTS activity_logs (
-    id SERIAL PRIMARY KEY,
-    company_id INTEGER NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
-    user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    company_id INTEGER NOT NULL,
+    user_id INTEGER,
     action VARCHAR(255) NOT NULL,
     entity_type VARCHAR(100),
     entity_id INTEGER,
@@ -19,58 +19,42 @@ CREATE TABLE IF NOT EXISTS activity_logs (
 
 -- 2. SYSTEM SETTINGS TABLE
 CREATE TABLE IF NOT EXISTS system_settings (
-    id SERIAL PRIMARY KEY,
-    company_id INTEGER NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    company_id INTEGER NOT NULL,
     setting_key VARCHAR(100) NOT NULL,
     setting_value TEXT,
     setting_type VARCHAR(50) DEFAULT 'string',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE(company_id, setting_key)
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY unique_company_setting (company_id, setting_key)
 );
 
 -- 3. ENHANCED PAYROLL TABLE (REPLACE existing payroll_runs)
-ALTER TABLE payroll_runs ADD COLUMN IF NOT EXISTS
-    basic_salary DECIMAL(15,2) DEFAULT 0;
-ALTER TABLE payroll_runs ADD COLUMN IF NOT EXISTS
-    gross_salary DECIMAL(15,2) DEFAULT 0;
-ALTER TABLE payroll_runs ADD COLUMN IF NOT EXISTS
-    overtime_hours DECIMAL(6,2) DEFAULT 0;
-ALTER TABLE payroll_runs ADD COLUMN IF NOT EXISTS
-    overtime_amount DECIMAL(15,2) DEFAULT 0;
-ALTER TABLE payroll_runs ADD COLUMN IF NOT EXISTS
-    prorated_salary DECIMAL(15,2) DEFAULT 0;
-ALTER TABLE payroll_runs ADD COLUMN IF NOT EXISTS
-    housing_allowance DECIMAL(15,2) DEFAULT 0;
-ALTER TABLE payroll_runs ADD COLUMN IF NOT EXISTS
-    transport_allowance DECIMAL(15,2) DEFAULT 0;
-ALTER TABLE payroll_runs ADD COLUMN IF NOT EXISTS
-    meal_allowance DECIMAL(15,2) DEFAULT 0;
-ALTER TABLE payroll_runs ADD COLUMN IF NOT EXISTS
-    performance_bonus DECIMAL(15,2) DEFAULT 0;
-ALTER TABLE payroll_runs ADD COLUMN IF NOT EXISTS
-    income_tax DECIMAL(15,2) DEFAULT 0;
-ALTER TABLE payroll_runs ADD COLUMN IF NOT EXISTS
-    social_security DECIMAL(15,2) DEFAULT 0;
-ALTER TABLE payroll_runs ADD COLUMN IF NOT EXISTS
-    health_insurance DECIMAL(15,2) DEFAULT 0;
-ALTER TABLE payroll_runs ADD COLUMN IF NOT EXISTS
-    other_deductions DECIMAL(15,2) DEFAULT 0;
-ALTER TABLE payroll_runs ADD COLUMN IF NOT EXISTS
-    net_salary DECIMAL(15,2) DEFAULT 0;
-ALTER TABLE payroll_runs ADD COLUMN IF NOT EXISTS
-    notes TEXT;
-ALTER TABLE payroll_runs ADD COLUMN IF NOT EXISTS
-    approved_by INTEGER REFERENCES users(id) ON DELETE SET NULL;
-ALTER TABLE payroll_runs ADD COLUMN IF NOT EXISTS
-    approved_at TIMESTAMP;
+-- Note: MySQL doesn't support ADD COLUMN IF NOT EXISTS, run these separately
+-- ALTER TABLE payroll_runs ADD COLUMN basic_salary DECIMAL(15,2) DEFAULT 0;
+-- ALTER TABLE payroll_runs ADD COLUMN gross_salary DECIMAL(15,2) DEFAULT 0;
+-- ALTER TABLE payroll_runs ADD COLUMN overtime_hours DECIMAL(6,2) DEFAULT 0;
+-- ALTER TABLE payroll_runs ADD COLUMN overtime_amount DECIMAL(15,2) DEFAULT 0;
+-- ALTER TABLE payroll_runs ADD COLUMN prorated_salary DECIMAL(15,2) DEFAULT 0;
+-- ALTER TABLE payroll_runs ADD COLUMN housing_allowance DECIMAL(15,2) DEFAULT 0;
+-- ALTER TABLE payroll_runs ADD COLUMN transport_allowance DECIMAL(15,2) DEFAULT 0;
+-- ALTER TABLE payroll_runs ADD COLUMN meal_allowance DECIMAL(15,2) DEFAULT 0;
+-- ALTER TABLE payroll_runs ADD COLUMN performance_bonus DECIMAL(15,2) DEFAULT 0;
+-- ALTER TABLE payroll_runs ADD COLUMN income_tax DECIMAL(15,2) DEFAULT 0;
+-- ALTER TABLE payroll_runs ADD COLUMN social_security DECIMAL(15,2) DEFAULT 0;
+-- ALTER TABLE payroll_runs ADD COLUMN health_insurance DECIMAL(15,2) DEFAULT 0;
+-- ALTER TABLE payroll_runs ADD COLUMN other_deductions DECIMAL(15,2) DEFAULT 0;
+-- ALTER TABLE payroll_runs ADD COLUMN net_salary DECIMAL(15,2) DEFAULT 0;
+-- ALTER TABLE payroll_runs ADD COLUMN notes TEXT;
+-- ALTER TABLE payroll_runs ADD COLUMN approved_by INTEGER;
+-- ALTER TABLE payroll_runs ADD COLUMN approved_at TIMESTAMP;
 
 -- 4. APPRAISAL/PERFORMANCE RATING TABLE
 CREATE TABLE IF NOT EXISTS appraisals (
-    id SERIAL PRIMARY KEY,
-    company_id INTEGER NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
-    employee_id INTEGER NOT NULL REFERENCES employees_core(id) ON DELETE CASCADE,
-    reviewer_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    company_id INTEGER NOT NULL,
+    employee_id INTEGER NOT NULL,
+    reviewer_id INTEGER,
     appraisal_period VARCHAR(50),
     rating DECIMAL(2,1),
     communication DECIMAL(2,1),
@@ -81,14 +65,14 @@ CREATE TABLE IF NOT EXISTS appraisals (
     comments TEXT,
     status VARCHAR(50) DEFAULT 'Draft',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
 -- 5. LABOUR FORECASTING TABLE
 CREATE TABLE IF NOT EXISTS labour_forecasts (
-    id SERIAL PRIMARY KEY,
-    company_id INTEGER NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
-    department_id INTEGER REFERENCES departments(id) ON DELETE SET NULL,
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    company_id INTEGER NOT NULL,
+    department_id INTEGER,
     forecast_month DATE,
     current_headcount INTEGER,
     projected_hires INTEGER,
@@ -96,16 +80,16 @@ CREATE TABLE IF NOT EXISTS labour_forecasts (
     projected_headcount INTEGER,
     hiring_budget DECIMAL(15,2),
     notes TEXT,
-    created_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+    created_by INTEGER,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
 -- 6. ATTRITION TABLE
 CREATE TABLE IF NOT EXISTS attrition_records (
-    id SERIAL PRIMARY KEY,
-    company_id INTEGER NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
-    employee_id INTEGER NOT NULL REFERENCES employees_core(id) ON DELETE CASCADE,
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    company_id INTEGER NOT NULL,
+    employee_id INTEGER NOT NULL,
     exit_date DATE,
     reason VARCHAR(255),
     exit_interview_notes TEXT,
@@ -115,22 +99,22 @@ CREATE TABLE IF NOT EXISTS attrition_records (
 
 -- 7. GAMIFICATION/POINTS TABLE
 CREATE TABLE IF NOT EXISTS gamification_points (
-    id SERIAL PRIMARY KEY,
-    company_id INTEGER NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
-    employee_id INTEGER NOT NULL REFERENCES employees_core(id) ON DELETE CASCADE,
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    company_id INTEGER NOT NULL,
+    employee_id INTEGER NOT NULL,
     points INTEGER DEFAULT 0,
     level INTEGER DEFAULT 1,
     badges TEXT,
     achievements TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
 -- 8. COMPLIANCE/POLICY TABLE
 CREATE TABLE IF NOT EXISTS compliance_records (
-    id SERIAL PRIMARY KEY,
-    company_id INTEGER NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
-    employee_id INTEGER REFERENCES employees_core(id) ON DELETE CASCADE,
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    company_id INTEGER NOT NULL,
+    employee_id INTEGER,
     policy_name VARCHAR(255),
     compliance_type VARCHAR(100),
     status VARCHAR(50) DEFAULT 'Pending',
@@ -142,8 +126,8 @@ CREATE TABLE IF NOT EXISTS compliance_records (
 
 -- 9. AI PREDICTIONS LOG TABLE
 CREATE TABLE IF NOT EXISTS ai_predictions (
-    id SERIAL PRIMARY KEY,
-    company_id INTEGER NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    company_id INTEGER NOT NULL,
     prediction_type VARCHAR(100),
     parameters TEXT,
     result TEXT,
@@ -153,49 +137,43 @@ CREATE TABLE IF NOT EXISTS ai_predictions (
 
 -- 10. USER ROLES TABLE (for granular RBAC)
 CREATE TABLE IF NOT EXISTS user_roles (
-    id SERIAL PRIMARY KEY,
-    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    company_id INTEGER NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INTEGER NOT NULL,
+    company_id INTEGER NOT NULL,
     role VARCHAR(50) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE(user_id, company_id, role)
+    UNIQUE KEY unique_user_company_role (user_id, company_id, role)
 );
 
 -- 11. PERMISSIONS TABLE
 CREATE TABLE IF NOT EXISTS permissions (
-    id SERIAL PRIMARY KEY,
+    id INT AUTO_INCREMENT PRIMARY KEY,
     role VARCHAR(50) NOT NULL,
     permission VARCHAR(100) NOT NULL,
-    UNIQUE(role, permission)
+    UNIQUE KEY unique_role_permission (role, permission)
 );
 
 -- 12. EMPLOYEE EXTENDED INFO (Personal details access control)
-ALTER TABLE employees_core ADD COLUMN IF NOT EXISTS
-    date_of_birth DATE;
-ALTER TABLE employees_core ADD COLUMN IF NOT EXISTS
-    gender VARCHAR(50);
-ALTER TABLE employees_core ADD COLUMN IF NOT EXISTS
-    nationality VARCHAR(100);
-ALTER TABLE employees_core ADD COLUMN IF NOT EXISTS
-    bank_account VARCHAR(50);
-ALTER TABLE employees_core ADD COLUMN IF NOT EXISTS
-    tax_id VARCHAR(50);
-ALTER TABLE employees_core ADD COLUMN IF NOT EXISTS
-    emergency_contact VARCHAR(100);
-ALTER TABLE employees_core ADD COLUMN IF NOT EXISTS
-    emergency_contact_phone VARCHAR(30);
+-- Note: MySQL doesn't support ADD COLUMN IF NOT EXISTS, run these separately
+-- ALTER TABLE employees_core ADD COLUMN date_of_birth DATE;
+-- ALTER TABLE employees_core ADD COLUMN gender VARCHAR(50);
+-- ALTER TABLE employees_core ADD COLUMN nationality VARCHAR(100);
+-- ALTER TABLE employees_core ADD COLUMN bank_account VARCHAR(50);
+-- ALTER TABLE employees_core ADD COLUMN tax_id VARCHAR(50);
+-- ALTER TABLE employees_core ADD COLUMN emergency_contact VARCHAR(100);
+-- ALTER TABLE employees_core ADD COLUMN emergency_contact_phone VARCHAR(30);
 
 -- 13. INDEXES FOR PERFORMANCE
-CREATE INDEX IF NOT EXISTS idx_activity_logs_company ON activity_logs(company_id, created_at DESC);
-CREATE INDEX IF NOT EXISTS idx_activity_logs_user ON activity_logs(user_id);
-CREATE INDEX IF NOT EXISTS idx_payroll_company ON payroll_runs(company_id, pay_period);
-CREATE INDEX IF NOT EXISTS idx_appraisals_employee ON appraisals(employee_id);
-CREATE INDEX IF NOT EXISTS idx_forecasts_company ON labour_forecasts(company_id, forecast_month);
-CREATE INDEX IF NOT EXISTS idx_attrition_company ON attrition_records(company_id);
-CREATE INDEX IF NOT EXISTS idx_compliance_company ON compliance_records(company_id);
+CREATE INDEX idx_activity_logs_company ON activity_logs(company_id, created_at DESC);
+CREATE INDEX idx_activity_logs_user ON activity_logs(user_id);
+CREATE INDEX idx_payroll_company ON payroll_runs(company_id, pay_period);
+CREATE INDEX idx_appraisals_employee ON appraisals(employee_id);
+CREATE INDEX idx_forecasts_company ON labour_forecasts(company_id, forecast_month);
+CREATE INDEX idx_attrition_company ON attrition_records(company_id);
+CREATE INDEX idx_compliance_company ON compliance_records(company_id);
 
 -- 14. INSERT DEFAULT PERMISSIONS
-INSERT INTO permissions (role, permission) VALUES
+INSERT IGNORE INTO permissions (role, permission) VALUES
     ('Admin', 'view_all_employees'),
     ('Admin', 'edit_all_employees'),
     ('Admin', 'view_payroll'),

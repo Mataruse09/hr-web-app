@@ -515,6 +515,26 @@ a:hover { text-decoration: underline; }
   font-size: 20px; cursor: pointer; color: var(--text-muted);
   display: none;
 }
+
+/* Show sidebar toggle on mobile */
+@media (max-width: 768px) {
+  .sidebar-toggle {
+    display: block;
+    position: fixed;
+    top: 10px;
+    left: 10px;
+    z-index: 1001;
+    background: var(--primary);
+    color: white;
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+  }
+}
 .topbar-left { flex: 1; }
 .page-title  { font-size: 18px; font-weight: 600; color: var(--text); }
 .topbar-right { display: flex; align-items: center; gap: 14px; }

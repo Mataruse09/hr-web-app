@@ -63,21 +63,30 @@ def predict_attrition_risk(company_id: int, employee_id: int = None) -> List[Dic
         if emp_risk:
             results.append(emp_risk)
     else:
-        # All employees analysis
-        employees = query("""
-            SELECT id, first_name, last_name, job_title, department_id,
-                   hire_date, status, email
-            FROM employees_core 
-            WHERE company_id = %s AND status = 'Active'
-        """, (company_id,))
+        # All employees analysis - limit to 50 to prevent timeouts
+        try:
+            employees = query("""
+                SELECT id, first_name, last_name, job_title, department_id,
+                       hire_date, status, email
+                FROM employees_core 
+                WHERE company_id = %s AND status = 'Active'
+                LIMIT 50
+            """, (company_id,))
+        except Exception as e:
+            logger.warning(f"Failed to get employees for attrition risk: {e}")
+            employees = []
         
         if employees:
             for emp in employees:
-                emp_risk = _calculate_single_employee_risk(company_id, emp['id'])
-                if emp_risk:
-                    emp_risk['employee_name'] = f"{emp['first_name']} {emp['last_name']}"
-                    emp_risk['job_title'] = emp['job_title']
-                    results.append(emp_risk)
+                try:
+                    emp_risk = _calculate_single_employee_risk(company_id, emp['id'])
+                    if emp_risk:
+                        emp_risk['employee_name'] = f"{emp['first_name']} {emp['last_name']}"
+                        emp_risk['job_title'] = emp['job_title']
+                        results.append(emp_risk)
+                except Exception as e:
+                    logger.warning(f"Error calculating risk for employee {emp.get('id')}: {e}")
+                    continue
         
         # Sort by risk score (highest first)
         results.sort(key=lambda x: x['risk_score'], reverse=True)
@@ -87,34 +96,52 @@ def predict_attrition_risk(company_id: int, employee_id: int = None) -> List[Dic
 
 def _calculate_single_employee_risk(company_id: int, employee_id: int) -> Optional[Dict]:
     """Calculate risk score for a single employee."""
+    # Initialize default scores
+    tenure_score = 30.0
+    attendance_score = 30.0
+    leave_score = 30.0
+    appraisal_score = 30.0
+    overtime_score = 30.0
+    salary_score = 30.0
     
-    # 1. Tenure Factor (longer tenure = lower risk)
-    tenure_score = _calculate_tenure_score(employee_id, company_id)
-    
-    # 2. Attendance Factor (poor attendance = higher risk)
-    attendance_score = _calculate_attendance_score(company_id, employee_id)
-    
-    # 3. Leave Balance Factor
-    leave_score = _calculate_leave_balance_score(company_id, employee_id)
-    
-    # 4. Appraisal Factor
-    appraisal_score = _calculate_appraisal_score(company_id, employee_id)
-    
-    # 5. Overtime Factor
-    overtime_score = _calculate_overtime_score(company_id, employee_id)
-    
-    # 6. Salary Factor (simplified - would need market data in production)
-    salary_score = _calculate_salary_factor(company_id, employee_id)
-    
-    # Calculate weighted risk score
-    risk_score = (
-        tenure_score * ATTRITION_WEIGHTS['tenure'] +
-        attendance_score * ATTRITION_WEIGHTS['attendance'] +
-        leave_score * ATTRITION_WEIGHTS['leave_balance'] +
-        appraisal_score * ATTRITION_WEIGHTS['appraisal'] +
-        overtime_score * ATTRITION_WEIGHTS['overtime'] +
-        salary_score * ATTRITION_WEIGHTS['salary_gap']
-    )
+    try:
+        # 1. Tenure Factor (longer tenure = lower risk)
+        tenure_score = _calculate_tenure_score(employee_id, company_id)
+        
+        # 2. Attendance Factor (poor attendance = higher risk)
+        attendance_score = _calculate_attendance_score(company_id, employee_id)
+        
+        # 3. Leave Balance Factor
+        leave_score = _calculate_leave_balance_score(company_id, employee_id)
+        
+        # 4. Appraisal Factor
+        appraisal_score = _calculate_appraisal_score(company_id, employee_id)
+        
+        # 5. Overtime Factor
+        overtime_score = _calculate_overtime_score(company_id, employee_id)
+        
+        # 6. Salary Factor (simplified - would need market data in production)
+        salary_score = _calculate_salary_factor(company_id, employee_id)
+        
+        # Calculate weighted risk score
+        risk_score = (
+            tenure_score * ATTRITION_WEIGHTS['tenure'] +
+            attendance_score * ATTRITION_WEIGHTS['attendance'] +
+            leave_score * ATTRITION_WEIGHTS['leave_balance'] +
+            appraisal_score * ATTRITION_WEIGHTS['appraisal'] +
+            overtime_score * ATTRITION_WEIGHTS['overtime'] +
+            salary_score * ATTRITION_WEIGHTS['salary_gap']
+        )
+    except Exception as e:
+        logger.warning(f"Error calculating risk scores for employee {employee_id}: {e}")
+        # Return default risk score
+        return {
+            'employee_id': employee_id,
+            'risk_score': 30.0,
+            'risk_level': 'Low',
+            'factors': ['Unable to calculate full risk profile'],
+            'recommendations': ['Review employee data']
+        }
     
     # Determine risk level
     if risk_score >= 70:
@@ -155,10 +182,14 @@ def _calculate_single_employee_risk(company_id: int, employee_id: int) -> Option
 
 def _calculate_tenure_score(employee_id: int, company_id: int) -> float:
     """Calculate tenure-based risk score (0-100, higher = more risk)."""
-    emp = query("""
-        SELECT hire_date FROM employees_core 
-        WHERE id = %s AND company_id = %s
-    """, (employee_id, company_id), one=True)
+    try:
+        emp = query("""
+            SELECT hire_date FROM employees_core 
+            WHERE id = %s AND company_id = %s
+        """, (employee_id, company_id), one=True)
+    except Exception as e:
+        logger.warning(f"Error getting tenure for employee {employee_id}: {e}")
+        return 30.0  # Default score
     
     if not emp or not emp.get('hire_date'):
         return 50.0  # Unknown tenure
@@ -186,15 +217,19 @@ def _calculate_attendance_score(company_id: int, employee_id: int) -> float:
     start_date = (date.today() - timedelta(days=90)).isoformat()
     end_date = date.today().isoformat()
     
-    attendance = query("""
-        SELECT 
-            SUM(CASE WHEN status = 'Absent' THEN 1 ELSE 0 END) as absent_days,
-            SUM(CASE WHEN status = 'Late' THEN 1 ELSE 0 END) as late_days,
-            COUNT(*) as total_days
-        FROM attendance
-        WHERE company_id = %s AND employee_id = %s 
-        AND work_date BETWEEN %s AND %s
-    """, (company_id, employee_id, start_date, end_date), one=True)
+    try:
+        attendance = query("""
+            SELECT 
+                SUM(CASE WHEN status = 'Absent' THEN 1 ELSE 0 END) as absent_days,
+                SUM(CASE WHEN status = 'Late' THEN 1 ELSE 0 END) as late_days,
+                COUNT(*) as total_days
+            FROM attendance
+            WHERE company_id = %s AND employee_id = %s 
+            AND work_date BETWEEN %s AND %s
+        """, (company_id, employee_id, start_date, end_date), one=True)
+    except Exception as e:
+        logger.warning(f"Error getting attendance for employee {employee_id}: {e}")
+        return 30.0  # No data
     
     if not attendance or not attendance.get('total_days'):
         return 30.0  # No data
@@ -215,11 +250,15 @@ def _calculate_leave_balance_score(company_id: int, employee_id: int) -> float:
     """Calculate leave balance risk score."""
     current_year = date.today().year
     
-    balance = query("""
-        SELECT annual_total, annual_used 
-        FROM leave_balances
-        WHERE employee_id = %s AND company_id = %s AND year = %s
-    """, (employee_id, company_id, current_year), one=True)
+    try:
+        balance = query("""
+            SELECT annual_total, annual_used 
+            FROM leave_balances
+            WHERE employee_id = %s AND company_id = %s AND year = %s
+        """, (employee_id, company_id, current_year), one=True)
+    except Exception as e:
+        logger.warning(f"Leave balance table query failed: {e}")
+        return 40.0  # No balance record
     
     if not balance:
         return 40.0  # No balance record
@@ -240,11 +279,15 @@ def _calculate_leave_balance_score(company_id: int, employee_id: int) -> float:
 def _calculate_appraisal_score(company_id: int, employee_id: int) -> float:
     """Calculate performance-based risk score."""
     # Get latest appraisal
-    appraisal = query("""
-        SELECT overall_rating FROM appraisals
-        WHERE employee_id = %s AND company_id = %s
-        ORDER BY created_at DESC LIMIT 1
-    """, (employee_id, company_id), one=True)
+    try:
+        appraisal = query("""
+            SELECT overall_rating FROM appraisals
+            WHERE employee_id = %s AND company_id = %s
+            ORDER BY created_at DESC LIMIT 1
+        """, (employee_id, company_id), one=True)
+    except Exception as e:
+        logger.warning(f"Appraisal table query failed: {e}")
+        return 30.0  # No appraisal data
     
     if not appraisal or not appraisal.get('overall_rating'):
         return 30.0  # No appraisal data
@@ -260,12 +303,16 @@ def _calculate_overtime_score(company_id: int, employee_id: int) -> float:
     # Get last 3 months overtime
     three_months_ago = (date.today() - timedelta(days=90)).isoformat()
     
-    overtime = query("""
-        SELECT SUM(overtime_hours) as total_overtime
-        FROM payroll_runs
-        WHERE employee_id = %s AND company_id = %s
-        AND pay_period >= %s
-    """, (employee_id, company_id, three_months_ago), one=True)
+    try:
+        overtime = query("""
+            SELECT SUM(overtime_hours) as total_overtime
+            FROM payroll_runs
+            WHERE employee_id = %s AND company_id = %s
+            AND pay_period >= %s
+        """, (employee_id, company_id, three_months_ago), one=True)
+    except Exception as e:
+        logger.warning(f"Error getting overtime for employee {employee_id}: {e}")
+        return 30.0  # Default score
     
     total_overtime = overtime.get('total_overtime', 0) or 0
     
@@ -281,11 +328,15 @@ def _calculate_overtime_score(company_id: int, employee_id: int) -> float:
 def _calculate_salary_factor(company_id: int, employee_id: int) -> float:
     """Calculate salary-related risk score (simplified)."""
     # Get employee salary
-    comp = query("""
-        SELECT basic_salary FROM compensation
-        WHERE employee_id = %s AND company_id = %s
-        ORDER BY created_at DESC LIMIT 1
-    """, (employee_id, company_id), one=True)
+    try:
+        comp = query("""
+            SELECT basic_salary FROM compensation
+            WHERE employee_id = %s AND company_id = %s
+            ORDER BY created_at DESC LIMIT 1
+        """, (employee_id, company_id), one=True)
+    except Exception as e:
+        logger.warning(f"Error getting salary for employee {employee_id}: {e}")
+        return 30.0  # Default score
     
     if not comp or not comp.get('basic_salary'):
         return 30.0  # No salary data

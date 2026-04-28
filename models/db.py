@@ -70,7 +70,7 @@ def _get_connection_args(cfg):
         'port': int(cfg.get('DB_PORT', 3306) or os.getenv('DB_PORT', 3306)),
         'autocommit': False,
         'raise_on_warnings': False,
-        'connection_timeout': 10,
+        'connection_timeout': 30,  # Increased timeout for long-running queries
     }
 
 
@@ -86,7 +86,7 @@ def init_pool(app):
         conn_args = _get_connection_args(cfg)
         pool = pooling.MySQLConnectionPool(
             pool_name='hr_system_pool',
-            pool_size=15,  # Increased from 5 to handle more concurrent requests
+            pool_size=10,  # Balanced pool size
             pool_reset_session=True,
             **conn_args
         )

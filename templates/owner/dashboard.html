@@ -45,6 +45,55 @@
         .owner-content {
             padding: 30px;
         }
+        
+        /* Mobile Toggle Button */
+        .nav-toggle-btn {
+            display: none;
+            background: var(--primary);
+            border: none;
+            color: white;
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-size: 1.2rem;
+            cursor: pointer;
+        }
+        
+        /* Mobile Responsive Styles */
+        @media (max-width: 992px) {
+            .nav-toggle-btn {
+                display: block;
+            }
+            .owner-nav .nav-container {
+                display: none;
+                position: absolute;
+                top: 100%;
+                left: 0;
+                right: 0;
+                background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+                padding: 15px;
+                z-index: 1000;
+                box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+            }
+            .owner-nav .nav-container.active {
+                display: block;
+            }
+            .owner-nav .nav-container .nav {
+                flex-direction: column;
+                gap: 5px;
+            }
+            .owner-nav .nav-container .nav-item {
+                width: 100%;
+            }
+            .owner-nav .nav-container .nav-link {
+                display: block;
+                padding: 12px 15px;
+                border-radius: 8px;
+            }
+            .owner-content {
+                padding: 15px;
+            }
+        }
+        
         .stat-card {
             background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
             border-radius: 16px;
@@ -152,7 +201,10 @@
                     </a>
                     <span class="badge bg-warning text-dark">SUPER ADMIN</span>
                 </div>
-                <div class="d-flex align-items-center">
+                <button class="nav-toggle-btn" onclick="toggleNav()">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <div class="d-flex align-items-center nav-container" id="navContainer">
                     <ul class="nav">
                         <li class="nav-item"><a class="nav-link active" href="{{ url_for('owner.dashboard') }}"><i class="fas fa-home me-1"></i>Dashboard</a></li>
                         <li class="nav-item"><a class="nav-link" href="{{ url_for('owner.all_companies') }}"><i class="fas fa-building me-1"></i>Companies</a></li>
@@ -168,6 +220,13 @@
             </div>
         </div>
     </nav>
+
+    <script>
+        function toggleNav() {
+            var navContainer = document.getElementById('navContainer');
+            navContainer.classList.toggle('active');
+        }
+    </script>
 
     <div class="owner-content">
         {% with messages = get_flashed_messages(with_categories=true) %}

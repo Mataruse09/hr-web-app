@@ -9,9 +9,13 @@ logger = logging.getLogger(__name__)
 def get_compensation(employee_id: int, company_id: int):
     """Get employee full compensation details"""
     try:
-        # Only select columns that exist in the compensation table
+        # Select all columns from the compensation table
         return query("""
-            SELECT id, employee_id, company_id, basic_salary, currency, created_at
+            SELECT id, employee_id, company_id, basic_salary, currency,
+                   effective_date, housing_allowance, transport_allowance,
+                   meal_allowance, other_allowances, income_tax_rate,
+                   social_insurance, health_insurance, other_deductions,
+                   created_at, updated_at
             FROM compensation
             WHERE employee_id=%s AND company_id=%s
             ORDER BY created_at DESC LIMIT 1
@@ -28,23 +32,47 @@ def save_compensation(company_id: int, employee_id: int, data: dict):
         if existing:
             mutate("""
                 UPDATE compensation SET
-                  basic_salary=%s, currency=%s
+                  basic_salary=%s, currency=%s,
+                  effective_date=%s, housing_allowance=%s, transport_allowance=%s,
+                  meal_allowance=%s, other_allowances=%s, income_tax_rate=%s,
+                  social_insurance=%s, health_insurance=%s, other_deductions=%s
                 WHERE id=%s
             """, (
                 data.get('basic_salary', 0),
                 data.get('currency', 'USD'),
+                data.get('effective_date'),
+                data.get('housing_allowance', 0),
+                data.get('transport_allowance', 0),
+                data.get('meal_allowance', 0),
+                data.get('other_allowances', 0),
+                data.get('income_tax_rate', 15),
+                data.get('social_insurance', 0),
+                data.get('health_insurance', 0),
+                data.get('other_deductions', 0),
                 existing['id'],
             ))
         else:
             mutate("""
                 INSERT INTO compensation
-                  (company_id, employee_id, basic_salary, currency)
-                VALUES(%s, %s, %s, %s)
+                  (company_id, employee_id, basic_salary, currency,
+                   effective_date, housing_allowance, transport_allowance,
+                   meal_allowance, other_allowances, income_tax_rate,
+                   social_insurance, health_insurance, other_deductions)
+                VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             """, (
                 company_id,
                 employee_id,
                 data.get('basic_salary', 0),
                 data.get('currency', 'USD'),
+                data.get('effective_date'),
+                data.get('housing_allowance', 0),
+                data.get('transport_allowance', 0),
+                data.get('meal_allowance', 0),
+                data.get('other_allowances', 0),
+                data.get('income_tax_rate', 15),
+                data.get('social_insurance', 0),
+                data.get('health_insurance', 0),
+                data.get('other_deductions', 0),
             ))
     except Exception as e:
         logger.error(f"Error saving compensation for employee {employee_id}: {e}")

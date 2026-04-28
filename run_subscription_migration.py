@@ -19,11 +19,11 @@ def run_migration():
     # Create Flask app context
     app = create_app()
     with app.app_context():
-        # Check if tables already exist
+        # Check if tables already exist (MySQL syntax)
         try:
             existing = query("""
                 SELECT table_name FROM information_schema.tables 
-                WHERE table_schema = 'public' 
+                WHERE table_schema = DATABASE() 
                 AND table_name IN ('subscription_plans', 'company_subscriptions', 'subscription_features')
             """)
             
@@ -41,7 +41,7 @@ def run_migration():
         try:
             mutate("""
                 CREATE TABLE IF NOT EXISTS subscription_plans (
-                    id SERIAL PRIMARY KEY,
+                    id INT AUTO_INCREMENT PRIMARY KEY,
                     name VARCHAR(100) NOT NULL UNIQUE,
                     display_name VARCHAR(100) NOT NULL,
                     description TEXT,
@@ -49,11 +49,11 @@ def run_migration():
                     price_yearly DECIMAL(10, 2),
                     max_employees INTEGER NOT NULL DEFAULT 10,
                     max_users INTEGER NOT NULL DEFAULT 5,
-                    features JSONB NOT NULL DEFAULT '[]',
-                    is_active BOOLEAN NOT NULL DEFAULT TRUE,
-                    is_trial BOOLEAN NOT NULL DEFAULT FALSE,
+                    features JSON NOT NULL DEFAULT '[]',
+                    is_active TINYINT(1) NOT NULL DEFAULT 1,
+                    is_trial TINYINT(1) NOT NULL DEFAULT 0,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
                 )
             """)
             print("   ✓ Created")
@@ -65,18 +65,18 @@ def run_migration():
         try:
             mutate("""
                 CREATE TABLE IF NOT EXISTS company_subscriptions (
-                    id SERIAL PRIMARY KEY,
-                    company_id INTEGER NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
-                    plan_id INTEGER NOT NULL REFERENCES subscription_plans(id),
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    company_id INTEGER NOT NULL,
+                    plan_id INTEGER NOT NULL,
                     status VARCHAR(50) NOT NULL DEFAULT 'active',
                     start_date DATE NOT NULL,
                     end_date DATE,
-                    auto_renew BOOLEAN NOT NULL DEFAULT TRUE,
-                    cancel_at_period_end BOOLEAN NOT NULL DEFAULT FALSE,
+                    auto_renew TINYINT(1) NOT NULL DEFAULT 1,
+                    cancel_at_period_end TINYINT(1) NOT NULL DEFAULT 0,
                     stripe_customer_id VARCHAR(255),
                     stripe_subscription_id VARCHAR(255),
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
                 )
             """)
             print("   ✓ Created")
@@ -88,12 +88,12 @@ def run_migration():
         try:
             mutate("""
                 CREATE TABLE IF NOT EXISTS subscription_features (
-                    id SERIAL PRIMARY KEY,
+                    id INT AUTO_INCREMENT PRIMARY KEY,
                     name VARCHAR(100) NOT NULL UNIQUE,
                     display_name VARCHAR(100) NOT NULL,
                     description TEXT,
                     category VARCHAR(50) NOT NULL,
-                    is_premium BOOLEAN NOT NULL DEFAULT TRUE,
+                    is_premium TINYINT(1) NOT NULL DEFAULT 1,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
             """)
@@ -105,12 +105,11 @@ def run_migration():
         print("\n4. Inserting default subscription plans...")
         try:
             mutate("""
-                INSERT INTO subscription_plans (name, display_name, description, price_monthly, price_yearly, max_employees, max_users, features, is_active, is_trial) VALUES
-                ('free', 'Free Plan', 'Basic HR features for small teams', 0, 0, 10, 3, '["employees", "attendance", "leave", "basic_reports"]', true, false),
-                ('starter', 'Starter Plan', 'Essential HR features for growing teams', 29.99, 299.99, 50, 10, '["employees", "attendance", "leave", "basic_reports", "payroll", "appraisals"]', true, false),
-                ('professional', 'Professional Plan', 'Advanced HR with AI analytics', 79.99, 799.99, 200, 25, '["employees", "attendance", "leave", "basic_reports", "payroll", "appraisals", "ai_analytics", "forecasting", "attrition"]', true, false),
-                ('enterprise', 'Enterprise Plan', 'Full-featured HR for large organizations', 199.99, 1999.99, 1000, 100, '["employees", "attendance", "leave", "basic_reports", "payroll", "appraisals", "ai_analytics", "forecasting", "attrition", "compliance", "gamification", "advanced_forecasting"]', true, false)
-                ON CONFLICT (name) DO NOTHING
+                INSERT IGNORE INTO subscription_plans (name, display_name, description, price_monthly, price_yearly, max_employees, max_users, features, is_active, is_trial) VALUES
+                ('free', 'Free Plan', 'Basic HR features for small teams', 0, 0, 10, 3, '["employees", "attendance", "leave", "basic_reports"]', 1, 0),
+                ('starter', 'Starter Plan', 'Essential HR features for growing teams', 29.99, 299.99, 50, 10, '["employees", "attendance", "leave", "basic_reports", "payroll", "appraisals"]', 1, 0),
+                ('professional', 'Professional Plan', 'Advanced HR with AI analytics', 79.99, 799.99, 200, 25, '["employees", "attendance", "leave", "basic_reports", "payroll", "appraisals", "ai_analytics", "forecasting", "attrition"]', 1, 0),
+                ('enterprise', 'Enterprise Plan', 'Full-featured HR for large organizations', 199.99, 1999.99, 1000, 100, '["employees", "attendance", "leave", "basic_reports", "payroll", "appraisals", "ai_analytics", "forecasting", "attrition", "compliance", "gamification", "advanced_forecasting"]', 1, 0)
             """)
             print("   ✓ Inserted default plans")
         except Exception as e:
@@ -120,20 +119,19 @@ def run_migration():
         print("\n5. Inserting subscription features...")
         try:
             mutate("""
-                INSERT INTO subscription_features (name, display_name, description, category, is_premium) VALUES
-                ('employees', 'Employee Management', 'Basic employee CRUD operations', 'basic', false),
-                ('attendance', 'Attendance Tracking', 'Track employee attendance and hours', 'basic', false),
-                ('leave', 'Leave Management', 'Manage employee leave requests', 'basic', false),
-                ('basic_reports', 'Basic Reports', 'Standard HR reports and dashboards', 'basic', false),
-                ('payroll', 'Payroll', 'Payroll processing and management', 'advanced', true),
-                ('appraisals', 'Appraisals', 'Performance appraisal system', 'advanced', true),
-                ('ai_analytics', 'AI Analytics', 'AI-powered workforce insights', 'ai', true),
-                ('forecasting', 'Labour Forecasting', 'Workforce demand forecasting', 'ai', true),
-                ('attrition', 'Attrition Analysis', 'Employee attrition risk analysis', 'ai', true),
-                ('compliance', 'Compliance Management', 'Regulatory compliance tracking', 'premium', true),
-                ('gamification', 'Gamification', 'Employee engagement and rewards', 'premium', true),
-                ('advanced_forecasting', 'Advanced Forecasting', 'ML-powered workforce predictions', 'ai', true)
-                ON CONFLICT (name) DO NOTHING
+                INSERT IGNORE INTO subscription_features (name, display_name, description, category, is_premium) VALUES
+                ('employees', 'Employee Management', 'Basic employee CRUD operations', 'basic', 0),
+                ('attendance', 'Attendance Tracking', 'Track employee attendance and hours', 'basic', 0),
+                ('leave', 'Leave Management', 'Manage employee leave requests', 'basic', 0),
+                ('basic_reports', 'Basic Reports', 'Standard HR reports and dashboards', 'basic', 0),
+                ('payroll', 'Payroll', 'Payroll processing and management', 'advanced', 1),
+                ('appraisals', 'Appraisals', 'Performance appraisal system', 'advanced', 1),
+                ('ai_analytics', 'AI Analytics', 'AI-powered workforce insights', 'ai', 1),
+                ('forecasting', 'Labour Forecasting', 'Workforce demand forecasting', 'ai', 1),
+                ('attrition', 'Attrition Analysis', 'Employee attrition risk analysis', 'ai', 1),
+                ('compliance', 'Compliance Management', 'Regulatory compliance tracking', 'premium', 1),
+                ('gamification', 'Gamification', 'Employee engagement and rewards', 'premium', 1),
+                ('advanced_forecasting', 'Advanced Forecasting', 'ML-powered workforce predictions', 'ai', 1)
             """)
             print("   ✓ Inserted default features")
         except Exception as e:
@@ -151,7 +149,7 @@ def run_migration():
         
         try:
             mutate("""
-                ALTER TABLE companies ADD COLUMN IF NOT EXISTS plan_id INTEGER REFERENCES subscription_plans(id)
+                ALTER TABLE companies ADD COLUMN plan_id INTEGER
             """)
             print("   ✓ Added plan_id")
         except Exception as e:
@@ -159,7 +157,7 @@ def run_migration():
         
         try:
             mutate("""
-                ALTER TABLE companies ADD COLUMN IF NOT EXISTS subscription_start DATE
+                ALTER TABLE companies ADD COLUMN subscription_start DATE
             """)
             print("   ✓ Added subscription_start")
         except Exception as e:
@@ -167,7 +165,7 @@ def run_migration():
         
         try:
             mutate("""
-                ALTER TABLE companies ADD COLUMN IF NOT EXISTS subscription_end DATE
+                ALTER TABLE companies ADD COLUMN subscription_end DATE
             """)
             print("   ✓ Added subscription_end")
         except Exception as e:
@@ -176,13 +174,13 @@ def run_migration():
         # Create indexes
         print("\n7. Creating indexes...")
         try:
-            mutate("CREATE INDEX IF NOT EXISTS idx_company_subscriptions_company ON company_subscriptions(company_id)")
+            mutate("CREATE INDEX idx_company_subscriptions_company ON company_subscriptions(company_id)")
             print("   ✓ Created company index")
         except Exception as e:
             print(f"   Note: {e}")
         
         try:
-            mutate("CREATE INDEX IF NOT EXISTS idx_company_subscriptions_status ON company_subscriptions(status)")
+            mutate("CREATE INDEX idx_company_subscriptions_status ON company_subscriptions(status)")
             print("   ✓ Created status index")
         except Exception as e:
             print(f"   Note: {e}")

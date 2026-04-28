@@ -1,5 +1,6 @@
 -- Add payment_method column to company_subscriptions
-ALTER TABLE company_subscriptions ADD COLUMN IF NOT EXISTS payment_method VARCHAR(50);
+ALTER TABLE company_subscriptions 
+ADD COLUMN payment_method VARCHAR(50);
 
 -- Update existing records
 UPDATE company_subscriptions SET payment_method = 'card' WHERE payment_method IS NULL;
