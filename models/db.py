@@ -235,7 +235,14 @@ def _close_db(exc=None):
                 # Connection was already closed, create a new one for the pool
                 pass
         except Exception as e:
+            # Connection may be in a bad state (e.g., server reset it)
+            # Just log and ignore - the pool will handle cleanup
             logger.debug("Error closing DB connection (non-critical): %s", e)
+            try:
+                # Try to reset the connection before returning to pool
+                db.reset_connection()
+            except:
+                pass
 
 
 def init_db(app):
@@ -288,7 +295,13 @@ def query(sql: str, params: tuple = (), one: bool = False, max_retries: int = 3)
                 if cur:
                     cur.close()
                 if db:
-                    db.close()
+                    try:
+                        if db.is_connected():
+                            db.close()
+                    except Exception as close_err:
+                        logger.debug("Error closing DB connection in query: %s", close_err)
+            
+            break  # Exit loop after successful execution
                     
         except Error as e:
             last_error = e
@@ -372,9 +385,14 @@ def mutate(sql: str, params: tuple = (), max_retries: int = 3):
                 if cur:
                     cur.close()
                 if db:
-                    db.close()
-                    
-        except Error as e:
+                    try:
+                        if db.is_connected():
+                            db.close()
+                    except Exception as close_err:
+                        # Connection may be in bad state, just log and continue
+                        logger.debug("Error closing DB connection in mutate: %s", close_err)
+            
+            break  # Exit loop after successful execution
             last_error = e
             error_msg = str(e).lower()
             

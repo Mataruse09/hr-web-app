@@ -58,6 +58,21 @@
             cursor: pointer;
         }
         
+        /* Default: hide nav container on all sizes, show on desktop */
+        .owner-nav .nav-container {
+            display: none;
+        }
+        
+        /* Desktop: always show nav */
+        @media (min-width: 993px) {
+            .owner-nav .nav-container {
+                display: flex !important;
+            }
+            .nav-toggle-btn {
+                display: none;
+            }
+        }
+        
         /* Mobile Responsive Styles */
         @media (max-width: 992px) {
             .nav-toggle-btn {
