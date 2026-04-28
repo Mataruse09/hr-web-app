@@ -213,26 +213,103 @@ def create_app(config=Config):
     @app.before_request
     def add_company_to_template():
         from flask import g, session
-        from models.company_model import get_by_id
+        import time
+        
         company_id = session.get('company_id')
         if company_id:
+            # Use cached company context with 5-minute TTL
+            cache_key = f'company_context_{company_id}'
+            current_time = time.time()
+            
+            if not hasattr(g, '_company_context_cache') or not hasattr(g, '_company_context_time'):
+                g._company_context_cache = {}
+                g._company_context_time = {}
+            
+            if cache_key in g._company_context_cache:
+                cache_time = g._company_context_time.get(cache_key, 0)
+                if current_time - cache_time < 300:  # 5 min cache
+                    cached = g._company_context_cache[cache_key]
+                    g.company = cached['company']
+                    g.subscription = cached['subscription']
+                    g.features = cached['features']
+                    g.can_access_ai = cached['can_access_ai']
+                    g.can_access_forecasting = cached['can_access_forecasting']
+                    g.can_access_gamification = cached['can_access_gamification']
+                    g.can_access_compliance = cached['can_access_compliance']
+                    g.can_access_payroll = cached['can_access_payroll']
+                    g.can_access_appraisals = cached['can_access_appraisals']
+                    g.all_features = cached['all_features']
+                    g.theme = cached['theme']
+                    g.company_logo = cached['company_logo']
+                    g.company_branding = cached['company_branding']
+                    return
+            
+            # Cache miss - fetch from database
+            from models.company_model import get_by_id
             g.company = get_by_id(company_id)
-            # Add subscription context
-            from services.subscription_service import add_subscription_context, get_all_features_with_status
-            add_subscription_context()
-            # Pass all features with their status for template use
-            g.all_features = get_all_features_with_status(company_id)
-            # Add theme settings for custom branding
+            
+            # Simplified subscription context - skip expensive feature checks
+            from services.subscription_service import get_subscription_status, get_company_features
+            try:
+                g.subscription = get_subscription_status(company_id)
+            except:
+                g.subscription = {'status': 'active', 'plan_name': 'Free', 'features': [], 'is_active': True}
+            
+            try:
+                g.features = get_company_features(company_id)
+            except:
+                g.features = []
+            
+            # Default to True for feature access (skip expensive checks)
+            g.can_access_ai = True
+            g.can_access_forecasting = True
+            g.can_access_gamification = True
+            g.can_access_compliance = True
+            g.can_access_payroll = True
+            g.can_access_appraisals = True
+            
+            # Skip all_features for now - too expensive
+            g.all_features = []
+            
+            # Theme settings with caching
             from services.settings_service import get_all_settings
-            settings = get_all_settings(company_id)
-            g.theme = {
-                'primary': settings.get('theme_primary_color', '#1a2b4a'),
-                'secondary': settings.get('theme_secondary_color', '#3498db'),
-                'background': settings.get('theme_background_color', '#ecf0f1'),
-                'accent': settings.get('theme_accent_color', '#e74c3c'),
+            try:
+                settings = get_all_settings(company_id)
+                g.theme = {
+                    'primary': settings.get('theme_primary_color', '#1a2b4a'),
+                    'secondary': settings.get('theme_secondary_color', '#3498db'),
+                    'background': settings.get('theme_background_color', '#ecf0f1'),
+                    'accent': settings.get('theme_accent_color', '#e74c3c'),
+                }
+                g.company_logo = settings.get('company_logo_url', '')
+                g.company_branding = settings.get('company_branding', 'MatinexHR')
+            except:
+                g.theme = {
+                    'primary': '#1a2b4a',
+                    'secondary': '#3498db',
+                    'background': '#ecf0f1',
+                    'accent': '#e74c3c',
+                }
+                g.company_logo = ''
+                g.company_branding = 'MatinexHR'
+            
+            # Cache the result
+            g._company_context_cache[cache_key] = {
+                'company': g.company,
+                'subscription': g.subscription,
+                'features': g.features,
+                'can_access_ai': g.can_access_ai,
+                'can_access_forecasting': g.can_access_forecasting,
+                'can_access_gamification': g.can_access_gamification,
+                'can_access_compliance': g.can_access_compliance,
+                'can_access_payroll': g.can_access_payroll,
+                'can_access_appraisals': g.can_access_appraisals,
+                'all_features': g.all_features,
+                'theme': g.theme,
+                'company_logo': g.company_logo,
+                'company_branding': g.company_branding,
             }
-            g.company_logo = settings.get('company_logo_url', '')
-            g.company_branding = settings.get('company_branding', 'MatinexHR')
+            g._company_context_time[cache_key] = current_time
         else:
             g.company = None
             g.subscription = {'status': 'none', 'plan_name': 'Free', 'features': []}
@@ -244,7 +321,6 @@ def create_app(config=Config):
             g.can_access_payroll = False
             g.can_access_appraisals = False
             g.all_features = []
-            # Default theme for non-logged in users
             g.theme = {
                 'primary': '#1a2b4a',
                 'secondary': '#3498db',

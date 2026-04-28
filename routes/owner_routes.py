@@ -22,7 +22,7 @@ owner_bp = Blueprint('owner', __name__)
 
 # Get secret key from environment variable (more secure)
 # Set this in your environment: export OWNER_SECRET_KEY="your-very-secret-key"
-OWNER_SECRET_KEY = os.environ.get('OWNER_SECRET_KEY', 'matinexhr_owner_secret_2026')
+OWNER_SECRET_KEY = os.environ.get('OWNER_SECRET_KEY', '642e50f116ad37511e895a9329983af5')
 
 # Obfuscated route path - change this to something unique
 OWNER_ROUTE_HASH = os.environ.get('OWNER_ROUTE_HASH', 'x7k9m2p4q8')
@@ -1261,7 +1261,9 @@ def manage_subscriptions():
                              plans=plans, 
                              companies=companies,
                              is_global_free=is_global_free,
-                             stats=stats)
+                             stats=stats,
+                             now=datetime.utcnow(),
+                             timedelta=timedelta)
     except Exception as e:
         logger.exception(e)
         flash('Error loading subscriptions.', 'danger')

@@ -147,8 +147,8 @@ def admin_dashboard():
     from models.company_model import get_by_id
     company = get_by_id(company_id)
     
-    # Get KPIs with caching disabled for faster initial load
-    kpis = get_dashboard_kpis(company_id, use_cache=False)
+    # Get KPIs with caching enabled for better performance
+    kpis = get_dashboard_kpis(company_id, use_cache=True)
     departments = employee_model.get_departments(company_id)
 
     return render_template(
@@ -173,7 +173,7 @@ def hr_dashboard():
 
     from models.company_model import get_by_id
     company = get_by_id(company_id)
-    kpis = get_dashboard_kpis(company_id, use_cache=False)
+    kpis = get_dashboard_kpis(company_id, use_cache=True)
     departments = employee_model.get_departments(company_id)
 
     return render_template(
@@ -198,7 +198,7 @@ def manager_dashboard():
 
     from models.company_model import get_by_id
     company = get_by_id(company_id)
-    kpis = get_dashboard_kpis(company_id, use_cache=False)
+    kpis = get_dashboard_kpis(company_id, use_cache=True)
     departments = employee_model.get_departments(company_id)
 
     return render_template(

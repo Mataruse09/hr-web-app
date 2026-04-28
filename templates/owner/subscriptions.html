@@ -187,7 +187,8 @@
                             </td>
                             <td>
                                 {% if company.end_date %}
-                                {% if company.end_date.strftime('%Y-%m-%d') < (now + timedelta(days=7)).strftime('%Y-%m-%d') %}
+                                {% set seven_days_later = now + timedelta(days=7) %}
+                                {% if company.end_date.strftime('%Y-%m-%d') < seven_days_later.strftime('%Y-%m-%d') %}
                                 <span class="badge badge-expiring">{{ company.end_date.strftime('%Y-%m-%d') }}</span>
                                 {% else %}
                                 {{ company.end_date.strftime('%Y-%m-%d') }}

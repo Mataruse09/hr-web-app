@@ -1,9 +1,14 @@
 from models.db import query, mutate
 from datetime import datetime
 import logging
-import traceback
+import time
 
 logger = logging.getLogger(__name__)
+
+# Simple in-memory cache for companies (cache for 5 minutes)
+_company_cache = {}
+_company_cache_time = {}
+_cache_ttl = 300  # 5 minutes
 
 
 def create_company(name, industry, address, phone, email, website, terms_accepted=False):
@@ -15,12 +20,27 @@ def create_company(name, industry, address, phone, email, website, terms_accepte
 
 
 def get_by_id(company_id: int):
+    """Get company by ID with caching."""
+    cache_key = f'company_{company_id}'
+    current_time = time.time()
+    
+    # Check cache first
+    if cache_key in _company_cache:
+        cache_time = _company_cache_time.get(cache_key, 0)
+        if current_time - cache_time < _cache_ttl:
+            return _company_cache[cache_key]
+    
+    # Cache miss - query database
     try:
-        return query(
+        result = query(
             "SELECT id, name, industry, address, phone, email, website, is_active "
             "FROM companies WHERE id = %s AND is_active = TRUE",
             (company_id,), one=True
         )
+        # Cache the result
+        _company_cache[cache_key] = result
+        _company_cache_time[cache_key] = current_time
+        return result
     except Exception as e:
         logger.error(f"Error getting company by id {company_id}: {e}")
         return None

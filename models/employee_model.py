@@ -1,9 +1,14 @@
 from datetime import date
 from models.db import query, mutate
 import logging
-import traceback
+import time
 
 logger = logging.getLogger(__name__)
+
+# Simple in-memory cache for departments (cache for 5 minutes)
+_dept_cache = {}
+_dept_cache_time = {}
+_dept_cache_ttl = 300
 
 
 # ── Read ────────────────────────────────────────────────────────────────────
@@ -202,8 +207,19 @@ def delete(emp_id: int, company_id: int):
 # ── Departments ─────────────────────────────────────────────────────────────
 
 def get_departments(company_id: int):
+    """Get departments with caching."""
+    cache_key = f'depts_{company_id}'
+    current_time = time.time()
+    
+    # Check cache first
+    if cache_key in _dept_cache:
+        cache_time = _dept_cache_time.get(cache_key, 0)
+        if current_time - cache_time < _dept_cache_ttl:
+            return _dept_cache[cache_key]
+    
+    # Cache miss - query database
     try:
-        return query("""
+        result = query("""
             SELECT d.*, 
                    COUNT(e.id) AS employee_count
             FROM departments d
@@ -212,6 +228,10 @@ def get_departments(company_id: int):
             GROUP BY d.id
             ORDER BY d.name
         """, (company_id,))
+        # Cache the result
+        _dept_cache[cache_key] = result
+        _dept_cache_time[cache_key] = current_time
+        return result
     except Exception as e:
         logger.error(f"Error getting departments for company {company_id}: {e}")
         return []
