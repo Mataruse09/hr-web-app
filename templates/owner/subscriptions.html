@@ -16,9 +16,37 @@
         .back-link:hover { color: white; }
         
         /* Stats Cards */
-        .stat-card { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); border-radius: 16px; padding: 25px; color: white; box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
-        .stat-card .number { font-size: 2.5rem; font-weight: 700; }
-        .stat-card .label { font-size: 0.9rem; opacity: 0.7; text-transform: uppercase; }
+        .stat-card { 
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); 
+            border-radius: 16px; 
+            padding: 25px; 
+            color: white; 
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            height: 100%;
+            min-height: 120px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+        .stat-card .number { font-size: 2rem; font-weight: 700; margin-bottom: 8px; }
+        .stat-card .label { font-size: 0.85rem; opacity: 0.7; text-transform: uppercase; }
+        
+        /* Mobile stat card spacing */
+        @media (max-width: 768px) {
+            .stat-card {
+                padding: 15px 10px;
+                min-height: 100px;
+                margin-bottom: 10px;
+            }
+            .stat-card .number {
+                font-size: 1.5rem;
+            }
+            .stat-card .label {
+                font-size: 0.7rem;
+            }
+        }
         
         /* Global Free Banner */
         .global-free-banner { background: linear-gradient(135deg, #10b981 0%, #059669 100%); border-radius: 12px; padding: 20px; color: white; margin-bottom: 25px; }
@@ -80,26 +108,26 @@
         {% endwith %}
         
         <!-- Statistics -->
-        <div class="row mb-4">
-            <div class="col-md-3">
+        <div class="row mb-4 g-3">
+            <div class="col-6 col-md-3">
                 <div class="stat-card">
                     <div class="number">{{ stats.active_subs }}</div>
                     <div class="label">Active Subscriptions</div>
                 </div>
             </div>
-            <div class="col-md-3">
+            <div class="col-6 col-md-3">
                 <div class="stat-card">
                     <div class="number" style="color: #10b981;">{{ stats.free_subs }}</div>
                     <div class="label">Free Access</div>
                 </div>
             </div>
-            <div class="col-md-3">
+            <div class="col-6 col-md-3">
                 <div class="stat-card">
                     <div class="number" style="color: #f59e0b;">{{ stats.expiring_soon }}</div>
                     <div class="label">Expiring Soon (7 days)</div>
                 </div>
             </div>
-            <div class="col-md-3">
+            <div class="col-6 col-md-3">
                 <div class="stat-card">
                     <div class="number">{{ companies|length }}</div>
                     <div class="label">Total Companies</div>

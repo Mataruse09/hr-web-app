@@ -13,9 +13,37 @@
         .page-title { color: white; font-size: 1.8rem; font-weight: 700; margin-bottom: 25px; }
         .back-link { color: rgba(255,255,255,0.7); text-decoration: none; }
         .back-link:hover { color: white; }
-        .stat-card { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); border-radius: 16px; padding: 25px; color: white; box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
-        .stat-card .number { font-size: 2.5rem; font-weight: 700; }
-        .stat-card .label { font-size: 0.9rem; opacity: 0.7; text-transform: uppercase; }
+        .stat-card { 
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); 
+            border-radius: 16px; 
+            padding: 25px; 
+            color: white; 
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            height: 100%;
+            min-height: 120px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+        .stat-card .number { font-size: 2rem; font-weight: 700; margin-bottom: 8px; }
+        .stat-card .label { font-size: 0.85rem; opacity: 0.7; text-transform: uppercase; }
+        
+        /* Mobile stat card spacing */
+        @media (max-width: 768px) {
+            .stat-card {
+                padding: 15px 10px;
+                min-height: 100px;
+                margin-bottom: 10px;
+            }
+            .stat-card .number {
+                font-size: 1.5rem;
+            }
+            .stat-card .label {
+                font-size: 0.7rem;
+            }
+        }
         .data-card { background: #1a1a2e; border-radius: 12px; padding: 20px; margin-bottom: 20px; border: 1px solid rgba(255,255,255,0.1); }
         .data-card h5 { color: white; font-weight: 600; margin-bottom: 15px; }
         .data-row { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.9); }
@@ -33,20 +61,20 @@
         <h1 class="page-title"><i class="fas fa-shield-alt me-2"></i>Security Dashboard</h1>
         
         <!-- Stats -->
-        <div class="row mb-4">
-            <div class="col-md-4">
+        <div class="row mb-4 g-3">
+            <div class="col-4 col-md-4">
                 <div class="stat-card">
                     <div class="number text-warning">{{ stats.failed_logins_24h }}</div>
                     <div class="label">Failed Logins (24h)</div>
                 </div>
             </div>
-            <div class="col-md-4">
+            <div class="col-4 col-md-4">
                 <div class="stat-card">
                     <div class="number text-danger">{{ stats.suspicious_ips }}</div>
                     <div class="label">Suspicious IPs</div>
                 </div>
             </div>
-            <div class="col-md-4">
+            <div class="col-4 col-md-4">
                 <div class="stat-card">
                     <div class="number text-info">{{ stats.banned_companies }}</div>
                     <div class="label">Banned Companies</div>
@@ -54,9 +82,9 @@
             </div>
         </div>
         
-        <div class="row">
+        <div class="row g-3">
             <!-- Suspicious IPs -->
-            <div class="col-md-6">
+            <div class="col-12 col-md-6">
                 <div class="data-card">
                     <h5><i class="fas fa-radar me-2"></i>Top Suspicious IPs (24h)</h5>
                     {% for ip in suspicious_ips %}
@@ -80,7 +108,7 @@
             </div>
             
             <!-- Recent Activity -->
-            <div class="col-md-6">
+            <div class="col-12 col-md-6">
                 <div class="data-card">
                     <h5><i class="fas fa-history me-2"></i>Recent Security Events</h5>
                     {% for event in suspicious_activity %}

@@ -10,23 +10,23 @@
 
             <div class="card shadow-sm mb-4">
                 <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-3">
+                    <div class="row g-3">
+                        <div class="col-6 col-md-3">
                             <h5>Current Headcount</h5>
                             <h2 class="text-primary">{{ forecast.current_headcount }}</h2>
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-6 col-md-3">
                             <h5>Projected Headcount</h5>
                             <h2 class="text-info">{{ forecast.projected_headcount }}</h2>
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-6 col-md-3">
                             <h5>Change Required</h5>
                             {% set change = forecast.projected_headcount - forecast.current_headcount %}
                             <h2 class="{% if change > 0 %}text-danger{% elif change < 0 %}text-success{% else %}text-secondary{% endif %}">
                                 {% if change > 0 %}+{% endif %}{{ change }}
                             </h2>
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-6 col-md-3">
                             <h5>Budget Allocated</h5>
                             <h2 class="text-success">{{ "%.2f"|format(forecast.hiring_budget or 0) }}</h2>
                         </div>

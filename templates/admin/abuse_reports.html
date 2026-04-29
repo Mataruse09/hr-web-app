@@ -63,7 +63,7 @@
         <!-- Filter -->
         <div class="mb-4">
             <form method="GET" class="row g-3">
-                <div class="col-md-3">
+                <div class="col-6 col-md-3">
                     <select name="status" class="form-select">
                         <option value="">All Statuses</option>
                         <option value="pending" {% if request.args.get('status') == 'pending' %}selected{% endif %}>Pending</option>
@@ -72,7 +72,7 @@
                         <option value="dismissed" {% if request.args.get('status') == 'dismissed' %}selected{% endif %}>Dismissed</option>
                     </select>
                 </div>
-                <div class="col-md-2">
+                <div class="col-6 col-md-2">
                     <button type="submit" class="btn btn-primary">Filter</button>
                 </div>
             </form>

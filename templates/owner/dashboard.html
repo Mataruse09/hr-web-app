@@ -85,17 +85,23 @@
             }
             .owner-nav .nav-container {
                 display: none !important;
-                position: absolute;
-                top: 100%;
+                position: fixed;
+                top: 60px;
                 left: 0;
                 right: 0;
                 background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
                 padding: 15px;
                 z-index: 1000;
                 box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+                max-height: calc(100vh - 60px);
+                overflow-y: auto;
             }
             .owner-nav .nav-container.active {
                 display: block !important;
+            }
+            /* Add padding to content when nav is open on mobile */
+            body.nav-open .owner-content {
+                margin-top: 350px;
             }
             .owner-nav .nav-container .nav {
                 flex-direction: column;
@@ -121,24 +127,50 @@
             color: white;
             box-shadow: 0 4px 20px rgba(0,0,0,0.3);
             transition: transform 0.2s;
+            height: 100%;
+            min-height: 140px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
         }
         .stat-card:hover {
             transform: translateY(-5px);
         }
         .stat-card .icon {
-            font-size: 2.5rem;
+            font-size: 2rem;
             opacity: 0.8;
+            margin-bottom: 10px;
         }
         .stat-card .number {
-            font-size: 2.5rem;
+            font-size: 2.2rem;
             font-weight: 700;
-            margin: 10px 0;
+            margin: 8px 0;
         }
         .stat-card .label {
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             opacity: 0.7;
             text-transform: uppercase;
             letter-spacing: 1px;
+        }
+        
+        /* Mobile stat card spacing */
+        @media (max-width: 768px) {
+            .stat-card {
+                padding: 20px 15px;
+                min-height: 120px;
+                margin-bottom: 15px;
+            }
+            .stat-card .icon {
+                font-size: 1.5rem;
+            }
+            .stat-card .number {
+                font-size: 1.8rem;
+            }
+            .stat-card .label {
+                font-size: 0.75rem;
+            }
         }
         .section-title {
             color: white;
@@ -245,6 +277,8 @@
         function toggleNav() {
             var navContainer = document.getElementById('navContainer');
             navContainer.classList.toggle('active');
+            // Add/remove class on body to push content down
+            document.body.classList.toggle('nav-open');
         }
     </script>
 
@@ -261,29 +295,29 @@
         {% endwith %}
         
         <!-- Stats Row -->
-        <div class="row mb-4">
-            <div class="col-md-3">
+        <div class="row mb-4 g-3">
+            <div class="col-6 col-md-3">
                 <div class="stat-card">
                     <div class="icon"><i class="fas fa-building"></i></div>
                     <div class="number">{{ stats.total_companies }}</div>
                     <div class="label">Total Companies</div>
                 </div>
             </div>
-            <div class="col-md-3">
+            <div class="col-6 col-md-3">
                 <div class="stat-card">
                     <div class="icon" style="color: #28a745;"><i class="fas fa-check-circle"></i></div>
                     <div class="number">{{ stats.active_companies }}</div>
                     <div class="label">Active</div>
                 </div>
             </div>
-            <div class="col-md-3">
+            <div class="col-6 col-md-3">
                 <div class="stat-card">
                     <div class="icon" style="color: #dc3545;"><i class="fas fa-ban"></i></div>
                     <div class="number">{{ stats.banned_companies }}</div>
                     <div class="label">Banned</div>
                 </div>
             </div>
-            <div class="col-md-3">
+            <div class="col-6 col-md-3">
                 <div class="stat-card">
                     <div class="icon" style="color: #17a2b8;"><i class="fas fa-users"></i></div>
                     <div class="number">{{ stats.total_users }}</div>
@@ -292,9 +326,9 @@
             </div>
         </div>
         
-        <div class="row">
+        <div class="row g-3">
             <!-- Recent Companies -->
-            <div class="col-md-6">
+            <div class="col-12 col-md-6">
                 <div class="data-card">
                     <h5><i class="fas fa-building me-2"></i>Recent Companies</h5>
                     {% for company in recent_companies %}
@@ -321,7 +355,7 @@
             </div>
             
             <!-- Recent Abuse Reports -->
-            <div class="col-md-6">
+            <div class="col-12 col-md-6">
                 <div class="data-card">
                     <h5><i class="fas fa-exclamation-triangle me-2"></i>Recent Abuse Reports</h5>
                     {% for report in recent_reports %}

@@ -19,7 +19,7 @@
 </div>
 
 <div class="row g-4">
-  <div class="col-md-6">
+  <div class="col-12 col-md-6">
     <div class="section-card">
       <h3>🏢 Company Information</h3>
       <dl class="detail-list">
@@ -32,7 +32,7 @@
       <button class="btn btn-outline mt-2" onclick="alert('Edit company info coming soon!')">✏️ Edit Details</button>
     </div>
   </div>
-  <div class="col-md-6">
+  <div class="col-12 col-md-6">
     <div class="section-card">
       <h3>💳 Subscription Status</h3>
       <div class="kpi-grid">
@@ -70,21 +70,21 @@
 </div>
 
 <div class="row g-4 mt-2">
-  <div class="col-md-4">
+  <div class="col-12 col-md-4">
     <div class="section-card text-center" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
       <div style="font-size: 2.5rem;">👥</div>
       <div style="font-size: 2rem; font-weight: 700;">{{ kpis.total_employees if kpis else 0 }}</div>
       <div>Total Employees</div>
     </div>
   </div>
-  <div class="col-md-4">
+  <div class="col-12 col-md-4">
     <div class="section-card text-center" style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); color: white;">
       <div style="font-size: 2.5rem;">✅</div>
       <div style="font-size: 2rem; font-weight: 700;">{{ kpis.active_employees if kpis else 0 }}</div>
       <div>Active Users</div>
     </div>
   </div>
-  <div class="col-md-4">
+  <div class="col-12 col-md-4">
     <div class="section-card text-center" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white;">
       <div style="font-size: 2.5rem;">📊</div>
       <div style="font-size: 2rem; font-weight: 700;">{{ kpis.attendance_rate if kpis else 0 }}%</div>

@@ -96,9 +96,9 @@
         {% if banned_companies %}
         <div class="mb-5">
             <h2 class="text-danger mb-3"><i class="fas fa-ban me-2"></i>Banned Companies</h2>
-            <div class="row">
+            <div class="row g-3">
                 {% for company in banned_companies %}
-                <div class="col-md-6">
+                <div class="col-12 col-md-6">
                     <div class="company-card banned">
                         <div class="d-flex justify-content-between align-items-start">
                             <div>
@@ -127,9 +127,9 @@
         
         <!-- All Companies -->
         <h2 class="mb-3"><i class="fas fa-list me-2"></i>All Companies</h2>
-        <div class="row">
+        <div class="row g-3">
             {% for company in companies %}
-            <div class="col-md-6">
+            <div class="col-12 col-md-6">
                 <div class="company-card {% if company.is_banned %}banned{% else %}active{% endif %}">
                     <div class="d-flex justify-content-between align-items-start">
                         <div>

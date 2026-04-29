@@ -30,19 +30,19 @@
         <!-- Filters -->
         <div class="filter-box">
             <form method="GET" class="row g-3">
-                <div class="col-md-3">
+                <div class="col-6 col-md-3">
                     <input type="text" name="action" class="form-control" placeholder="Search action..." value="{{ action_filter }}">
                 </div>
-                <div class="col-md-3">
+                <div class="col-6 col-md-3">
                     <input type="date" name="date_from" class="form-control" value="{{ request.args.get('date_from', '') }}">
                 </div>
-                <div class="col-md-3">
+                <div class="col-6 col-md-3">
                     <input type="date" name="date_to" class="form-control" value="{{ request.args.get('date_to', '') }}">
                 </div>
-                <div class="col-md-2">
+                <div class="col-3 col-md-2">
                     <button type="submit" class="btn btn-primary w-100">Filter</button>
                 </div>
-                <div class="col-md-1">
+                <div class="col-3 col-md-1">
                     <a href="{{ url_for('owner.activity_logs') }}" class="btn btn-secondary w-100">Clear</a>
                 </div>
             </form>
