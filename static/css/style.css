@@ -964,7 +964,7 @@ code { font-family: monospace; background: #f0f2f5; padding: 2px 6px; border-rad
   .sidebar {
     transform: translateX(-100%);
     position: fixed;
-    z-index: 9999;
+    z-index: 10001;
     width: 85vw;
     max-width: 300px;
     height: 100vh;
@@ -985,7 +985,7 @@ code { font-family: monospace; background: #f0f2f5; padding: 2px 6px; border-rad
     position: fixed;
     top: 10px;
     left: 10px;
-    z-index: 9998;
+    z-index: 10002;
     background: var(--primary);
     color: white;
     width: 40px;

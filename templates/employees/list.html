@@ -59,6 +59,8 @@
           {% if session.role in ['Admin', 'HR', 'CHRO'] %}
           <a href="{{ url_for('employees.edit_employee', emp_id=emp.id) }}"
              class="btn-icon" title="Edit">✏️</a>
+          <a href="{{ url_for('payroll.compensation', emp_id=emp.id) }}"
+             class="btn-icon" title="Set Compensation">💰</a>
           <a href="{{ url_for('compliance.assign_compliance', employee_id=emp.id) }}"
              class="btn-icon" title="Assign Compliance">📋</a>
           <form method="POST"

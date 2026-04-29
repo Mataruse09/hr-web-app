@@ -587,6 +587,14 @@ def _get_attendance_overall(company_id: int, start_date: str, end_date: str) -> 
     
     total = stats['total_records'] or 0
     if total == 0:
+        # Try fallback: get from calculation_services
+        try:
+            from services.calculation_services import company_monthly_attendance_rate
+            att_rate = company_monthly_attendance_rate(company_id)
+            if att_rate > 0:
+                return {'attendance_rate': att_rate, 'total_days': 0, 'fallback': True}
+        except:
+            pass
         return {'attendance_rate': 0, 'total_days': 0}
     
     present = float(stats['present'] or 0) + float(stats['wfh'] or 0) + float(stats['half_day'] or 0) * 0.5

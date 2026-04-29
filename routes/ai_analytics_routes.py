@@ -228,7 +228,15 @@ def _get_ai_summary(report: dict) -> dict:
             summary['projected_growth'] = first_month.get('hiring_needed', 0)
     
     if 'attendance_analysis' in report and report['attendance_analysis']:
-        summary['attendance_rate'] = report['attendance_analysis'].get('overall', {}).get('attendance_rate', 0)
+        ai_att_rate = report['attendance_analysis'].get('overall', {}).get('attendance_rate', 0)
+        # If AI returns 0, try to get from main KPI calculation
+        if ai_att_rate == 0:
+            try:
+                from services.calculation_services import company_monthly_attendance_rate
+                ai_att_rate = company_monthly_attendance_rate(company_id)
+            except:
+                pass
+        summary['attendance_rate'] = ai_att_rate
     
     if 'recommendations' in report:
         summary['recommendations_count'] = len(report['recommendations'])
