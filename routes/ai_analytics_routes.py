@@ -10,6 +10,8 @@ from datetime import datetime, date, timedelta
 from functools import lru_cache
 import hashlib
 import json
+import signal
+import threading
 
 from utils import login_required, roles_required
 from models.db import query, mutate
@@ -28,6 +30,16 @@ from services.subscription_service import ai_feature_required
 logger = logging.getLogger(__name__)
 
 ai_analytics_bp = Blueprint('ai_analytics', __name__)
+
+# Timeout handler for AI operations
+class TimeoutError(Exception):
+    pass
+
+def timeout_handler(signum, frame):
+    raise TimeoutError("AI operation timed out")
+
+# Cache for partial results
+_ai_partial_cache = {}
 
 # ═══════════════════════════════════════════════════════════════════════════
 # IN-MEMORY CACHE FOR AI ANALYTICS (Simple TTL-based cache)
@@ -87,6 +99,81 @@ def get_cached_ai_data(company_id, func, *args, ttl=300, **kwargs):
     return result
 
 
+def _run_with_timeout(func, args, timeout_seconds=30):
+    """
+    Run a function with a timeout limit.
+    Returns (result, None) on success or (None, error_message) on timeout.
+    """
+    result = [None]
+    error = [None]
+    
+    def worker():
+        try:
+            result[0] = func(*args)
+        except Exception as e:
+            error[0] = str(e)
+            logger.exception(e)
+    
+    thread = threading.Thread(target=worker)
+    thread.daemon = True
+    thread.start()
+    thread.join(timeout_seconds)
+    
+    if thread.is_alive():
+        logger.warning(f"Function {func.__name__} timed out after {timeout_seconds}s")
+        return None, f"Operation timed out after {timeout_seconds} seconds"
+    
+    if error[0]:
+        return None, error[0]
+    
+    return result[0], None
+
+
+def _get_ai_report_with_timeout(company_id, report_type='comprehensive', timeout=45):
+    """
+    Get AI report with timeout handling for slow databases.
+    Falls back to cached or partial data if full report takes too long.
+    """
+    cache_key = f"ai_report_{company_id}_{report_type}"
+    
+    # Check cache first
+    cached = ai_cache.get(cache_key)
+    if cached is not None:
+        logger.info(f"Using cached AI report for company {company_id}")
+        return cached
+    
+    # Try to generate report with timeout
+    logger.info(f"Generating AI report for company {company_id} (timeout={timeout}s)")
+    result, error = _run_with_timeout(
+        generate_ai_report, 
+        (company_id, report_type),
+        timeout
+    )
+    
+    if error:
+        logger.warning(f"AI report generation failed: {error}")
+        # Return empty report structure instead of failing
+        return {
+            'generated_at': datetime.utcnow().isoformat(),
+            'company_id': company_id,
+            'report_type': report_type,
+            'error': error,
+            'attrition_risk': [],
+            'workforce_forecast': {'forecasts': []},
+            'attendance_analysis': {'overall': {'attendance_rate': 0}},
+            'leave_trends': [],
+            'productivity': {'performance': {}},
+            'workforce_composition': {},
+            'recommendations': []
+        }
+    
+    # Cache successful result for 5 minutes
+    if result:
+        ai_cache.set(cache_key, result, 300)
+    
+    return result
+
+
 # ═══════════════════════════════════════════════════════════════════════════
 # MAIN AI ANALYTICS DASHBOARD
 # ═══════════════════════════════════════════════════════════════════════════
@@ -100,8 +187,8 @@ def dashboard():
     company_id = session['company_id']
     
     try:
-        # Get comprehensive report (cached for 5 minutes)
-        report = get_cached_ai_data(company_id, generate_ai_report, 'comprehensive', ttl=300)
+        # Get comprehensive report with timeout handling
+        report = _get_ai_report_with_timeout(company_id, 'comprehensive')
         
         # Get summary stats
         summary = _get_ai_summary(report)

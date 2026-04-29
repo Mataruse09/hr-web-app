@@ -4,6 +4,17 @@
 
 {% block content %}
 <div class="container-fluid mt-4">
+    <!-- Loading Spinner -->
+    <div id="aiLoadingSpinner" class="text-center py-5">
+        <div class="spinner-border text-primary mb-4" role="status" style="width: 4rem; height: 4rem;">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+        <h4 class="text-muted" id="loadingMessage">Analyzing your workforce data...</h4>
+        <p class="text-muted small mt-2">This may take a moment as our AI processes your employee data</p>
+    </div>
+
+    <!-- Main Content (hidden until loaded) -->
+    <div id="aiContent" style="display: none;">
     <!-- Header -->
     <div class="row mb-4">
         <div class="col-md-8">
@@ -306,5 +317,52 @@
             </div>
         </div>
     </div>
+    </div>
 </div>
+
+<script>
+// Loading messages to show users
+const loadingMessages = [
+    "Analyzing your workforce data...",
+    "Processing employee patterns...",
+    "Calculating attrition risk scores...",
+    "Building workforce forecasts...",
+    "Identifying high-risk employees...",
+    "Generating smart recommendations...",
+    "Almost ready...",
+];
+
+// Show loading spinner on page load
+document.addEventListener('DOMContentLoaded', function() {
+    const spinner = document.getElementById('aiLoadingSpinner');
+    const content = document.getElementById('aiContent');
+    const messageEl = document.getElementById('loadingMessage');
+    
+    if (spinner && content) {
+        // Check if there's an error in the report
+        {% if report.error %}
+        spinner.innerHTML = '<div class="text-warning mb-4" style="font-size: 3rem;">⚠️</div><h4 class="text-muted">Report taking longer than expected</h4><p class="text-muted small">Please refresh the page to try again</p>';
+        setTimeout(() => {
+            spinner.style.display = 'none';
+            content.style.display = 'block';
+        }, 2000);
+        {% else %}
+        // Rotate through loading messages
+        let msgIndex = 0;
+        const messageInterval = setInterval(() => {
+            msgIndex = (msgIndex + 1) % loadingMessages.length;
+            if (messageEl) {
+                messageEl.textContent = loadingMessages[msgIndex];
+            }
+        }, 2000);
+        
+        // Hide spinner and show content after a delay
+        setTimeout(() => {
+            clearInterval(messageInterval);
+            spinner.style.display = 'none';
+            content.style.display = 'block';
+        }, 1500);
+        {% endif %}
+    }
+});
 {% endblock %}
