@@ -4,17 +4,6 @@
 
 {% block content %}
 <div class="container-fluid mt-4">
-    <!-- Loading Spinner -->
-    <div id="aiLoadingSpinner" class="text-center py-5">
-        <div class="spinner-border text-primary mb-4" role="status" style="width: 4rem; height: 4rem;">
-            <span class="visually-hidden">Loading...</span>
-        </div>
-        <h4 class="text-muted" id="loadingMessage">Analyzing your workforce data...</h4>
-        <p class="text-muted small mt-2">This may take a moment as our AI processes your employee data</p>
-    </div>
-
-    <!-- Main Content (hidden until loaded) -->
-    <div id="aiContent" style="display: none;">
     <!-- Header -->
     <div class="row mb-4">
         <div class="col-md-8">
@@ -24,8 +13,8 @@
             <p class="text-muted">Machine learning-powered insights and predictions</p>
         </div>
         <div class="col-md-4 text-end">
-            <a href="{{ url_for('ai_analytics.full_report', type='comprehensive') }}" class="btn btn-primary">
-                📊 Generate Full Report
+            <a href="{{ url_for('ai_analytics.dashboard') }}" class="btn btn-primary">
+                🔄 Refresh
             </a>
         </div>
     </div>
@@ -107,7 +96,7 @@
                     <h5 class="mb-0">🎯 Attrition Risk Prediction</h5>
                 </div>
                 <div class="card-body">
-                    {% if report.attrition_risk %}
+                    {% if report and report.attrition_risk %}
                         {% set high_risk = report.attrition_risk|selectattr('risk_level', 'equalto', 'High')|list %}
                         {% set medium_risk = report.attrition_risk|selectattr('risk_level', 'equalto', 'Medium')|list %}
                         
@@ -149,7 +138,7 @@
                     <h5 class="mb-0">📈 Workforce Demand Forecast</h5>
                 </div>
                 <div class="card-body">
-                    {% if report.workforce_forecast and report.workforce_forecast.forecasts %}
+                    {% if report and report.workforce_forecast and report.workforce_forecast.forecasts %}
                         {% set forecasts = report.workforce_forecast.forecasts %}
                         <div class="table-responsive">
                             <table class="table table-sm">
@@ -197,7 +186,7 @@
                     <h5 class="mb-0">📅 Attendance Pattern Analysis</h5>
                 </div>
                 <div class="card-body">
-                    {% if report.attendance_analysis and report.attendance_analysis.overall %}
+                    {% if report and report.attendance_analysis and report.attendance_analysis.overall %}
                         {% set overall = report.attendance_analysis.overall %}
                         <div class="row text-center">
                             <div class="col-4">
@@ -237,7 +226,7 @@
                     <h5 class="mb-0">💡 AI Smart Recommendations</h5>
                 </div>
                 <div class="card-body">
-                    {% if report.recommendations %}
+                    {% if report and report.recommendations %}
                         <ul class="list-group list-group-flush">
                             {% for rec in report.recommendations[:3] %}
                             <li class="list-group-item px-0">
@@ -317,52 +306,5 @@
             </div>
         </div>
     </div>
-    </div>
 </div>
-
-<script>
-// Loading messages to show users
-const loadingMessages = [
-    "Analyzing your workforce data...",
-    "Processing employee patterns...",
-    "Calculating attrition risk scores...",
-    "Building workforce forecasts...",
-    "Identifying high-risk employees...",
-    "Generating smart recommendations...",
-    "Almost ready...",
-];
-
-// Show loading spinner on page load
-document.addEventListener('DOMContentLoaded', function() {
-    const spinner = document.getElementById('aiLoadingSpinner');
-    const content = document.getElementById('aiContent');
-    const messageEl = document.getElementById('loadingMessage');
-    
-    if (spinner && content) {
-        // Check if there's an error in the report
-        {% if report.error %}
-        spinner.innerHTML = '<div class="text-warning mb-4" style="font-size: 3rem;">⚠️</div><h4 class="text-muted">Report taking longer than expected</h4><p class="text-muted small">Please refresh the page to try again</p>';
-        setTimeout(() => {
-            spinner.style.display = 'none';
-            content.style.display = 'block';
-        }, 2000);
-        {% else %}
-        // Rotate through loading messages
-        let msgIndex = 0;
-        const messageInterval = setInterval(() => {
-            msgIndex = (msgIndex + 1) % loadingMessages.length;
-            if (messageEl) {
-                messageEl.textContent = loadingMessages[msgIndex];
-            }
-        }, 2000);
-        
-        // Hide spinner and show content after a delay
-        setTimeout(() => {
-            clearInterval(messageInterval);
-            spinner.style.display = 'none';
-            content.style.display = 'block';
-        }, 1500);
-        {% endif %}
-    }
-});
 {% endblock %}

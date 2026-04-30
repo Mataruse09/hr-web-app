@@ -21,7 +21,7 @@
                                 <span class="badge bg-primary">{{ reason.count }}</span>
                             </div>
                             <div class="progress">
-                                <div class="progress-bar" style="width: {% if exit_reasons %}{{ reason.count * 100 / exit_reasons[0].count }}{% else %}0{% endif %}%"></div>
+                                <div class="progress-bar bg-primary" style="width: {% if exit_reasons %}{{ reason.count * 100 / exit_reasons[0].count }}{% else %}0{% endif %}%"></div>
                             </div>
                         </div>
                         {% endfor %}

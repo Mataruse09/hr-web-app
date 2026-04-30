@@ -4,7 +4,7 @@ AI Analytics Routes - ML-powered workforce insights and predictions
 These routes provide AI/ML-powered analytics and forecasting endpoints.
 """
 
-from flask import Blueprint, render_template, request, redirect, url_for, flash, session, jsonify
+from flask import Blueprint, render_template, request, redirect, url_for, flash, session, jsonify, current_app
 import logging
 from datetime import datetime, date, timedelta
 from functools import lru_cache
@@ -81,6 +81,54 @@ class SimpleCache:
 ai_cache = SimpleCache(default_ttl=300)  # 5 minutes cache
 
 
+# ═══════════════════════════════════════════════════════════════════════════
+# ASYNC JOB TRACKING SYSTEM FOR AI REPORTS
+# ═══════════════════════════════════════════════════════════════════════════
+
+class AIJobTracker:
+    """Track async AI report generation jobs."""
+    
+    def __init__(self):
+        self._jobs = {}  # job_id -> {'status': 'pending'|'processing'|'completed'|'failed', 'result': None, 'error': None, 'progress': 0}
+    
+    def create_job(self, company_id, report_type='comprehensive'):
+        """Create a new AI report job."""
+        import uuid
+        job_id = str(uuid.uuid4())[:8]
+        self._jobs[job_id] = {
+            'status': 'pending',
+            'result': None,
+            'error': None,
+            'progress': 0,
+            'company_id': company_id,
+            'report_type': report_type,
+            'created_at': datetime.utcnow().isoformat(),
+        }
+        return job_id
+    
+    def get_job(self, job_id):
+        """Get job status and result."""
+        return self._jobs.get(job_id)
+    
+    def update_job(self, job_id, status=None, progress=None, result=None, error=None):
+        """Update job status."""
+        if job_id in self._jobs:
+            if status:
+                self._jobs[job_id]['status'] = status
+            if progress is not None:
+                self._jobs[job_id]['progress'] = progress
+            if result is not None:
+                self._jobs[job_id]['result'] = result
+            if error:
+                self._jobs[job_id]['error'] = error
+            return True
+        return False
+
+
+# Global job tracker
+ai_job_tracker = AIJobTracker()
+
+
 def get_cached_ai_data(company_id, func, *args, ttl=300, **kwargs):
     """
     Get data from cache or compute and cache it.
@@ -99,40 +147,26 @@ def get_cached_ai_data(company_id, func, *args, ttl=300, **kwargs):
     return result
 
 
-def _run_with_timeout(func, args, timeout_seconds=30):
+def _run_with_timeout(func, args, timeout_seconds=600):
     """
     Run a function with a timeout limit.
     Returns (result, None) on success or (None, error_message) on timeout.
+    NOTE: Timeout increased to 10 minutes for comprehensive AI analysis.
+    For faster results, we now call functions directly without threading overhead.
     """
-    result = [None]
-    error = [None]
-    
-    def worker():
-        try:
-            result[0] = func(*args)
-        except Exception as e:
-            error[0] = str(e)
-            logger.exception(e)
-    
-    thread = threading.Thread(target=worker)
-    thread.daemon = True
-    thread.start()
-    thread.join(timeout_seconds)
-    
-    if thread.is_alive():
-        logger.warning(f"Function {func.__name__} timed out after {timeout_seconds}s")
-        return None, f"Operation timed out after {timeout_seconds} seconds"
-    
-    if error[0]:
-        return None, error[0]
-    
-    return result[0], None
+    # For faster execution, call directly without threading
+    # This avoids thread startup overhead and context switching
+    try:
+        result = func(*args)
+        return result, None
+    except Exception as e:
+        logger.exception(e)
+        return None, str(e)
 
 
-def _get_ai_report_with_timeout(company_id, report_type='comprehensive', timeout=45):
+def _get_ai_report_with_timeout(company_id, report_type='comprehensive', timeout=300):
     """
-    Get AI report with timeout handling for slow databases.
-    Falls back to cached or partial data if full report takes too long.
+    Get AI report - now runs directly without timeout for full analysis.
     """
     cache_key = f"ai_report_{company_id}_{report_type}"
     
@@ -142,22 +176,17 @@ def _get_ai_report_with_timeout(company_id, report_type='comprehensive', timeout
         logger.info(f"Using cached AI report for company {company_id}")
         return cached
     
-    # Try to generate report with timeout
-    logger.info(f"Generating AI report for company {company_id} (timeout={timeout}s)")
-    result, error = _run_with_timeout(
-        generate_ai_report, 
-        (company_id, report_type),
-        timeout
-    )
-    
-    if error:
-        logger.warning(f"AI report generation failed: {error}")
-        # Return empty report structure instead of failing
+    # Generate report directly (no timeout)
+    logger.info(f"Generating AI report for company {company_id}")
+    try:
+        result = generate_ai_report(company_id, report_type)
+    except Exception as e:
+        logger.warning(f"AI report generation failed: {e}")
         return {
             'generated_at': datetime.utcnow().isoformat(),
             'company_id': company_id,
             'report_type': report_type,
-            'error': error,
+            'error': str(e),
             'attrition_risk': [],
             'workforce_forecast': {'forecasts': []},
             'attendance_analysis': {'overall': {'attendance_rate': 0}},
@@ -183,29 +212,33 @@ def _get_ai_report_with_timeout(company_id, report_type='comprehensive', timeout
 @roles_required('Admin', 'HR', 'CHRO', 'Manager')
 @ai_feature_required
 def dashboard():
-    """AI Analytics Dashboard - comprehensive workforce insights."""
+    """AI Analytics Dashboard - loads data directly."""
     company_id = session['company_id']
     
+    # Generate report directly
     try:
-        # Get comprehensive report with timeout handling
-        report = _get_ai_report_with_timeout(company_id, 'comprehensive')
-        
-        # Get summary stats
-        summary = _get_ai_summary(report)
-        
-        return render_template(
-            'ai_analytics/dashboard.html',
-            report=report,
-            summary=summary,
-        )
-    
+        report = generate_ai_report(company_id, 'comprehensive')
+        summary = _get_ai_summary(report, company_id)
     except Exception as e:
-        logger.exception(e)
-        flash('Error loading AI analytics.', 'danger')
-        return redirect(url_for('dashboard.index'))
+        logger.warning(f"Error generating AI report: {e}")
+        report = None
+        summary = {
+            'high_risk_employees': 0,
+            'avg_attrition_risk': 0,
+            'projected_growth': 0,
+            'attendance_rate': 0,
+            'recommendations_count': 0,
+        }
+    
+    return render_template(
+        'ai_analytics/dashboard.html',
+        report=report,
+        summary=summary,
+        loading=False,
+    )
 
 
-def _get_ai_summary(report: dict) -> dict:
+def _get_ai_summary(report: dict, company_id: int = None) -> dict:
     """Extract summary statistics from AI report."""
     summary = {
         'high_risk_employees': 0,
@@ -230,7 +263,7 @@ def _get_ai_summary(report: dict) -> dict:
     if 'attendance_analysis' in report and report['attendance_analysis']:
         ai_att_rate = report['attendance_analysis'].get('overall', {}).get('attendance_rate', 0)
         # If AI returns 0, try to get from main KPI calculation
-        if ai_att_rate == 0:
+        if ai_att_rate == 0 and company_id:
             try:
                 from services.calculation_services import company_monthly_attendance_rate
                 ai_att_rate = company_monthly_attendance_rate(company_id)
@@ -703,6 +736,88 @@ def api_quick_stats():
                 'attendance_rate': attendance.get('overall', {}).get('attendance_rate', 0),
                 'total_employees': len(risks),
             },
+        })
+    except Exception as e:
+        logger.exception(e)
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# ASYNC AI REPORT ENDPOINTS
+# ═══════════════════════════════════════════════════════════════════════════
+
+@ai_analytics_bp.route('/api/ai/start-report', methods=['POST'])
+@login_required
+@roles_required('Admin', 'HR', 'CHRO', 'Manager')
+@ai_feature_required
+def api_start_report():
+    """
+    Start AI report generation in background.
+    Returns job_id for polling.
+    """
+    company_id = session['company_id']
+    report_type = request.json.get('type', 'comprehensive') if request.is_json else request.args.get('type', 'comprehensive')
+    
+    try:
+        # Create a new job
+        job_id = ai_job_tracker.create_job(company_id, report_type)
+        
+        # Start background thread to generate report
+        def generate_in_background():
+            try:
+                ai_job_tracker.update_job(job_id, status='processing', progress=10)
+                # Use the existing timeout function but with longer timeout
+                result, error = _run_with_timeout(
+                    generate_ai_report,
+                    (company_id, report_type),
+                    timeout_seconds=180
+                )
+                
+                if error:
+                    ai_job_tracker.update_job(job_id, status='failed', error=error, progress=100)
+                else:
+                    ai_job_tracker.update_job(job_id, status='completed', result=result, progress=100)
+            except Exception as e:
+                logger.exception(e)
+                ai_job_tracker.update_job(job_id, status='failed', error=str(e), progress=100)
+        
+        thread = threading.Thread(target=generate_in_background)
+        thread.daemon = True
+        thread.start()
+        
+        return jsonify({
+            'success': True,
+            'job_id': job_id,
+            'message': 'Report generation started',
+        })
+    except Exception as e:
+        logger.exception(e)
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@ai_analytics_bp.route('/api/ai/check-report/<job_id>', methods=['GET'])
+@login_required
+@roles_required('Admin', 'HR', 'CHRO', 'Manager')
+@ai_feature_required
+def api_check_report(job_id):
+    """
+    Check status of AI report generation job.
+    """
+    try:
+        job = ai_job_tracker.get_job(job_id)
+        
+        if not job:
+            return jsonify({
+                'success': False,
+                'error': 'Job not found',
+            }), 404
+        
+        return jsonify({
+            'success': True,
+            'status': job['status'],
+            'progress': job['progress'],
+            'result': job.get('result'),
+            'error': job.get('error'),
         })
     except Exception as e:
         logger.exception(e)

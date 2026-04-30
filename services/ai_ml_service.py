@@ -234,7 +234,7 @@ def _calculate_attendance_score(company_id: int, employee_id: int) -> float:
     if not attendance or not attendance.get('total_days'):
         return 30.0  # No data
     
-    total = attendance['total_days']
+    total = float(attendance['total_days'] or 0)
     absent = float(attendance.get('absent_days', 0) or 0)
     late = float(attendance.get('late_days', 0) or 0)
     
@@ -263,8 +263,8 @@ def _calculate_leave_balance_score(company_id: int, employee_id: int) -> float:
     if not balance:
         return 40.0  # No balance record
     
-    total = balance.get('annual_total', 21)
-    used = balance.get('annual_used', 0)
+    total = float(balance.get('annual_total', 21))
+    used = float(balance.get('annual_used', 0))
     remaining = total - used
     
     # Low remaining leave = potential burnout risk
@@ -314,7 +314,7 @@ def _calculate_overtime_score(company_id: int, employee_id: int) -> float:
         logger.warning(f"Error getting overtime for employee {employee_id}: {e}")
         return 30.0  # Default score
     
-    total_overtime = overtime.get('total_overtime', 0) or 0
+    total_overtime = float(overtime.get('total_overtime', 0) or 0)
     
     # Excessive overtime (> 50 hours/quarter) = higher risk
     if total_overtime > 50:
@@ -349,7 +349,7 @@ def _calculate_salary_factor(company_id: int, employee_id: int) -> float:
         WHERE c.company_id = %s AND e.status = 'Active'
     """, (company_id,), one=True)
     
-    avg = avg_salary.get('avg_sal', 0) or 0
+    avg = float(avg_salary.get('avg_sal', 0) or 0)
     if avg == 0:
         return 30.0
     
@@ -432,6 +432,19 @@ def _get_current_workforce_state(company_id: int) -> Dict:
         WHERE company_id = %s
     """, (company_id,), one=True)
     
+    # Handle case where no employees exist or query failed
+    if stats is None:
+        logger.warning(f"Failed to get workforce stats for company {company_id}, returning defaults")
+        return {
+            'total_employees': 0,
+            'active_employees': 0,
+            'inactive_employees': 0,
+            'full_time': 0,
+            'part_time': 0,
+            'contract': 0,
+            'departments': [],
+        }
+    
     # Get department breakdown
     departments = query("""
         SELECT d.name, COUNT(e.id) as count
@@ -439,7 +452,7 @@ def _get_current_workforce_state(company_id: int) -> Dict:
         LEFT JOIN employees_core e ON d.id = e.department_id AND e.status = 'Active'
         WHERE d.company_id = %s
         GROUP BY d.id, d.name
-    """, (company_id,))
+    """, (company_id,)) or []
     
     return {
         'total_employees': stats['total_employees'] or 0,
@@ -448,7 +461,7 @@ def _get_current_workforce_state(company_id: int) -> Dict:
         'full_time': stats['full_time'] or 0,
         'part_time': stats['part_time'] or 0,
         'contract': stats['contract'] or 0,
-        'departments': departments or [],
+        'departments': departments,
     }
 
 
@@ -584,6 +597,11 @@ def _get_attendance_overall(company_id: int, start_date: str, end_date: str) -> 
         FROM attendance
         WHERE company_id = %s AND work_date BETWEEN %s AND %s
     """, (company_id, start_date, end_date), one=True)
+    
+    # Handle case where query failed
+    if stats is None:
+        logger.warning(f"Failed to get attendance stats for company {company_id}")
+        return {'attendance_rate': 0, 'total_days': 0, 'present': 0, 'absent': 0, 'late': 0, 'wfh': 0, 'half_day': 0, 'avg_working_hours': 0}
     
     total = stats['total_records'] or 0
     if total == 0:
@@ -798,6 +816,17 @@ def _get_leave_statistics(company_id: int, year: int) -> Dict:
         FROM leave_requests
         WHERE company_id = %s AND YEAR(start_date) = %s
     """, (company_id, year), one=True)
+    
+    # Handle case where query failed
+    if stats is None:
+        logger.warning(f"Failed to get leave stats for company {company_id}")
+        return {
+            'total_requests': 0,
+            'approved': 0,
+            'pending': 0,
+            'rejected': 0,
+            'total_days': 0,
+        }
     
     return {
         'total_requests': stats['total_requests'] or 0,

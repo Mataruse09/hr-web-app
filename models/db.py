@@ -243,8 +243,13 @@ def query(sql: str, params: tuple = (), one: bool = False, max_retries: int = 3)
                 continue
             
             # Check if db connection is valid (more robust check)
-            if not db or not hasattr(db, 'cursor'):
-                logger.warning("Database connection is None or invalid - retrying")
+            if db is None:
+                logger.warning("Database connection is None - retrying")
+                time.sleep(0.1)
+                continue
+            
+            if not hasattr(db, 'cursor'):
+                logger.warning("Database connection is invalid - retrying")
                 time.sleep(0.1)
                 continue
             
@@ -325,8 +330,13 @@ def mutate(sql: str, params: tuple = (), max_retries: int = 3):
                 continue
             
             # Check if db connection is valid (more robust check)
-            if not db or not hasattr(db, 'cursor'):
-                logger.warning("Database connection is None or invalid - retrying")
+            if db is None:
+                logger.warning("Database connection is None - retrying")
+                time.sleep(0.1)
+                continue
+            
+            if not hasattr(db, 'cursor'):
+                logger.warning("Database connection is invalid - retrying")
                 time.sleep(0.1)
                 continue
             
