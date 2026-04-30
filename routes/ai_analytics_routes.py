@@ -227,6 +227,41 @@ def _get_ai_report_with_timeout(company_id, report_type='comprehensive', timeout
 # MAIN AI ANALYTICS DASHBOARD
 # ═══════════════════════════════════════════════════════════════════════════
 
+def get_ai_data_async(company_id, report_type='comprehensive'):
+    """
+    Get AI data with async support - starts background job if needed.
+    Returns (report, job_id, is_generating) tuple.
+    """
+    cache_key = f"ai_report_{company_id}_{report_type}"
+    
+    # Check for existing completed job
+    job = ai_job_tracker.get_job_by_key(cache_key)
+    if job and job['status'] == 'completed':
+        return job.get('result'), None, False
+    
+    if job and job['status'] == 'processing':
+        # Still generating
+        return None, job.get('job_id'), True
+    
+    # Start new background job
+    job_id = ai_job_tracker.create_job(company_id, report_type, cache_key)
+    
+    def generate_in_background():
+        try:
+            ai_job_tracker.update_job(job_id, status='processing', progress=10)
+            result = generate_ai_report(company_id, report_type)
+            ai_job_tracker.update_job(job_id, status='completed', result=result, progress=100)
+        except Exception as e:
+            logger.warning(f"Background AI report generation failed: {e}")
+            ai_job_tracker.update_job(job_id, status='failed', error=str(e), progress=100)
+    
+    thread = threading.Thread(target=generate_in_background)
+    thread.daemon = True
+    thread.start()
+    
+    return None, job_id, True
+
+
 @ai_analytics_bp.route('/ai-analytics')
 @login_required
 @roles_required('Admin', 'HR', 'CHRO', 'Manager')
@@ -356,32 +391,68 @@ def attrition_risk():
     company_id = session['company_id']
     employee_id = request.args.get('employee_id', type=int)
     
-    try:
-        # Cache for 5 minutes (attrition risk doesn't change frequently)
-        if employee_id:
-            risks = get_cached_ai_data(company_id, predict_attrition_risk, employee_id, ttl=300)
-        else:
-            risks = get_cached_ai_data(company_id, predict_attrition_risk, ttl=300)
+    # Use async pattern for single employee or all employees
+    cache_key = f"attrition_{company_id}_{employee_id or 'all'}"
+    job = ai_job_tracker.get_job_by_key(cache_key)
+    
+    if job and job['status'] == 'completed':
+        risks = job.get('result', [])
+    elif job and job['status'] == 'processing':
+        # Still generating - show loading state
+        return render_template(
+            'ai_analytics/attrition_risk.html',
+            risks=[],
+            selected_employee_id=employee_id,
+            generating=True,
+            job_id=job.get('job_id'),
+        )
+    else:
+        # Start background job
+        job_id = ai_job_tracker.create_job(company_id, 'attrition', cache_key)
         
-        # Get employee details for display
-        if employee_id:
-            emp = query("""
-                SELECT e.id, e.first_name, e.last_name, e.job_title, d.name as department
-                FROM employees_core e
-                LEFT JOIN departments d ON e.department_id = d.id
-                WHERE e.id = %s AND e.company_id = %s
-            """, (employee_id, company_id), one=True)
-            
-            if emp and risks:
-                risks[0]['employee_name'] = f"{emp['first_name']} {emp['last_name']}"
-                risks[0]['job_title'] = emp['job_title']
-                risks[0]['department'] = emp['department']
+        def generate_in_background():
+            try:
+                ai_job_tracker.update_job(job_id, status='processing', progress=10)
+                if employee_id:
+                    result = predict_attrition_risk(company_id, employee_id)
+                else:
+                    result = predict_attrition_risk(company_id)
+                ai_job_tracker.update_job(job_id, status='completed', result=result, progress=100)
+            except Exception as e:
+                logger.warning(f"Background attrition risk failed: {e}")
+                ai_job_tracker.update_job(job_id, status='failed', error=str(e), progress=100)
+        
+        thread = threading.Thread(target=generate_in_background)
+        thread.daemon = True
+        thread.start()
         
         return render_template(
             'ai_analytics/attrition_risk.html',
-            risks=risks,
+            risks=[],
             selected_employee_id=employee_id,
+            generating=True,
+            job_id=job_id,
         )
+    
+    # Get employee details for display
+    if employee_id and risks:
+        emp = query("""
+            SELECT e.id, e.first_name, e.last_name, e.job_title, d.name as department
+            FROM employees_core e
+            LEFT JOIN departments d ON e.department_id = d.id
+            WHERE e.id = %s AND e.company_id = %s
+        """, (employee_id, company_id), one=True)
+        
+        if emp and risks:
+            risks[0]['employee_name'] = f"{emp['first_name']} {emp['last_name']}"
+            risks[0]['job_title'] = emp['job_title']
+            risks[0]['department'] = emp['department']
+    
+    return render_template(
+        'ai_analytics/attrition_risk.html',
+        risks=risks,
+        selected_employee_id=employee_id,
+    )
     
     except Exception as e:
         logger.exception(e)
@@ -428,20 +499,49 @@ def workforce_forecast():
     company_id = session['company_id']
     months = request.args.get('months', type=int, default=12)
     
-    try:
-        # Cache forecast for 10 minutes (forecasts change less frequently)
-        forecast = get_cached_ai_data(company_id, forecast_workforce_demand, months, ttl=600)
+    # Use async pattern
+    cache_key = f"forecast_{company_id}_{months}"
+    job = ai_job_tracker.get_job_by_key(cache_key)
+    
+    if job and job['status'] == 'completed':
+        forecast = job.get('result', {})
+    elif job and job['status'] == 'processing':
+        return render_template(
+            'ai_analytics/forecast.html',
+            forecast=None,
+            months=months,
+            generating=True,
+            job_id=job.get('job_id'),
+        )
+    else:
+        job_id = ai_job_tracker.create_job(company_id, 'forecast', cache_key)
+        
+        def generate_in_background():
+            try:
+                ai_job_tracker.update_job(job_id, status='processing', progress=10)
+                result = forecast_workforce_demand(company_id, months)
+                ai_job_tracker.update_job(job_id, status='completed', result=result, progress=100)
+            except Exception as e:
+                logger.warning(f"Background forecast failed: {e}")
+                ai_job_tracker.update_job(job_id, status='failed', error=str(e), progress=100)
+        
+        thread = threading.Thread(target=generate_in_background)
+        thread.daemon = True
+        thread.start()
         
         return render_template(
             'ai_analytics/forecast.html',
-            forecast=forecast,
+            forecast=None,
             months=months,
+            generating=True,
+            job_id=job_id,
         )
     
-    except Exception as e:
-        logger.exception(e)
-        flash('Error generating forecast.', 'danger')
-        return redirect(url_for('ai_analytics.dashboard'))
+    return render_template(
+        'ai_analytics/forecast.html',
+        forecast=forecast,
+        months=months,
+    )
 
 
 @ai_analytics_bp.route('/api/ai/forecast')
@@ -478,20 +578,49 @@ def attendance_analysis():
     company_id = session['company_id']
     days = request.args.get('days', type=int, default=90)
     
-    try:
-        # Cache for 5 minutes
-        analysis = get_cached_ai_data(company_id, analyze_attendance_patterns, days, ttl=300)
+    # Use async pattern
+    cache_key = f"attendance_{company_id}_{days}"
+    job = ai_job_tracker.get_job_by_key(cache_key)
+    
+    if job and job['status'] == 'completed':
+        analysis = job.get('result', {})
+    elif job and job['status'] == 'processing':
+        return render_template(
+            'ai_analytics/attendance.html',
+            analysis=None,
+            days=days,
+            generating=True,
+            job_id=job.get('job_id'),
+        )
+    else:
+        job_id = ai_job_tracker.create_job(company_id, 'attendance', cache_key)
+        
+        def generate_in_background():
+            try:
+                ai_job_tracker.update_job(job_id, status='processing', progress=10)
+                result = analyze_attendance_patterns(company_id, days)
+                ai_job_tracker.update_job(job_id, status='completed', result=result, progress=100)
+            except Exception as e:
+                logger.warning(f"Background attendance analysis failed: {e}")
+                ai_job_tracker.update_job(job_id, status='failed', error=str(e), progress=100)
+        
+        thread = threading.Thread(target=generate_in_background)
+        thread.daemon = True
+        thread.start()
         
         return render_template(
             'ai_analytics/attendance.html',
-            analysis=analysis,
+            analysis=None,
             days=days,
+            generating=True,
+            job_id=job_id,
         )
     
-    except Exception as e:
-        logger.exception(e)
-        flash('Error analyzing attendance patterns.', 'danger')
-        return redirect(url_for('ai_analytics.dashboard'))
+    return render_template(
+        'ai_analytics/attendance.html',
+        analysis=analysis,
+        days=days,
+    )
 
 
 @ai_analytics_bp.route('/api/ai/attendance')
@@ -527,20 +656,49 @@ def leave_analysis():
     company_id = session['company_id']
     year = request.args.get('year', type=int, default=date.today().year)
     
-    try:
-        # Cache for 10 minutes (leave trends are monthly)
-        analysis = get_cached_ai_data(company_id, analyze_leave_trends, year, ttl=600)
+    # Use async pattern
+    cache_key = f"leave_{company_id}_{year}"
+    job = ai_job_tracker.get_job_by_key(cache_key)
+    
+    if job and job['status'] == 'completed':
+        analysis = job.get('result', [])
+    elif job and job['status'] == 'processing':
+        return render_template(
+            'ai_analytics/leave.html',
+            analysis=None,
+            year=year,
+            generating=True,
+            job_id=job.get('job_id'),
+        )
+    else:
+        job_id = ai_job_tracker.create_job(company_id, 'leave', cache_key)
+        
+        def generate_in_background():
+            try:
+                ai_job_tracker.update_job(job_id, status='processing', progress=10)
+                result = analyze_leave_trends(company_id, year)
+                ai_job_tracker.update_job(job_id, status='completed', result=result, progress=100)
+            except Exception as e:
+                logger.warning(f"Background leave analysis failed: {e}")
+                ai_job_tracker.update_job(job_id, status='failed', error=str(e), progress=100)
+        
+        thread = threading.Thread(target=generate_in_background)
+        thread.daemon = True
+        thread.start()
         
         return render_template(
             'ai_analytics/leave.html',
-            analysis=analysis,
+            analysis=None,
             year=year,
+            generating=True,
+            job_id=job_id,
         )
     
-    except Exception as e:
-        logger.exception(e)
-        flash('Error analyzing leave trends.', 'danger')
-        return redirect(url_for('ai_analytics.dashboard'))
+    return render_template(
+        'ai_analytics/leave.html',
+        analysis=analysis,
+        year=year,
+    )
 
 
 @ai_analytics_bp.route('/api/ai/leave')
@@ -576,24 +734,51 @@ def productivity_insights():
     """View AI-powered productivity insights."""
     company_id = session['company_id']
     
-    try:
-        # Cache for 5 minutes
-        analysis = get_cached_ai_data(company_id, analyze_productivity, ttl=300)
+    # Use async pattern
+    cache_key = f"productivity_{company_id}"
+    job = ai_job_tracker.get_job_by_key(cache_key)
+    
+    if job and job['status'] == 'completed':
+        analysis = job.get('result', {})
+    elif job and job['status'] == 'processing':
+        return render_template(
+            'ai_analytics/productivity.html',
+            analysis=None,
+            generating=True,
+            job_id=job.get('job_id'),
+        )
+    else:
+        job_id = ai_job_tracker.create_job(company_id, 'productivity', cache_key)
         
-        # Ensure analysis is a dict (handle case where cache returns wrong type)
-        if not isinstance(analysis, dict):
-            logger.warning(f"Invalid analysis type: {type(analysis)}, re-computing")
-            analysis = analyze_productivity(company_id)
+        def generate_in_background():
+            try:
+                ai_job_tracker.update_job(job_id, status='processing', progress=10)
+                result = analyze_productivity(company_id)
+                ai_job_tracker.update_job(job_id, status='completed', result=result, progress=100)
+            except Exception as e:
+                logger.warning(f"Background productivity analysis failed: {e}")
+                ai_job_tracker.update_job(job_id, status='failed', error=str(e), progress=100)
+        
+        thread = threading.Thread(target=generate_in_background)
+        thread.daemon = True
+        thread.start()
         
         return render_template(
             'ai_analytics/productivity.html',
-            analysis=analysis,
+            analysis=None,
+            generating=True,
+            job_id=job_id,
         )
     
-    except Exception as e:
-        logger.exception(e)
-        flash('Error analyzing productivity.', 'danger')
-        return redirect(url_for('ai_analytics.dashboard'))
+    # Ensure analysis is a dict
+    if not isinstance(analysis, dict):
+        logger.warning(f"Invalid analysis type: {type(analysis)}, re-computing")
+        analysis = analyze_productivity(company_id)
+    
+    return render_template(
+        'ai_analytics/productivity.html',
+        analysis=analysis,
+    )
 
 
 @ai_analytics_bp.route('/api/ai/productivity')
@@ -628,19 +813,46 @@ def workforce_composition():
     """View workforce composition and diversity analysis."""
     company_id = session['company_id']
     
-    try:
-        # Cache for 10 minutes (composition changes slowly)
-        analysis = get_cached_ai_data(company_id, analyze_workforce_composition, ttl=600)
+    # Use async pattern
+    cache_key = f"composition_{company_id}"
+    job = ai_job_tracker.get_job_by_key(cache_key)
+    
+    if job and job['status'] == 'completed':
+        analysis = job.get('result', {})
+    elif job and job['status'] == 'processing':
+        return render_template(
+            'ai_analytics/composition.html',
+            analysis=None,
+            generating=True,
+            job_id=job.get('job_id'),
+        )
+    else:
+        job_id = ai_job_tracker.create_job(company_id, 'composition', cache_key)
+        
+        def generate_in_background():
+            try:
+                ai_job_tracker.update_job(job_id, status='processing', progress=10)
+                result = analyze_workforce_composition(company_id)
+                ai_job_tracker.update_job(job_id, status='completed', result=result, progress=100)
+            except Exception as e:
+                logger.warning(f"Background composition analysis failed: {e}")
+                ai_job_tracker.update_job(job_id, status='failed', error=str(e), progress=100)
+        
+        thread = threading.Thread(target=generate_in_background)
+        thread.daemon = True
+        thread.start()
         
         return render_template(
             'ai_analytics/composition.html',
-            analysis=analysis,
+            analysis=None,
+            generating=True,
+            job_id=job_id,
         )
     
-    except Exception as e:
-        logger.exception(e)
-        flash('Error analyzing workforce composition.', 'danger')
-        return redirect(url_for('ai_analytics.dashboard'))
+    return render_template(
+        'ai_analytics/composition.html',
+        analysis=analysis,
+    )
 
 
 @ai_analytics_bp.route('/api/ai/composition')
@@ -674,30 +886,63 @@ def recommendations():
     """View AI-powered smart recommendations."""
     company_id = session['company_id']
     
-    try:
-        # Cache for 5 minutes
-        recs = get_cached_ai_data(company_id, get_smart_recommendations, ttl=300)
+    # Use async pattern
+    cache_key = f"recommendations_{company_id}"
+    job = ai_job_tracker.get_job_by_key(cache_key)
+    
+    if job and job['status'] == 'completed':
+        recs = job.get('result', [])
+    elif job and job['status'] == 'processing':
+        return render_template(
+            'ai_analytics/recommendations.html',
+            recommendations=[],
+            high_priority=[],
+            medium_priority=[],
+            low_priority=[],
+            generating=True,
+            job_id=job.get('job_id'),
+        )
+    else:
+        job_id = ai_job_tracker.create_job(company_id, 'recommendations', cache_key)
         
-        # Filter to only include dict objects (defensive against string entries)
-        valid_recs = [r for r in recs if isinstance(r, dict)]
+        def generate_in_background():
+            try:
+                ai_job_tracker.update_job(job_id, status='processing', progress=10)
+                result = get_smart_recommendations(company_id)
+                ai_job_tracker.update_job(job_id, status='completed', result=result, progress=100)
+            except Exception as e:
+                logger.warning(f"Background recommendations failed: {e}")
+                ai_job_tracker.update_job(job_id, status='failed', error=str(e), progress=100)
         
-        # Group by priority
-        high_priority = [r for r in valid_recs if r.get('priority') == 'high']
-        medium_priority = [r for r in valid_recs if r.get('priority') == 'medium']
-        low_priority = [r for r in valid_recs if r.get('priority') == 'low']
+        thread = threading.Thread(target=generate_in_background)
+        thread.daemon = True
+        thread.start()
         
         return render_template(
             'ai_analytics/recommendations.html',
-            recommendations=valid_recs,
-            high_priority=high_priority,
-            medium_priority=medium_priority,
-            low_priority=low_priority,
+            recommendations=[],
+            high_priority=[],
+            medium_priority=[],
+            low_priority=[],
+            generating=True,
+            job_id=job_id,
         )
     
-    except Exception as e:
-        logger.exception(e)
-        flash('Error generating recommendations.', 'danger')
-        return redirect(url_for('ai_analytics.dashboard'))
+    # Filter to only include dict objects (defensive against string entries)
+    valid_recs = [r for r in recs if isinstance(r, dict)]
+    
+    # Group by priority
+    high_priority = [r for r in valid_recs if r.get('priority') == 'high']
+    medium_priority = [r for r in valid_recs if r.get('priority') == 'medium']
+    low_priority = [r for r in valid_recs if r.get('priority') == 'low']
+    
+    return render_template(
+        'ai_analytics/recommendations.html',
+        recommendations=valid_recs,
+        high_priority=high_priority,
+        medium_priority=medium_priority,
+        low_priority=low_priority,
+    )
 
 
 @ai_analytics_bp.route('/api/ai/recommendations')
@@ -734,20 +979,28 @@ def full_report():
     company_id = session['company_id']
     report_type = request.args.get('type', 'comprehensive')
     
-    try:
-        # Cache for 10 minutes
-        report = get_cached_ai_data(company_id, generate_ai_report, report_type, ttl=600)
-        
+    # Use async pattern to prevent timeouts
+    report, job_id, is_generating = get_ai_data_async(company_id, report_type)
+    
+    if is_generating:
+        # Show generating state with polling
+        return render_template(
+            'ai_analytics/report.html',
+            report=None,
+            report_type=report_type,
+            generating=True,
+            job_id=job_id,
+        )
+    
+    if report:
         return render_template(
             'ai_analytics/report.html',
             report=report,
             report_type=report_type,
         )
     
-    except Exception as e:
-        logger.exception(e)
-        flash('Error generating report.', 'danger')
-        return redirect(url_for('ai_analytics.dashboard'))
+    flash('Error generating report.', 'danger')
+    return redirect(url_for('ai_analytics.dashboard'))
 
 
 @ai_analytics_bp.route('/api/ai/report')
@@ -759,16 +1012,24 @@ def api_report():
     company_id = session['company_id']
     report_type = request.args.get('type', 'comprehensive')
     
-    try:
-        # Cache for 10 minutes
-        report = get_cached_ai_data(company_id, generate_ai_report, report_type, ttl=600)
+    # Use async pattern to prevent timeouts
+    report, job_id, is_generating = get_ai_data_async(company_id, report_type)
+    
+    if is_generating:
+        return jsonify({
+            'success': True,
+            'status': 'generating',
+            'job_id': job_id,
+            'data': None,
+        })
+    
+    if report:
         return jsonify({
             'success': True,
             'data': report,
         })
-    except Exception as e:
-        logger.exception(e)
-        return jsonify({'success': False, 'error': str(e)}), 500
+    
+    return jsonify({'success': False, 'error': 'Failed to generate report'}), 500
 
 
 # ═══════════════════════════════════════════════════════════════════════════

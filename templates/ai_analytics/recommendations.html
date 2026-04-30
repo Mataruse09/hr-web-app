@@ -132,3 +132,26 @@
     {% endif %}
 </div>
 {% endblock %}
+
+{% if generating %}
+<script>
+const pollInterval = setInterval(async () => {
+    try {
+        const response = await fetch('{{ url_for("ai_analytics.api_poll_report") }}');
+        const data = await response.json();
+        
+        if (data.success && data.status === 'completed' && data.result) {
+            clearInterval(pollInterval);
+            location.reload();
+        } else if (data.success && data.status === 'failed') {
+            clearInterval(pollInterval);
+            console.error('Report generation failed:', data.error);
+        }
+    } catch (e) {
+        console.error('Polling error:', e);
+    }
+}, 5000);
+setTimeout(() => clearInterval(pollInterval), 600000);
+</script>
+{% endif %}
+
