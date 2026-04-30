@@ -90,8 +90,9 @@ class AIJobTracker:
     
     def __init__(self):
         self._jobs = {}  # job_id -> {'status': 'pending'|'processing'|'completed'|'failed', 'result': None, 'error': None, 'progress': 0}
+        self._key_map = {}  # cache_key -> job_id for quick lookup
     
-    def create_job(self, company_id, report_type='comprehensive'):
+    def create_job(self, company_id, report_type='comprehensive', cache_key=None):
         """Create a new AI report job."""
         import uuid
         job_id = str(uuid.uuid4())[:8]
@@ -103,12 +104,31 @@ class AIJobTracker:
             'company_id': company_id,
             'report_type': report_type,
             'created_at': datetime.utcnow().isoformat(),
+            'cache_key': cache_key,
         }
+        if cache_key:
+            self._key_map[cache_key] = job_id
         return job_id
     
     def get_job(self, job_id):
         """Get job status and result."""
         return self._jobs.get(job_id)
+    
+    def get_job_by_key(self, cache_key):
+        """Get most recent job for a given cache key."""
+        job_id = self._key_map.get(cache_key)
+        if job_id:
+            job = self._jobs.get(job_id)
+            # Only return if job is recent (within last 30 minutes)
+            if job and job.get('created_at'):
+                try:
+                    created = datetime.fromisoformat(job['created_at'])
+                    age = (datetime.utcnow() - created).total_seconds()
+                    if age < 1800:  # 30 minutes
+                        return job
+                except:
+                    pass
+        return None
     
     def update_job(self, job_id, status=None, progress=None, result=None, error=None):
         """Update job status."""
@@ -212,15 +232,19 @@ def _get_ai_report_with_timeout(company_id, report_type='comprehensive', timeout
 @roles_required('Admin', 'HR', 'CHRO', 'Manager')
 @ai_feature_required
 def dashboard():
-    """AI Analytics Dashboard - loads data with error handling."""
+    """AI Analytics Dashboard - uses async job system for long-running reports."""
     company_id = session['company_id']
     
-    # Generate report with try/except to prevent crashes
-    try:
-        report = generate_ai_report(company_id, 'comprehensive')
-        summary = _get_ai_summary(report, company_id)
-    except Exception as e:
-        logger.warning(f"Error generating AI report: {e}")
+    # Check if there's a recent completed job for this company
+    cache_key = f"ai_report_{company_id}_comprehensive"
+    job = ai_job_tracker.get_job_by_key(cache_key)
+    
+    if job and job['status'] == 'completed':
+        # Use cached result
+        report = job.get('result')
+        summary = _get_ai_summary(report, company_id) if report else None
+    elif job and job['status'] == 'processing':
+        # Report is still being generated - show generating state
         report = None
         summary = {
             'high_risk_employees': 0,
@@ -228,7 +252,49 @@ def dashboard():
             'projected_growth': 0,
             'attendance_rate': 0,
             'recommendations_count': 0,
+            'generating': True,
+            'job_id': job['job_id'],
         }
+    else:
+        # No existing job - start a new async job
+        try:
+            job_id = ai_job_tracker.create_job(company_id, 'comprehensive', cache_key)
+            
+            # Start background thread
+            def generate_in_background():
+                try:
+                    ai_job_tracker.update_job(job_id, status='processing', progress=10)
+                    result = generate_ai_report(company_id, 'comprehensive')
+                    ai_job_tracker.update_job(job_id, status='completed', result=result, progress=100)
+                except Exception as e:
+                    logger.warning(f"Background AI report generation failed: {e}")
+                    ai_job_tracker.update_job(job_id, status='failed', error=str(e), progress=100)
+            
+            thread = threading.Thread(target=generate_in_background)
+            thread.daemon = True
+            thread.start()
+            
+            # Return immediately with generating state
+            report = None
+            summary = {
+                'high_risk_employees': 0,
+                'avg_attrition_risk': 0,
+                'projected_growth': 0,
+                'attendance_rate': 0,
+                'recommendations_count': 0,
+                'generating': True,
+                'job_id': job_id,
+            }
+        except Exception as e:
+            logger.warning(f"Error starting AI report job: {e}")
+            report = None
+            summary = {
+                'high_risk_employees': 0,
+                'avg_attrition_risk': 0,
+                'projected_growth': 0,
+                'attendance_rate': 0,
+                'recommendations_count': 0,
+            }
     
     return render_template(
         'ai_analytics/dashboard.html',
@@ -811,6 +877,42 @@ def api_check_report(job_id):
                 'success': False,
                 'error': 'Job not found',
             }), 404
+        
+        return jsonify({
+            'success': True,
+            'status': job['status'],
+            'progress': job['progress'],
+            'result': job.get('result'),
+            'error': job.get('error'),
+        })
+    except Exception as e:
+        logger.exception(e)
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@ai_analytics_bp.route('/api/ai/poll-report', methods=['GET'])
+@login_required
+@roles_required('Admin', 'HR', 'CHRO', 'Manager')
+@ai_feature_required
+def api_poll_report():
+    """
+    Poll for AI report status by company_id.
+    Used by dashboard to check if background job is complete.
+    """
+    try:
+        company_id = session.get('company_id')
+        if not company_id:
+            return jsonify({'success': False, 'error': 'No company_id'}), 400
+        
+        cache_key = f"ai_report_{company_id}_comprehensive"
+        job = ai_job_tracker.get_job_by_key(cache_key)
+        
+        if not job:
+            return jsonify({
+                'success': True,
+                'status': 'not_started',
+                'result': None,
+            })
         
         return jsonify({
             'success': True,

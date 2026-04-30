@@ -307,4 +307,31 @@
         </div>
     </div>
 </div>
+
+{% if summary.generating %}
+<script>
+// Poll for AI report completion
+const pollInterval = setInterval(async () => {
+    try {
+        const response = await fetch('{{ url_for("ai_analytics.api_poll_report") }}');
+        const data = await response.json();
+        
+        if (data.success && data.status === 'completed' && data.result) {
+            // Report ready - reload the page to show data
+            clearInterval(pollInterval);
+            location.reload();
+        } else if (data.success && data.status === 'failed') {
+            clearInterval(pollInterval);
+            console.error('AI report generation failed:', data.error);
+        }
+    } catch (e) {
+        console.error('Polling error:', e);
+    }
+}, 5000); // Poll every 5 seconds
+
+// Stop polling after 10 minutes
+setTimeout(() => clearInterval(pollInterval), 600000);
+</script>
+{% endif %}
+
 {% endblock %}
