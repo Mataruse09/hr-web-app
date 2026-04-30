@@ -63,14 +63,14 @@ def predict_attrition_risk(company_id: int, employee_id: int = None) -> List[Dic
         if emp_risk:
             results.append(emp_risk)
     else:
-        # All employees analysis - limit to 50 to prevent timeouts
+        # All employees analysis - limit to 20 to prevent timeouts on production
         try:
             employees = query("""
                 SELECT id, first_name, last_name, job_title, department_id,
                        hire_date, status, email
                 FROM employees_core 
                 WHERE company_id = %s AND status = 'Active'
-                LIMIT 50
+                LIMIT 20
             """, (company_id,))
         except Exception as e:
             logger.warning(f"Failed to get employees for attrition risk: {e}")
@@ -263,9 +263,13 @@ def _calculate_leave_balance_score(company_id: int, employee_id: int) -> float:
     if not balance:
         return 40.0  # No balance record
     
-    total = float(balance.get('annual_total', 21))
-    used = float(balance.get('annual_used', 0))
-    remaining = total - used
+    try:
+        total = float(balance.get('annual_total', 21) or 21)
+        used = float(balance.get('annual_used', 0) or 0)
+        remaining = total - used
+    except Exception as e:
+        logger.warning(f"Error parsing leave balance: {e}")
+        return 40.0
     
     # Low remaining leave = potential burnout risk
     if remaining <= 2:
@@ -1294,6 +1298,7 @@ def _get_performance_recommendations(company_id: int) -> List[Dict]:
 def generate_ai_report(company_id: int, report_type: str = 'comprehensive') -> Dict:
     """
     Generate comprehensive AI-powered HR analytics report.
+    Includes error handling to prevent worker timeouts on production.
     """
     report = {
         'generated_at': datetime.utcnow().isoformat(),
@@ -1302,29 +1307,101 @@ def generate_ai_report(company_id: int, report_type: str = 'comprehensive') -> D
     }
     
     if report_type == 'comprehensive':
-        report['attrition_risk'] = predict_attrition_risk(company_id)
-        report['workforce_forecast'] = forecast_workforce_demand(company_id, 6)
-        report['attendance_analysis'] = analyze_attendance_patterns(company_id)
-        report['leave_trends'] = analyze_leave_trends(company_id)
-        report['productivity'] = analyze_productivity(company_id)
-        report['workforce_composition'] = analyze_workforce_composition(company_id)
-        report['recommendations'] = get_smart_recommendations(company_id)
+        # Each function call is wrapped in try/except to prevent one failure from crashing the entire report
+        try:
+            report['attrition_risk'] = predict_attrition_risk(company_id)
+        except Exception as e:
+            logger.warning(f"Attrition risk calculation failed: {e}")
+            report['attrition_risk'] = []
+        
+        try:
+            report['workforce_forecast'] = forecast_workforce_demand(company_id, 6)
+        except Exception as e:
+            logger.warning(f"Workforce forecast calculation failed: {e}")
+            report['workforce_forecast'] = {'forecasts': [], 'current': {}}
+        
+        try:
+            report['attendance_analysis'] = analyze_attendance_patterns(company_id)
+        except Exception as e:
+            logger.warning(f"Attendance analysis calculation failed: {e}")
+            report['attendance_analysis'] = {'overall': {'attendance_rate': 0}}
+        
+        try:
+            report['leave_trends'] = analyze_leave_trends(company_id)
+        except Exception as e:
+            logger.warning(f"Leave trends calculation failed: {e}")
+            report['leave_trends'] = []
+        
+        try:
+            report['productivity'] = analyze_productivity(company_id)
+        except Exception as e:
+            logger.warning(f"Productivity analysis calculation failed: {e}")
+            report['productivity'] = {'performance': {}}
+        
+        try:
+            report['workforce_composition'] = analyze_workforce_composition(company_id)
+        except Exception as e:
+            logger.warning(f"Workforce composition calculation failed: {e}")
+            report['workforce_composition'] = {}
+        
+        try:
+            report['recommendations'] = get_smart_recommendations(company_id)
+        except Exception as e:
+            logger.warning(f"Recommendations calculation failed: {e}")
+            report['recommendations'] = []
     
     elif report_type == 'attrition':
-        report['attrition_risk'] = predict_attrition_risk(company_id)
-        report['workforce_composition'] = analyze_workforce_composition(company_id)
-        report['recommendations'] = [r for r in get_smart_recommendations(company_id) 
+        try:
+            report['attrition_risk'] = predict_attrition_risk(company_id)
+        except Exception as e:
+            logger.warning(f"Attrition risk calculation failed: {e}")
+            report['attrition_risk'] = []
+        
+        try:
+            report['workforce_composition'] = analyze_workforce_composition(company_id)
+        except Exception as e:
+            logger.warning(f"Workforce composition calculation failed: {e}")
+            report['workforce_composition'] = {}
+        
+        try:
+            report['recommendations'] = [r for r in get_smart_recommendations(company_id) 
                                      if r['category'] == 'attrition']
+        except Exception as e:
+            logger.warning(f"Recommendations calculation failed: {e}")
+            report['recommendations'] = []
     
     elif report_type == 'workforce':
-        report['workforce_forecast'] = forecast_workforce_demand(company_id, 12)
-        report['workforce_composition'] = analyze_workforce_composition(company_id)
-        report['recommendations'] = [r for r in get_smart_recommendations(company_id) 
+        try:
+            report['workforce_forecast'] = forecast_workforce_demand(company_id, 12)
+        except Exception as e:
+            logger.warning(f"Workforce forecast calculation failed: {e}")
+            report['workforce_forecast'] = {'forecasts': [], 'current': {}}
+        
+        try:
+            report['workforce_composition'] = analyze_workforce_composition(company_id)
+        except Exception as e:
+            logger.warning(f"Workforce composition calculation failed: {e}")
+            report['workforce_composition'] = {}
+        
+        try:
+            report['recommendations'] = [r for r in get_smart_recommendations(company_id) 
                                      if r['category'] == 'workforce']
+        except Exception as e:
+            logger.warning(f"Recommendations calculation failed: {e}")
+            report['recommendations'] = []
     
     elif report_type == 'attendance':
-        report['attendance_analysis'] = analyze_attendance_patterns(company_id)
-        report['recommendations'] = [r for r in get_smart_recommendations(company_id) 
+        try:
+            report['attendance_analysis'] = analyze_attendance_patterns(company_id)
+        except Exception as e:
+            logger.warning(f"Attendance analysis calculation failed: {e}")
+            report['attendance_analysis'] = {'overall': {'attendance_rate': 0}}
+        
+        try:
+            report['recommendations'] = [r for r in get_smart_recommendations(company_id) 
                                      if r['category'] == 'attendance']
+        except Exception as e:
+            logger.warning(f"Recommendations calculation failed: {e}")
+            report['recommendations'] = []
     
     return report

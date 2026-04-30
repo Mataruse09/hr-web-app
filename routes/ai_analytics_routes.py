@@ -212,10 +212,10 @@ def _get_ai_report_with_timeout(company_id, report_type='comprehensive', timeout
 @roles_required('Admin', 'HR', 'CHRO', 'Manager')
 @ai_feature_required
 def dashboard():
-    """AI Analytics Dashboard - loads data directly."""
+    """AI Analytics Dashboard - loads data with error handling."""
     company_id = session['company_id']
     
-    # Generate report directly
+    # Generate report with try/except to prevent crashes
     try:
         report = generate_ai_report(company_id, 'comprehensive')
         summary = _get_ai_summary(report, company_id)
