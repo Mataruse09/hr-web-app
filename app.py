@@ -402,6 +402,12 @@ def google_verification():
 def robots_txt():
     return Response("User-agent: *\nAllow: /\n\nSitemap: https://hr-web-app-5.onrender.com/sitemap.xml", mimetype='text/plain')
 
+# ── Health Check Route (prevents Render idle timeout) ─────────────
+@app.route('/health')
+def health_check():
+    """Health check endpoint to prevent Render idle timeout"""
+    return Response("OK", mimetype='text/plain')
+
 # ── Sitemap.xml Route ─────────────
 @app.route('/sitemap.xml')
 def sitemap_xml():
